@@ -73,13 +73,33 @@ test('SQLite cap is shared, and demo exhaustion leaves room for the app', async 
   assert.deepEqual(responses.map(r => r.status).sort(), [204, 429]);
   assert.equal((await send('app')).status, 204);
   assert.equal((await send('app')).status, 429);
+  sqlite.prepare('INSERT INTO usage VALUES (?, ?, ?, ?)').run(month, 'traffic', 1000, 1000);
   assert.equal((await send('demo', 'traffic')).status, 429);
+  assert.equal((await send('app', 'traffic')).status, 204);
   sqlite.close();
 });
 
-test('public browser traffic and unconfigured app requests fail before upstream', async () => {
-  const env = {STUDIO_TRAFFIC: 'on'};
+test('disabled browser traffic and unconfigured app requests fail before upstream', async () => {
+  const env = {STUDIO_TRAFFIC: 'off'};
   assert.equal((await worker.fetch(request('/api/traffic/12/1/1'), env)).status, 404);
   assert.equal((await worker.fetch(request('/app-api/route?coords=-122.3,40.4;-122.3,40.5'), env)).status, 503);
   assert.deepEqual(await (await worker.fetch(request('/api/provider-status'), env)).json(), {studioTraffic: false});
+});
+
+test('both clients can request a traffic tile with the server key', async () => {
+  const QUOTA = {getByName: () => ({fetch: async (_, init) => {
+    assert.equal(JSON.parse(init.body).bucket, 'traffic');
+    return new Response(null, {status: 204});
+  }})};
+  const env = {QUOTA, STUDIO_TRAFFIC: 'on', TOMTOM_API_KEY: 'test-key'};
+  for (const client of ['app', 'demo']) {
+    const response = await handleTomTom(request('/api/traffic/12/656/1543'), '/traffic/12/656/1543', env, client, async (url, options) => {
+      assert.equal(new URL(url).pathname, '/maps/orbis/traffic/flow/raster/tile/12/656/1543');
+      assert.equal(options.headers['TomTom-Api-Key'], 'test-key');
+      return new Response(new Uint8Array([137, 80, 78, 71]), {headers: {'Content-Type': 'image/png'}});
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Content-Type'), 'image/png');
+    assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [137, 80, 78, 71]);
+  }
 });

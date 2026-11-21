@@ -111,7 +111,7 @@ export function isTomTomEndpoint(path) {
 
 export async function handleTomTom(request, path, env, client, fetchUpstream = globalThis.fetch.bind(globalThis)) {
   if (request.method !== 'GET') return error('Method not allowed.', 405);
-  const traffic = env.STUDIO_TRAFFIC === 'on' && client === 'app';
+  const traffic = env.STUDIO_TRAFFIC === 'on';
   if (path === '/provider-status') return json({studioTraffic: Boolean(traffic && env.TOMTOM_API_KEY)});
   let operation;
   try { operation = upstreamRequest(path, new URL(request.url).searchParams); }
@@ -133,7 +133,10 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = g
     if (!allowance.ok) return error('Trip services are temporarily unavailable.', 503);
     phase = 'TomTom connection';
     const upstreamHeaders = {Referer: workerReferrer};
-    if (bucket === 'traffic') upstreamHeaders['TomTom-Api-Key'] = env.TOMTOM_API_KEY;
+    if (bucket === 'traffic') {
+      upstreamHeaders['TomTom-Api-Key'] = env.TOMTOM_API_KEY;
+      upstreamHeaders.Accept = 'image/png';
+    }
     else upstream.searchParams.set('key', env.TOMTOM_API_KEY);
     const response = await fetchUpstream(upstream.href, {
       headers: upstreamHeaders,

@@ -3,7 +3,7 @@ const limits = {
   search: {total: 10000, demo: 1000},
   routing: {total: 5000, demo: 500},
   reverse: {total: 2000, demo: 200},
-  traffic: {total: 10000, demo: 0},
+  traffic: {total: 10000, demo: 1000},
 };
 
 export class TripQuota {
