@@ -1,0 +1,11 @@
+.local-signing/
+dist/
+*.keystore
+*.jks
+.dev.vars*
+.env*
+android/.gradle/
+android/**/build/
+android/local.properties
+node_modules/
+.cloudflare/

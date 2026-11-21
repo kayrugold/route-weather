@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application' version '8.9.1'
+}
+
+def serviceOrigin = providers.gradleProperty('routeWeatherServiceOrigin').orElse('').get()
+if (serviceOrigin && !(serviceOrigin ==~ /https:\/\/[a-zA-Z0-9.-]+/)) {
+    throw new GradleException('routeWeatherServiceOrigin must be an HTTPS origin with no path or trailing slash.')
+}
+
+android {
+    namespace 'com.andysdevstudio.routeweather'
+    compileSdk 36
+    buildToolsVersion '36.1.0'
+    buildFeatures { buildConfig true }
+
+
+    defaultConfig {
+        applicationId 'com.andysdevstudio.routeweather'
+        minSdk 26
+        targetSdk 36
+        versionCode 21
+        versionName '0.21'
+        buildConfigField 'String', 'SERVICE_ORIGIN', '"' + serviceOrigin + '"'
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            resValue 'string', 'app_name', 'Route Weather (Test)'
+        }
+        release {
+            resValue 'string', 'app_name', 'Route Weather'
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs = ['src/main']
+            assets.srcDirs = ['../../assets']
+        }
+    }
+}
+
+tasks.matching { it.name == 'packageReleaseBundle' }.configureEach {
+    doFirst {
+        if (!serviceOrigin) throw new GradleException('Set routeWeatherServiceOrigin to the verified live Worker before building a release bundle.')
+    }
+}

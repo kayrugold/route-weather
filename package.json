@@ -1,0 +1,13 @@
+{
+  "name": "route-weather",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-sqlite --test cloud/test/*.test.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "2.0.0-rc.3",
+    "cf": "^1.0.0-rc.2",
+    "vite": "^8.3.8"
+  }
+}
