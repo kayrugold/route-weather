@@ -45,6 +45,7 @@ export function normalizeRoute(source) {
       const next = instructions[i + 1]?.routeOffsetInMeters ?? offset + distance;
       return [{
         instruction: step.message,
+        offset: step.routeOffsetInMeters,
         name: step.street ?? '',
         distance: Math.max(0, Math.min(next, offset + distance) - step.routeOffsetInMeters),
         maneuver: {type: step.maneuver ?? 'continue', location: step.point ? coordinates(step.point) : points[0]},

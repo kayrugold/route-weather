@@ -26,6 +26,7 @@ test('round trip route contract preserves geometry, via points, leg times and di
   assert.deepEqual(result.waypoints[1].location, [-122.3,40.5]);
   assert.deepEqual(route.legs.flatMap(leg => leg.annotation.duration), [500,700]);
   assert.equal(route.legs[1].steps[0].instruction, 'Continue north');
+  assert.equal(route.legs[1].steps[0].offset, 11000);
 });
 
 test('Worker reserves quota before calling TomTom and never returns its credentials', async () => {

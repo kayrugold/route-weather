@@ -84,3 +84,9 @@ On Android, Traffic uses zoom-12 source tiles while GPS tracking is active. A pl
 The 14-hour test in `cloud/test/traffic-plan.test.mjs` models a moving phone viewport, tile retention and refreshes. It counted 197 requests with the driving policy versus 6,936 with the previous policy. This is a planning estimate, not TomTom billing telemetry. Measure a real shift before promising all-day traffic to multiple drivers. The 10,000-tile total and 1,000-tile demo caps are unchanged.
 
 The Note 20 used a real zoom-12 TomTom tile during a short GPS-follow replay. Zooming the map from 16 to 18 made no additional traffic request at the same location. The API 36 release bundle built successfully with the production Worker origin and still needs Play upload signing.
+
+### Spoken directions
+
+**Voice**, directly below **Layers**, is off by default and remembers the user's choice. It speaks TomTom turn instructions when GPS tracking is active on a planned route and the app is visible. Muting stops current speech immediately. Prompts pause when GPS accuracy is poor or the device leaves the planned route. To get directions on a different route, replan the trip.
+
+Android uses an installed offline English text-to-speech voice. If the default engine has no suitable voice, the app tries the other installed engines. The Note 20 completed both the toggle confirmation and a turn in a bench GPS replay. Browser speech depends on the device's browser speech support.
