@@ -103,3 +103,21 @@ test('both clients can request a traffic tile with the server key', async () => 
     assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [137, 80, 78, 71]);
   }
 });
+
+test('traffic distinguishes a temporary throttle from a monthly cap', async () => {
+  const path = '/traffic/12/656/1543';
+  const req = request('/api' + path);
+  const env = {STUDIO_TRAFFIC: 'on', TOMTOM_API_KEY: 'test-key'};
+  const quota = status => ({getByName: () => ({fetch: async () => new Response(null, {status})})});
+  const upstream = async () => new Response(null, {status: 429, headers: {'Retry-After': '7'}});
+  const limited = await handleTomTom(req, path, {...env, QUOTA: quota(204), CLIENT_RATE: {limit: async ({key}) => {
+    assert.equal(key, 'demo:traffic:unknown');
+    return {success: false};
+  }}}, 'demo', () => assert.fail('client throttle must not call TomTom'));
+  assert.equal((await limited.json()).retryAfterSeconds, 60);
+  const monthly = await handleTomTom(req, path, {...env, QUOTA: quota(429)}, 'demo',
+    () => assert.fail('monthly cap must not call TomTom'));
+  assert.equal((await monthly.json()).monthlyLimit, true);
+  const tomtom = await handleTomTom(req, path, {...env, QUOTA: quota(204)}, 'demo', upstream);
+  assert.equal((await tomtom.json()).retryAfterSeconds, 7);
+});

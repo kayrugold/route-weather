@@ -123,13 +123,17 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = g
   let phase = 'rate limiter';
   try {
     if (env.CLIENT_RATE && !(await env.CLIENT_RATE.limit({
-      key: client + ':' + (request.headers.get('CF-Connecting-IP') ?? 'unknown'),
-    })).success) return error('Too many requests. Please wait and try again.', 429);
+      key: client + ':' + (bucket === 'traffic' ? 'traffic:' : '') + (request.headers.get('CF-Connecting-IP') ?? 'unknown'),
+    })).success) return bucket === 'traffic'
+      ? json({error: 'Too many traffic requests.', retryAfterSeconds: 60}, 429)
+      : error('Too many requests. Please wait and try again.', 429);
     phase = 'shared quota';
     const allowance = await env.QUOTA.getByName('tomtom').fetch('https://quota.internal/', {
       method: 'POST', body: JSON.stringify({bucket, client}),
     });
-    if (allowance.status === 429) return error('This service has reached its usage limit. Try again later.', 429);
+    if (allowance.status === 429) return bucket === 'traffic'
+      ? json({error: 'This month’s traffic allowance has been used.', monthlyLimit: true}, 429)
+      : error('This service has reached its usage limit. Try again later.', 429);
     if (!allowance.ok) return error('Trip services are temporarily unavailable.', 503);
     phase = 'TomTom connection';
     const upstreamHeaders = {Referer: workerReferrer};
@@ -143,7 +147,15 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = g
       redirect: 'manual',
       signal: AbortSignal.timeout(12000),
     });
-    if (response.status === 429) return error('TomTom is at its usage limit. Try again later.', 429);
+    if (response.status === 429) {
+      if (bucket !== 'traffic') return error('TomTom is at its usage limit. Try again later.', 429);
+      const value = response.headers.get('Retry-After');
+      const seconds = value && Number.isFinite(Number(value)) ? Number(value) : (Date.parse(value) - Date.now()) / 1000;
+      return json({
+        error: 'TomTom is throttling traffic requests.',
+        retryAfterSeconds: Number.isFinite(seconds) ? Math.max(2, Math.ceil(seconds)) : 5,
+      }, 429);
+    }
     if (response.status === 401 || response.status === 403) {
       console.error('TomTom authorization failed', {bucket, status: response.status});
       return error('TomTom denied access to this service.', 502);

@@ -2993,6 +2993,9 @@ function bindDrivingMap(){
 const trafficKeyStorage='route-weather-tomtom-key';
 let trafficLayer,trafficRefresh,trafficLastRefresh=0,trafficKey='',trafficActive=false;
 let studioTraffic=false;
+const trafficTileSpacingMs=250;
+let trafficBudgetMonth='';
+const trafficMonth=()=>new Date().toISOString().slice(0,7);
 const trafficMinZoom=8;
 let trafficZoomHintTimer;
 const trafficMaxNativeZoom=16;
@@ -3005,6 +3008,7 @@ function setTrafficNotice(message){
 function trafficZoomStatus(){
   if(!trafficActive)return;
   if(map.getZoom()<trafficMinZoom)setTrafficNotice('Zoom in to see traffic speeds.');
+  else if(!trafficKey&&trafficBudgetMonth===trafficMonth())setTrafficNotice('This month’s shared traffic allowance has been used.');
   else setTrafficNotice('');
 }
 function stopTraffic(){
@@ -3024,8 +3028,7 @@ function trafficTileError(code){
       ? 'TomTom denied access. Allow '+location.hostname+' in your key’s domain whitelist, then tap Traffic to retry.'
       : 'TomTom could not authenticate this key. Check it in Menu → Traffic setup.');
   }else if(code===429){
-    stopTraffic();
-    setTrafficNotice('Traffic request limit reached. Try again later.');
+    setTrafficNotice('Some traffic tiles are delayed. Loaded traffic remains visible.');
   }else{
     setTrafficNotice('Some traffic tiles are unavailable. Blank roads have no traffic reading.');
   }
@@ -3036,6 +3039,50 @@ function startTraffic(){
   $('showTraffic').classList.add('active');
   $('showTraffic').setAttribute('aria-pressed','true');
   const requests=new Map();
+  const queue=[];
+  let nextTileAt=0,pausedUntil=0,timer=null;
+  function scheduleTiles(){
+    clearTimeout(timer);
+    timer=null;
+    while(queue.length&&queue[0].signal.aborted)queue.shift().reject(new DOMException('Tile was removed','AbortError'));
+    if(!queue.length)return;
+    if(!trafficKey&&trafficBudgetMonth===trafficMonth()){
+      for(const tile of queue.splice(0))tile.reject(Object.assign(Error('Traffic allowance reached'),{monthlyLimit:true}));
+      return;
+    }
+    const wait=Math.max(0,Math.max(nextTileAt,pausedUntil)-Date.now());
+    if(wait){timer=setTimeout(scheduleTiles,wait);return}
+    nextTileAt=Date.now()+trafficTileSpacingMs;
+    queue.shift().resolve();
+    if(queue.length)timer=setTimeout(scheduleTiles,trafficTileSpacingMs);
+  }
+  async function fetchTrafficTile(url,controller){
+    for(let attempt=0;attempt<2;attempt++){
+      await new Promise((resolve,reject)=>{
+        queue.push({resolve,reject,signal:controller.signal});
+        scheduleTiles();
+      });
+      if(controller.signal.aborted)throw new DOMException('Tile was removed','AbortError');
+      const signal=AbortSignal.any?AbortSignal.any([controller.signal,AbortSignal.timeout(12000)]):controller.signal;
+      const response=await fetch(url,{
+        headers:trafficKey?{'TomTom-Api-Key':trafficKey}:undefined,signal,
+        referrerPolicy:'strict-origin-when-cross-origin',redirect:'error'
+      });
+      if(response.status!==429)return response;
+      const detail=await response.json().catch(()=>({}));
+      if(detail.monthlyLimit){
+        trafficBudgetMonth=trafficMonth();
+        scheduleTiles();
+        throw Object.assign(Error('Traffic allowance reached'),{monthlyLimit:true});
+      }
+      const seconds=Number(detail.retryAfterSeconds||response.headers.get('Retry-After'))||5;
+      const delay=Math.max(2,Math.min(seconds,300));
+      pausedUntil=Math.max(pausedUntil,Date.now()+delay*1000);
+      if(trafficActive)setTrafficNotice('Traffic is briefly paused. Retrying in '+Math.ceil(delay)+' seconds.');
+      scheduleTiles();
+    }
+    throw Object.assign(Error('Traffic tile throttled'),{status:429});
+  }
   const Layer=L.GridLayer.extend({
     createTile(coords,done){
       const image=document.createElement('img');
@@ -3046,11 +3093,7 @@ function startTraffic(){
         ?'https://api.tomtom.com/maps/orbis/traffic/flow/raster/tile/'+tilePath+'?apiVersion=2&style=light'
         :'/api/traffic/'+tilePath;
       requests.set(image,controller);
-      const signal=AbortSignal.any?AbortSignal.any([controller.signal,AbortSignal.timeout(12000)]):controller.signal;
-      fetch(tileUrl,{
-        headers:trafficKey?{'TomTom-Api-Key':trafficKey}:undefined,signal,
-        referrerPolicy:'strict-origin-when-cross-origin',redirect:'error'
-      }).then(async response=>{
+      fetchTrafficTile(tileUrl,controller).then(async response=>{
         if(!response.ok||!response.headers.get('content-type')?.startsWith('image/png')){
           const error=Error('Traffic tile unavailable');
           error.status=response.status;
@@ -3060,7 +3103,10 @@ function startTraffic(){
         if(controller.signal.aborted)return;
         const url=URL.createObjectURL(blob);
         const finish=error=>{URL.revokeObjectURL(url);if(!controller.signal.aborted)done(error,image)};
-        image.onload=()=>finish(null);
+        image.onload=()=>{
+          finish(null);
+          if(!controller.signal.aborted&&Date.now()>=pausedUntil&&$('trafficMessage').textContent.startsWith('Traffic is briefly paused.'))trafficZoomStatus();
+        };
         image.onerror=()=>{
           finish(Error('Traffic tile could not be drawn'));
           if(!controller.signal.aborted)trafficTileError();
@@ -3069,7 +3115,8 @@ function startTraffic(){
       }).catch(error=>{
         if(controller.signal.aborted)return;
         done(error,image);
-        trafficTileError(error.status);
+        if(error.monthlyLimit)setTrafficNotice('This month’s shared traffic allowance has been used.');
+        else trafficTileError(error.status);
       }).finally(()=>requests.delete(image));
       return image;
     }
@@ -3078,8 +3125,8 @@ function startTraffic(){
     pane:'liveTraffic',minZoom:trafficMinZoom,maxNativeZoom:trafficMaxNativeZoom,maxZoom:18,
     updateWhenIdle:true,keepBuffer:1,noWrap:true,attribution:'<a href="https://www.tomtom.com/">© TomTom</a>'
   });
-  trafficLayer.on('tileunload',({tile})=>requests.get(tile)?.abort());
-  trafficLayer.on('remove',()=>{for(const request of requests.values())request.abort()});
+  trafficLayer.on('tileunload',({tile})=>{requests.get(tile)?.abort();scheduleTiles()});
+  trafficLayer.on('remove',()=>{for(const request of requests.values())request.abort();scheduleTiles()});
   trafficLayer.addTo(map);
   trafficLastRefresh=Date.now();
   trafficZoomStatus();
@@ -3093,6 +3140,7 @@ function startTraffic(){
 }
 function refreshTraffic(){
   if(!trafficActive||document.hidden||map.getZoom()<trafficMinZoom||Date.now()-trafficLastRefresh<175000)return;
+  if(!trafficKey&&trafficBudgetMonth===trafficMonth())return;
   trafficLastRefresh=Date.now();
   trafficZoomStatus();
   trafficLayer.redraw();
