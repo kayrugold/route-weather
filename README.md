@@ -76,3 +76,11 @@ Both clients use the same `assets/` source. The browser uses same-origin request
 The Cloudflare-enabled debug build passed a live Anderson, CA to Redding, CA trip on the Note 20. The planner selected both TomTom address results, drew a 16.6 km route, and showed three NWS forecast points. The Worker and standalone browser demo are deployed at `https://route-weather.andy-596.workers.dev`. The Android build should use that origin as `routeWeatherServiceOrigin`.
 
 Live traffic also passed in Chrome and on the Note 20. Both Traffic toggles drew TomTom PNG tiles through the Worker without opening the personal-key prompt.
+
+### Traffic for long drives
+
+On Android, Traffic uses zoom-12 source tiles while GPS tracking is active. A planned route limits requests to tiles along that route that come into view. With no planned route, the layer follows the local viewport. Traffic uses the same tile level when the base map is zoomed further in. It refreshes visible tiles individually after ten minutes in driving mode and fifteen minutes when browsing, and retains the displayed tile if a replacement fails. “Latest traffic tile loaded” is the load time of the newest displayed tile, not a timestamp for all traffic readings.
+
+The 14-hour test in `cloud/test/traffic-plan.test.mjs` models a moving phone viewport, tile retention and refreshes. It counted 197 requests with the driving policy versus 6,936 with the previous policy. This is a planning estimate, not TomTom billing telemetry. Measure a real shift before promising all-day traffic to multiple drivers. The 10,000-tile total and 1,000-tile demo caps are unchanged.
+
+The Note 20 used a real zoom-12 TomTom tile during a short GPS-follow replay. Zooming the map from 16 to 18 made no additional traffic request at the same location. The API 36 release bundle built successfully with the production Worker origin and still needs Play upload signing.

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'none'"><script src="/network.js"></script><script src="/provider-worker.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1724"><title>Route Weather · Andy's road ahead</title><link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/leaflet.css"><style>
+<!doctype html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'none'"><script src="/network.js"></script><script src="/provider-worker.js"></script><script src="/traffic-plan.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1724"><title>Route Weather · Andy's road ahead</title><link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/leaflet.css"><style>
 #roadSettingsToggle{display:none}.advanced-label{display:none}details#advanced{margin-top:12px}details#advanced[open] .advanced-label{margin-bottom:12px}:root{color-scheme:dark;--bg:#0b1724;--card:#142535;--line:#293b4d;--muted:#a9bdce;--cyan:#6ee7ed;--gold:#ffca70;--red:#ff9292}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px system-ui,-apple-system,sans-serif}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer;border:1px solid var(--line);border-radius:9px;background:#203548;color:inherit;padding:11px 14px;min-height:44px}button:hover{background:#304b60}button:disabled{opacity:.5;cursor:wait}button.active{background:var(--cyan);border-color:var(--cyan);color:#08222d}a{color:var(--cyan)}h1,h2,h3,p{margin:0}h1{font-size:21px;letter-spacing:-.6px}h2{font-size:18px}small,.muted{color:var(--muted)}header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--line)}.brand{display:flex;gap:12px;align-items:center}.logo{color:var(--cyan);font-size:29px}.eyebrow{font-size:10px;letter-spacing:2px;color:var(--cyan);font-weight:800}.header-right{display:flex;align-items:center;gap:12px}main{display:grid;grid-template-columns:360px 1fr;height:calc(100dvh - 70px)}aside{padding:20px;overflow:auto;border-right:1px solid var(--line)}.section-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;margin:0 0 12px}.field{display:flex;align-items:center;gap:8px;margin-bottom:10px}.field>span{width:18px;color:var(--cyan)}input,select{width:100%;min-width:0;background:#0d1b29;color:inherit;border:1px solid #34495e;padding:11px;border-radius:8px;min-height:44px}label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.row>button{flex:0 0 auto!important}.primary{background:var(--cyan);color:#09252e;font-weight:750;border-color:transparent;width:100%;margin-top:12px}.primary:hover{background:#a2f4f5}.subtle{background:transparent;font-size:12px;padding:8px}.help{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px}.divider{height:1px;background:var(--line);margin:19px 0}.summary{display:flex;gap:22px;margin:14px 0}.summary strong{display:block;font-size:26px;letter-spacing:-1px}.summary small{font-size:11px}.status{padding:11px 12px;background:#1a3041;border-left:3px solid var(--cyan);border-radius:5px;font-size:12px;line-height:1.6;margin-top:12px}.status.error{border-color:var(--red)}.workspace{display:flex;flex-direction:column;min-width:0;overflow:auto}.map-wrap{height:52%;min-height:320px;position:relative;flex-shrink:0}#map{height:100%;background:#263c49}.map-tools{position:absolute;top:14px;left:55px;z-index:500;display:flex;gap:6px;flex-wrap:wrap;right:12px;pointer-events:none}.map-tools>*{pointer-events:auto;box-shadow:0 3px 12px #0005;background:#112637f2;font-size:12px;padding:9px 12px}.map-bottom{position:absolute;bottom:24px;left:12px;z-index:500;background:#102433ec;padding:9px 12px;border-radius:8px;font-size:11px;max-width:calc(100% - 24px)}.map-bottom span{color:var(--gold)}.content{padding:20px 22px;min-height:260px}.tabs{display:flex;border-bottom:1px solid var(--line);gap:20px;margin-bottom:18px;overflow:auto}.tabs button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:0 0 12px;white-space:nowrap}.tabs button.active{border-color:var(--cyan);color:var(--cyan)}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.cards{display:flex;gap:10px;overflow:auto;padding-bottom:8px}.weather-card{background:var(--card);border:1px solid var(--line);border-radius:12px;min-width:162px;text-align:left;padding:14px;cursor:pointer}.weather-card.selected{border-color:var(--cyan)}.weather-card .temp{font-size:29px;font-weight:750;margin:8px 0}.weather-card .condition{min-height:22px;color:var(--muted);font-size:12px}.weather-card .wind{margin-top:12px;font-size:13px;line-height:1.7}.weather-card .badge{margin-top:9px;display:block;color:var(--gold);font-size:11px}.empty{padding:22px 0;color:var(--muted);line-height:1.7;max-width:600px}.empty strong{color:#e0ecf4}.road-item,.alert-item,.step{padding:13px 0;border-bottom:1px solid var(--line);line-height:1.6}.road-item button{float:right;font-size:12px;padding:5px 9px}.pill{display:inline-block;padding:2px 7px;border-radius:5px;background:#473b29;color:var(--gold);font-size:11px;margin-right:6px}.road-item p,.alert-item p{font-size:13px;color:var(--muted);margin-top:4px}.road-item details{font-size:12px;color:var(--muted)}.forecast-grid{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}.forecast-grid th,.forecast-grid td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}.table-scroll{overflow:auto}.point-icon{border-radius:50%;width:32px!important;height:32px!important;background:#0b2739;border:2px solid #6ee7ed;color:white;text-align:center;padding-top:4px;font-weight:800;box-shadow:0 2px 10px #0006}.point-icon.warn{border-color:#ffca70}.road-icon{border-radius:7px;background:#ffca70;color:#281c09;text-align:center;font-size:17px;border:2px solid #fff}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#142535;color:#edf5fb}.leaflet-popup-content{line-height:1.6}.leaflet-container a{color:#20808d}.leaflet-control-attribution{font-size:9px!important}.sources{font-size:11px;line-height:1.8;color:var(--muted)}dialog{max-width:560px;width:calc(100% - 30px);background:var(--bg);color:inherit;border:1px solid var(--line);border-radius:14px;padding:24px}dialog::backdrop{background:#0009}dialog p{line-height:1.7;margin-top:12px}button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}#pinMode.active{background:var(--gold);color:#201606}.pin-options{position:absolute;z-index:600;left:12px;top:65px;background:#112637;padding:10px;border-radius:8px;display:none}@media(max-width:760px){#roadSettingsToggle{display:block;padding-left:0;font-size:13px}#roadSettings{display:none}#roadSettings.mobile-open{display:block}.advanced-label{display:list-item;color:var(--muted);font-size:12px;cursor:pointer}#planner.mobile-hidden{display:none}aside .divider{margin:8px 0}.summary{margin:0}.panel-head .section-label{margin:0}aside .panel-head{margin-bottom:8px}header{padding:0 14px;height:60px}.header-right small{display:none}main{display:flex;flex-direction:column;height:auto}aside{padding:15px;border-right:0;overflow:visible}.workspace{overflow:visible}.map-wrap{height:48dvh;min-height:340px}.content{padding:17px 15px}.desktop-only{display:none}.divider{margin:14px 0}.summary{margin-bottom:0}aside .sources{display:none}.map-tools{left:50px;top:10px;gap:4px}.map-tools button{padding:8px;font-size:11px}.map-bottom{bottom:22px;font-size:10px}.header-right button{padding:8px 11px}h1{font-size:19px}.weather-card{min-width:155px}.panel-head{align-items:flex-start}#routeStatus:empty{display:none}}@media(min-width:761px){#collapse{display:none}}
 
 /* Map-first navigation layout */
@@ -846,6 +846,7 @@ async function buildTrip(routeEdit){
     setTab('route');
     map.invalidateSize({pan:false});
     fitRoute();
+    syncTrafficScope();
     renderRoadMarkers();
     if(window.matchMedia('(max-width:760px)').matches){
       $('planner').classList.add('mobile-hidden');
@@ -949,6 +950,7 @@ function clearRoute(){
   ++routeRevision;
   planning=false;
   trip=null;
+  syncTrafficScope();
   renderStateRoads();
   selected=0;
   pins={};
@@ -2946,6 +2948,7 @@ function onGpsFix({coords,timestamp}){
   AndroidRoute.compassPosition(coords.latitude,coords.longitude,coords.altitude||0);
   if(first){
     AndroidRoute.driving(true);
+    syncTrafficScope();
     centerDrivingMap();
     $('hudStatus').classList.remove('visible');
   }else if(gpsFollowing&&map.latLngToContainerPoint(gpsPosition).distanceTo(map.getSize().divideBy(2))>=4){
@@ -2971,6 +2974,7 @@ function stopGpsFollow(){
     map.setView(center,zoom,{animate:false});
   }
   syncGpsUi(false);
+  syncTrafficScope();
   updateDrive();
   queueAreaWeather();
   if($('hudText').textContent==='Requesting live GPS location…')$('hudStatus').classList.remove('visible');
@@ -2991,14 +2995,25 @@ function bindDrivingMap(){
 }
 
 const trafficKeyStorage='route-weather-tomtom-key';
-let trafficLayer,trafficRefresh,trafficLastRefresh=0,trafficKey='',trafficActive=false;
+let trafficLayer,trafficRefresh,trafficKey='',trafficActive=false;
+let trafficDriving=false,trafficScopeRoute=null,trafficNewestTileAt=0;
 let studioTraffic=false;
 const trafficTileSpacingMs=250;
 let trafficBudgetMonth='';
 const trafficMonth=()=>new Date().toISOString().slice(0,7);
 const trafficMinZoom=8;
 let trafficZoomHintTimer;
-const trafficMaxNativeZoom=16;
+const trafficMaxNativeZoom=13;
+
+function trafficScope(){
+  const driving=window.isRouteWeatherAndroid&&watch!==null&&Boolean(gpsPosition);
+  return {driving,route:driving?trip?.route.geometry.coordinates??null:null};
+}
+function syncTrafficScope(){
+  if(!trafficActive)return;
+  const {driving,route}=trafficScope();
+  if(driving!==trafficDriving||route!==trafficScopeRoute)startTraffic();
+}
 
 function setTrafficNotice(message){
   $('trafficMessage').textContent=message;
@@ -3009,6 +3024,10 @@ function trafficZoomStatus(){
   if(!trafficActive)return;
   if(map.getZoom()<trafficMinZoom)setTrafficNotice('Zoom in to see traffic speeds.');
   else if(!trafficKey&&trafficBudgetMonth===trafficMonth())setTrafficNotice('This month’s shared traffic allowance has been used.');
+  else if(trafficNewestTileAt){
+    const time=new Date(trafficNewestTileAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    setTrafficNotice((trafficScopeRoute?'Along your route · ':'')+'Latest traffic tile loaded at '+time);
+  }else if(trafficScopeRoute)setTrafficNotice('Traffic is limited to your planned route while driving.');
   else setTrafficNotice('');
 }
 function stopTraffic(){
@@ -3016,6 +3035,7 @@ function stopTraffic(){
   clearInterval(trafficRefresh);
   trafficLayer?.remove();
   trafficLayer=null;
+  trafficNewestTileAt=0;
   $('showTraffic').classList.remove('active');
   $('showTraffic').setAttribute('aria-pressed','false');
   setTrafficNotice('');
@@ -3035,10 +3055,21 @@ function trafficTileError(code){
 }
 function startTraffic(){
   stopTraffic();
+  const {driving,route}=trafficScope();
+  trafficDriving=driving;
+  trafficScopeRoute=route;
+  const plan=window.routeTrafficPlan;
+  const maxAge=driving?plan.drivingMaxAge:plan.browsingMaxAge;
+  const routeTilesByZoom=new Map();
+  function coversRoute({x,y,z}){
+    if(!route)return true;
+    if(!routeTilesByZoom.has(z))routeTilesByZoom.set(z,plan.routeTiles(route,z));
+    return routeTilesByZoom.get(z).has(plan.tileKey(x,y));
+  }
   trafficActive=true;
   $('showTraffic').classList.add('active');
   $('showTraffic').setAttribute('aria-pressed','true');
-  const requests=new Map();
+  const tiles=new Map();
   const queue=[];
   let nextTileAt=0,pausedUntil=0,timer=null;
   function scheduleTiles(){
@@ -3083,52 +3114,95 @@ function startTraffic(){
     }
     throw Object.assign(Error('Traffic tile throttled'),{status:429});
   }
+  async function loadTile(tile){
+    const controller=new AbortController();
+    tile.controller=controller;
+    tile.lastAttempt=Date.now();
+    let temporaryUrl;
+    try {
+      const response=await fetchTrafficTile(tile.url,controller);
+      if(!response.ok||!response.headers.get('content-type')?.startsWith('image/png')){
+        throw Object.assign(Error('Traffic tile unavailable'),{status:response.status});
+      }
+      const blob=await response.blob();
+      if(controller.signal.aborted)return;
+      temporaryUrl=URL.createObjectURL(blob);
+      const replacement=new Image();
+      replacement.src=temporaryUrl;
+      await replacement.decode();
+      if(controller.signal.aborted)return;
+      if(tile.imageUrl)URL.revokeObjectURL(tile.imageUrl);
+      tile.imageUrl=temporaryUrl;
+      temporaryUrl=null;
+      tile.image.src=tile.imageUrl;
+      if(!tile.drawn){
+        tile.drawn=true;
+        tile.done(null,tile.image);
+      }
+      trafficNewestTileAt=Date.now();
+      if(Date.now()>=pausedUntil)trafficZoomStatus();
+    } catch(error) {
+      if(controller.signal.aborted)return;
+      if(!tile.drawn)tile.done(error,tile.image);
+      if(error.monthlyLimit)setTrafficNotice('This month’s shared traffic allowance has been used.');
+      else trafficTileError(error.status);
+    } finally {
+      if(temporaryUrl)URL.revokeObjectURL(temporaryUrl);
+      tile.controller=null;
+    }
+  }
+  function unloadTile(image){
+    const tile=tiles.get(image);
+    if(!tile)return;
+    tile.controller?.abort();
+    if(tile.imageUrl)URL.revokeObjectURL(tile.imageUrl);
+    tiles.delete(image);
+  }
   const Layer=L.GridLayer.extend({
+    getEvents(){
+      const events=L.GridLayer.prototype.getEvents.call(this);
+      // The map always uses the same CRS. Let viewreset update the visible set
+      // without first dropping tiles that still use the same native zoom.
+      delete events.viewprereset;
+      return events;
+    },
     createTile(coords,done){
       const image=document.createElement('img');
       image.alt='';
-      const controller=new AbortController();
+      if(!coversRoute(coords)){
+        requestAnimationFrame(()=>done(null,image));
+        return image;
+      }
       const tilePath=[coords.z,coords.x,coords.y].join('/');
-      const tileUrl=trafficKey
+      const url=trafficKey
         ?'https://api.tomtom.com/maps/orbis/traffic/flow/raster/tile/'+tilePath+'?apiVersion=2&style=light'
         :'/api/traffic/'+tilePath;
-      requests.set(image,controller);
-      fetchTrafficTile(tileUrl,controller).then(async response=>{
-        if(!response.ok||!response.headers.get('content-type')?.startsWith('image/png')){
-          const error=Error('Traffic tile unavailable');
-          error.status=response.status;
-          throw error;
-        }
-        const blob=await response.blob();
-        if(controller.signal.aborted)return;
-        const url=URL.createObjectURL(blob);
-        const finish=error=>{URL.revokeObjectURL(url);if(!controller.signal.aborted)done(error,image)};
-        image.onload=()=>{
-          finish(null);
-          if(!controller.signal.aborted&&Date.now()>=pausedUntil&&$('trafficMessage').textContent.startsWith('Traffic is briefly paused.'))trafficZoomStatus();
-        };
-        image.onerror=()=>{
-          finish(Error('Traffic tile could not be drawn'));
-          if(!controller.signal.aborted)trafficTileError();
-        };
-        image.src=url;
-      }).catch(error=>{
-        if(controller.signal.aborted)return;
-        done(error,image);
-        if(error.monthlyLimit)setTrafficNotice('This month’s shared traffic allowance has been used.');
-        else trafficTileError(error.status);
-      }).finally(()=>requests.delete(image));
+      const tile={image,url,done,controller:null,lastAttempt:0,imageUrl:null,drawn:false,z:coords.z};
+      tiles.set(image,tile);
+      loadTile(tile);
       return image;
+    },
+    refreshVisible(){
+      if(Date.now()<pausedUntil)return;
+      const now=Date.now();
+      const viewport=map.getContainer().getBoundingClientRect();
+      const z=Math.min(Math.round(map.getZoom()),this.options.maxNativeZoom);
+      for(const tile of tiles.values()){
+        if(tile.z!==z||tile.controller||now-tile.lastAttempt<maxAge)continue;
+        const bounds=tile.image.getBoundingClientRect();
+        if(bounds.right<=viewport.left||bounds.left>=viewport.right||
+          bounds.bottom<=viewport.top||bounds.top>=viewport.bottom)continue;
+        loadTile(tile);
+      }
     }
   });
   trafficLayer=new Layer({
-    pane:'liveTraffic',minZoom:trafficMinZoom,maxNativeZoom:trafficMaxNativeZoom,maxZoom:18,
+    pane:'liveTraffic',minZoom:trafficMinZoom,maxNativeZoom:driving?plan.drivingZoom:trafficMaxNativeZoom,maxZoom:18,
     updateWhenIdle:true,keepBuffer:1,noWrap:true,attribution:'<a href="https://www.tomtom.com/">© TomTom</a>'
   });
-  trafficLayer.on('tileunload',({tile})=>{requests.get(tile)?.abort();scheduleTiles()});
-  trafficLayer.on('remove',()=>{for(const request of requests.values())request.abort();scheduleTiles()});
+  trafficLayer.on('tileunload',({tile})=>{unloadTile(tile);scheduleTiles()});
+  trafficLayer.on('remove',()=>{for(const image of tiles.keys())unloadTile(image);scheduleTiles()});
   trafficLayer.addTo(map);
-  trafficLastRefresh=Date.now();
   trafficZoomStatus();
   if(map.getZoom()<trafficMinZoom){
     const hint=$('trafficZoomHint');
@@ -3136,14 +3210,12 @@ function startTraffic(){
     clearTimeout(trafficZoomHintTimer);
     trafficZoomHintTimer=setTimeout(()=>{hint.hidden=true},3500);
   }
-  trafficRefresh=setInterval(refreshTraffic,180000);
+  trafficRefresh=setInterval(refreshTraffic,60000);
 }
 function refreshTraffic(){
-  if(!trafficActive||document.hidden||map.getZoom()<trafficMinZoom||Date.now()-trafficLastRefresh<175000)return;
+  if(!trafficActive||document.hidden||map.getZoom()<trafficMinZoom)return;
   if(!trafficKey&&trafficBudgetMonth===trafficMonth())return;
-  trafficLastRefresh=Date.now();
-  trafficZoomStatus();
-  trafficLayer.redraw();
+  trafficLayer.refreshVisible();
 }
 function openTrafficSetup(message=''){
   closeSurfaces();
