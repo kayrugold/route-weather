@@ -132,12 +132,19 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = g
     if (allowance.status === 429) return error('This service has reached its usage limit. Try again later.', 429);
     if (!allowance.ok) return error('Trip services are temporarily unavailable.', 503);
     phase = 'TomTom connection';
+    const upstreamHeaders = {Referer: workerReferrer};
+    if (bucket === 'traffic') upstreamHeaders['TomTom-Api-Key'] = env.TOMTOM_API_KEY;
+    else upstream.searchParams.set('key', env.TOMTOM_API_KEY);
     const response = await fetchUpstream(upstream.href, {
-      headers: {'TomTom-Api-Key': env.TOMTOM_API_KEY, Referer: workerReferrer},
+      headers: upstreamHeaders,
       redirect: 'manual',
       signal: AbortSignal.timeout(12000),
     });
     if (response.status === 429) return error('TomTom is at its usage limit. Try again later.', 429);
+    if (response.status === 401 || response.status === 403) {
+      console.error('TomTom authorization failed', {bucket, status: response.status});
+      return error('TomTom denied access to this service.', 502);
+    }
     if (bucket === 'routing' && response.status === 400) return error('No road route found. Try different route points.', 404);
     if (!response.ok) return error('TomTom service is temporarily unavailable.', 502);
     if (bucket === 'traffic') {

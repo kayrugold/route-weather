@@ -42,7 +42,7 @@ test('Worker reserves quota before calling TomTom and never returns its credenti
     calls++;
     assert.equal(url.hostname, 'api.tomtom.com');
     assert.equal(url.pathname, '/search/2/geocode/Anderson%2C%20CA.json');
-    assert.equal(options.headers['TomTom-Api-Key'], 'test-key');
+    assert.equal(url.searchParams.get('key'), 'test-key');
     assert.equal(options.headers.Referer, 'https://route-weather.andy-596.workers.dev/');
     assert.equal(options.redirect, 'manual');
     return Response.json({results: [{position: {lat: 40.45, lon: -122.3}, address: {freeformAddress: 'Anderson, CA'}}]});
