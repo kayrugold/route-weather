@@ -2,6 +2,7 @@ const headers = {'Cache-Control': 'no-store'};
 const json = (body, status = 200) => Response.json(body, {status, headers});
 const error = (message, status) => json({error: message}, status);
 const coordinates = point => [point.longitude, point.latitude];
+const workerReferrer = 'https://route-weather.andy-596.workers.dev/';
 
 function coordinate(value, max) {
   if (!value?.trim() || !Number.isFinite(Number(value)) || Math.abs(Number(value)) > max) {
@@ -108,7 +109,7 @@ export function isTomTomEndpoint(path) {
   return ['/search', '/route', '/nearest-road', '/provider-status'].includes(path) || path.startsWith('/traffic/');
 }
 
-export async function handleTomTom(request, path, env, client, fetchUpstream = fetch) {
+export async function handleTomTom(request, path, env, client, fetchUpstream = globalThis.fetch.bind(globalThis)) {
   if (request.method !== 'GET') return error('Method not allowed.', 405);
   const traffic = env.STUDIO_TRAFFIC === 'on' && client === 'app';
   if (path === '/provider-status') return json({studioTraffic: Boolean(traffic && env.TOMTOM_API_KEY)});
@@ -119,18 +120,21 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = f
   const [bucket, upstream, near] = operation;
   if (bucket === 'traffic' && !traffic) return error('Studio traffic is unavailable.', 404);
   if (!env.TOMTOM_API_KEY || !env.QUOTA) return error('Trip services are not configured yet.', 503);
+  let phase = 'rate limiter';
   try {
     if (env.CLIENT_RATE && !(await env.CLIENT_RATE.limit({
       key: client + ':' + (request.headers.get('CF-Connecting-IP') ?? 'unknown'),
     })).success) return error('Too many requests. Please wait and try again.', 429);
+    phase = 'shared quota';
     const allowance = await env.QUOTA.getByName('tomtom').fetch('https://quota.internal/', {
       method: 'POST', body: JSON.stringify({bucket, client}),
     });
     if (allowance.status === 429) return error('This service has reached its usage limit. Try again later.', 429);
     if (!allowance.ok) return error('Trip services are temporarily unavailable.', 503);
-    const response = await fetchUpstream(upstream, {
-      headers: {'TomTom-Api-Key': env.TOMTOM_API_KEY},
-      redirect: 'error',
+    phase = 'TomTom connection';
+    const response = await fetchUpstream(upstream.href, {
+      headers: {'TomTom-Api-Key': env.TOMTOM_API_KEY, Referer: workerReferrer},
+      redirect: 'manual',
       signal: AbortSignal.timeout(12000),
     });
     if (response.status === 429) return error('TomTom is at its usage limit. Try again later.', 429);
@@ -140,6 +144,7 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = f
       if (!response.headers.get('Content-Type')?.startsWith('image/png')) return error('Invalid traffic tile.', 502);
       return new Response(response.body, {headers: {...headers, 'Content-Type': 'image/png'}});
     }
+    phase = 'TomTom response';
     const data = await response.json();
     if (bucket === 'search') {
       return json(data.results.flatMap(item => {
@@ -158,7 +163,12 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = f
     }
     const route = normalizeRoute(data);
     return route ? json(route) : error('No road route found. Try different route points.', 404);
-  } catch {
+  } catch (cause) {
+    console.error('Route Weather provider error', {phase, bucket, name: cause?.name,
+      ...(phase === 'shared quota' || phase === 'rate limiter' ? {detail: cause?.message} : {})});
+    if (phase === 'shared quota' || phase === 'rate limiter') {
+      return error('Trip usage checks are temporarily unavailable. Please try again.', 503);
+    }
     return error('The trip service did not respond. Please try again.', 502);
   }
 }
