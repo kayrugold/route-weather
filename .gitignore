@@ -2,6 +2,9 @@
 dist/
 *.keystore
 *.jks
+*.p12
+*.pfx
+*.dpapi
 .dev.vars*
 .env*
 android/.gradle/
@@ -9,3 +12,6 @@ android/**/build/
 android/local.properties
 node_modules/
 .cloudflare/
+/legacy-source/
+/Route-Weather-Android-0.20.apk
+/build-test-apk.sh
