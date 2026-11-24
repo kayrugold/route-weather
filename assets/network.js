@@ -39,10 +39,35 @@
   window.fetch=(input,options)=>{
     const url=new URL(typeof input==='string'||input instanceof URL?input:input.url,location.href);
     if(url.origin===location.origin&&url.pathname.startsWith('/api/')){
+      if(url.pathname==='/api/road-reports'){
+        if(!serviceOrigin)return Promise.resolve(Response.json({error:'Shared reports are unavailable.'},{status:503}));
+        return browserFetch(serviceOrigin+'/app-api/road-reports'+url.search,options);
+      }
       if(sharedEndpoint.test(url.pathname)){
-        if(!serviceOrigin)return Promise.resolve(Response.json(
-          {error:'This build needs the Route Weather service URL.'},{status:503}));
-        return window.routeProviderFetch(serviceOrigin+'/app-api'+url.pathname.slice(4)+url.search,options);
+        const offline=window.routeWeatherOffline;
+        if(url.pathname==='/api/search'&&offline?.shouldUseOffline('search')){
+          return Promise.resolve(offline.search(url.searchParams));
+        }
+        if(url.pathname==='/api/route'&&offline?.shouldUseOffline('route')){
+          return Promise.resolve(offline.route(url.searchParams));
+        }
+        if(url.pathname==='/api/provider-status'&&offline?.shouldUseOffline('search')){
+          return Promise.resolve(Response.json({studioTraffic:false,placesSearch:true,offlineReady:true}));
+        }
+        if(!serviceOrigin){
+          if(url.pathname==='/api/search'&&offline?.getStatus().hasSearch)return Promise.resolve(offline.search(url.searchParams));
+          if(url.pathname==='/api/route'&&offline?.getStatus().hasRouting)return Promise.resolve(offline.route(url.searchParams));
+          return Promise.resolve(Response.json(
+            {error:'This build needs the Route Weather service URL.'},{status:503}));
+        }
+        return window.routeProviderFetch(serviceOrigin+'/app-api'+url.pathname.slice(4)+url.search,options)
+          .catch(error=>{
+            if(offline&&offline.getMode()!=='online'){
+              if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
+              if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);
+            }
+            throw error;
+          });
       }
       return window.routeWeatherWorker.fetch(new Request(url,options));
     }

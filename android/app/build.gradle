@@ -18,8 +18,8 @@ android {
         applicationId 'com.andysdevstudio.routeweather'
         minSdk 26
         targetSdk 36
-        versionCode 21
-        versionName '0.21'
+        versionCode 32
+        versionName '0.32'
         buildConfigField 'String', 'SERVICE_ORIGIN', '"' + serviceOrigin + '"'
     }
 
@@ -39,6 +39,10 @@ android {
             assets.srcDirs = ['../../assets']
         }
     }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 tasks.matching { it.name == 'packageReleaseBundle' }.configureEach {

@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'none'"><script src="/network.js"></script><script src="/provider-worker.js"></script><script src="/traffic-plan.js"></script><script src="/voice-guidance.js"></script><script src="/planner-address.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1724"><title>Route Weather · Andy's road ahead</title><link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/leaflet.css"><style>
+<!doctype html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; frame-src 'none'; object-src 'none'; base-uri 'none'"><script src="/offline-nav.js"></script><script src="/network.js"></script><script src="/provider-worker.js"></script><script src="/road-display.js"></script><script src="/live-grade.js"></script><script src="/traffic-plan.js"></script><script src="/voice-guidance.js"></script><script src="/planner-address.js"></script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1724"><title>Route Weather · Andy's road ahead</title><link rel="icon" href="/icon.svg"><link rel="stylesheet" href="/leaflet.css"><style>
 #roadSettingsToggle{display:none}.advanced-label{display:none}details#advanced{margin-top:12px}details#advanced[open] .advanced-label{margin-bottom:12px}:root{color-scheme:dark;--bg:#0b1724;--card:#142535;--line:#293b4d;--muted:#a9bdce;--cyan:#6ee7ed;--gold:#ffca70;--red:#ff9292}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#edf5fb;font:15px system-ui,-apple-system,sans-serif}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer;border:1px solid var(--line);border-radius:9px;background:#203548;color:inherit;padding:11px 14px;min-height:44px}button:hover{background:#304b60}button:disabled{opacity:.5;cursor:wait}button.active{background:var(--cyan);border-color:var(--cyan);color:#08222d}a{color:var(--cyan)}h1,h2,h3,p{margin:0}h1{font-size:21px;letter-spacing:-.6px}h2{font-size:18px}small,.muted{color:var(--muted)}header{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--line)}.brand{display:flex;gap:12px;align-items:center}.logo{color:var(--cyan);font-size:29px}.eyebrow{font-size:10px;letter-spacing:2px;color:var(--cyan);font-weight:800}.header-right{display:flex;align-items:center;gap:12px}main{display:grid;grid-template-columns:360px 1fr;height:calc(100dvh - 70px)}aside{padding:20px;overflow:auto;border-right:1px solid var(--line)}.section-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;margin:0 0 12px}.field{display:flex;align-items:center;gap:8px;margin-bottom:10px}.field>span{width:18px;color:var(--cyan)}input,select{width:100%;min-width:0;background:#0d1b29;color:inherit;border:1px solid #34495e;padding:11px;border-radius:8px;min-height:44px}label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}.row{display:flex;gap:10px}.row>*{flex:1;min-width:0}.row>button{flex:0 0 auto!important}.primary{background:var(--cyan);color:#09252e;font-weight:750;border-color:transparent;width:100%;margin-top:12px}.primary:hover{background:#a2f4f5}.subtle{background:transparent;font-size:12px;padding:8px}.help{font-size:12px;color:var(--muted);line-height:1.6;margin-top:10px}.divider{height:1px;background:var(--line);margin:19px 0}.summary{display:flex;gap:22px;margin:14px 0}.summary strong{display:block;font-size:26px;letter-spacing:-1px}.summary small{font-size:11px}.status{padding:11px 12px;background:#1a3041;border-left:3px solid var(--cyan);border-radius:5px;font-size:12px;line-height:1.6;margin-top:12px}.status.error{border-color:var(--red)}.workspace{display:flex;flex-direction:column;min-width:0;overflow:auto}.map-wrap{height:52%;min-height:320px;position:relative;flex-shrink:0}#map{height:100%;background:#263c49}.map-tools{position:absolute;top:14px;left:55px;z-index:500;display:flex;gap:6px;flex-wrap:wrap;right:12px;pointer-events:none}.map-tools>*{pointer-events:auto;box-shadow:0 3px 12px #0005;background:#112637f2;font-size:12px;padding:9px 12px}.map-bottom{position:absolute;bottom:24px;left:12px;z-index:500;background:#102433ec;padding:9px 12px;border-radius:8px;font-size:11px;max-width:calc(100% - 24px)}.map-bottom span{color:var(--gold)}.content{padding:20px 22px;min-height:260px}.tabs{display:flex;border-bottom:1px solid var(--line);gap:20px;margin-bottom:18px;overflow:auto}.tabs button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:var(--muted);padding:0 0 12px;white-space:nowrap}.tabs button.active{border-color:var(--cyan);color:var(--cyan)}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.cards{display:flex;gap:10px;overflow:auto;padding-bottom:8px}.weather-card{background:var(--card);border:1px solid var(--line);border-radius:12px;min-width:162px;text-align:left;padding:14px;cursor:pointer}.weather-card.selected{border-color:var(--cyan)}.weather-card .temp{font-size:29px;font-weight:750;margin:8px 0}.weather-card .condition{min-height:22px;color:var(--muted);font-size:12px}.weather-card .wind{margin-top:12px;font-size:13px;line-height:1.7}.weather-card .badge{margin-top:9px;display:block;color:var(--gold);font-size:11px}.empty{padding:22px 0;color:var(--muted);line-height:1.7;max-width:600px}.empty strong{color:#e0ecf4}.road-item,.alert-item,.step{padding:13px 0;border-bottom:1px solid var(--line);line-height:1.6}.road-item button{float:right;font-size:12px;padding:5px 9px}.pill{display:inline-block;padding:2px 7px;border-radius:5px;background:#473b29;color:var(--gold);font-size:11px;margin-right:6px}.road-item p,.alert-item p{font-size:13px;color:var(--muted);margin-top:4px}.road-item details{font-size:12px;color:var(--muted)}.forecast-grid{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}.forecast-grid th,.forecast-grid td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}.table-scroll{overflow:auto}.point-icon{border-radius:50%;width:32px!important;height:32px!important;background:#0b2739;border:2px solid #6ee7ed;color:white;text-align:center;padding-top:4px;font-weight:800;box-shadow:0 2px 10px #0006}.point-icon.warn{border-color:#ffca70}.road-icon{border-radius:7px;background:#ffca70;color:#281c09;text-align:center;font-size:17px;border:2px solid #fff}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#142535;color:#edf5fb}.leaflet-popup-content{line-height:1.6}.leaflet-container a{color:#20808d}.leaflet-control-attribution{font-size:9px!important}.sources{font-size:11px;line-height:1.8;color:var(--muted)}dialog{max-width:560px;width:calc(100% - 30px);background:var(--bg);color:inherit;border:1px solid var(--line);border-radius:14px;padding:24px}dialog::backdrop{background:#0009}dialog p{line-height:1.7;margin-top:12px}button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offset:2px}#pinMode.active{background:var(--gold);color:#201606}.pin-options{position:absolute;z-index:600;left:12px;top:65px;background:#112637;padding:10px;border-radius:8px;display:none}@media(max-width:760px){#roadSettingsToggle{display:block;padding-left:0;font-size:13px}#roadSettings{display:none}#roadSettings.mobile-open{display:block}.advanced-label{display:list-item;color:var(--muted);font-size:12px;cursor:pointer}#planner.mobile-hidden{display:none}aside .divider{margin:8px 0}.summary{margin:0}.panel-head .section-label{margin:0}aside .panel-head{margin-bottom:8px}header{padding:0 14px;height:60px}.header-right small{display:none}main{display:flex;flex-direction:column;height:auto}aside{padding:15px;border-right:0;overflow:visible}.workspace{overflow:visible}.map-wrap{height:48dvh;min-height:340px}.content{padding:17px 15px}.desktop-only{display:none}.divider{margin:14px 0}.summary{margin-bottom:0}aside .sources{display:none}.map-tools{left:50px;top:10px;gap:4px}.map-tools button{padding:8px;font-size:11px}.map-bottom{bottom:22px;font-size:10px}.header-right button{padding:8px 11px}h1{font-size:19px}.weather-card{min-width:155px}.panel-head{align-items:flex-start}#routeStatus:empty{display:none}}@media(min-width:761px){#collapse{display:none}}
 
 /* Map-first navigation layout */
@@ -44,8 +44,6 @@
 
 .state-road-row button[aria-pressed="true"] {border-color:#68b7e8;background:#285471}
 .state-road-availability {font-size:.78rem;color:var(--muted);max-width:90px}
-#stateOverlaySummary {display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px}
-#stateOverlaySummary button {min-height:44px;white-space:nowrap}
 #roadFilters label[hidden] {display:none}
 .state-road-row strong,.state-road-row span {display:block}
 .state-road-row span {margin-top:3px;color:#a9ddfa;font-size:.875rem}
@@ -401,10 +399,8 @@ body {--map-top:0px;--map-controls-top:calc(8px + env(safe-area-inset-top))}
 .map-menu {width:48px;height:48px;left:var(--ui-left);padding:10px}
 .map-tools {left:auto;right:var(--ui-right)}
 #mapLayers,#stateRoadPanel {top:calc(var(--map-controls-top) + 50px)}
-.map-tools #voiceDirections {
-  position:absolute;right:0;top:calc(100% + 6px);min-height:44px;
-}
-#mapLayers {top:calc(var(--map-controls-top) + 101px);max-height:calc(100dvh - var(--map-controls-top) - 120px)}
+.map-tools #voiceDirections {position:static;min-height:44px}
+#mapLayers {top:calc(var(--map-controls-top) + 50px);max-height:calc(100dvh - var(--map-controls-top) - 70px)}
 .hud-status {top:calc(var(--map-controls-top) + 53px)}
 .map-zoom {
   display:grid;grid-auto-flow:row;justify-items:center;align-items:center;
@@ -518,8 +514,8 @@ body:has(#wxTimeline:not([hidden])) {--map-controls-top:calc(var(--map-top) + 8p
 #wxCoverage {grid-column:1 / -1;color:#99d4fc;font-size:11px;line-height:1.15}
 #wxCoverage[hidden] {display:none}
 
-#roadAheadBanner {position:fixed;z-index:780;bottom:calc(var(--map-bottom) + 14px);right:12px;max-width:calc(100% - 78px);text-align:left;background:#3a2a19;color:#ffe2ad;border-color:#ad7838;padding:6px 10px;font-size:13px}
-#roadAheadBanner[hidden] {display:none}
+#roadAheadNotice {position:fixed;z-index:780;bottom:calc(var(--map-bottom) + 14px);right:12px;max-width:calc(100% - 85px);min-height:44px;text-align:left;background:#152536;color:#e9f4ff;border-color:#68869e;padding:6px 10px;font-size:13px}
+#roadAheadNotice[hidden] {display:none}
 .awareness-dialog {color:#edf5fb;background:#101c26;border:1px solid #536779;border-radius:12px;width:min(460px,calc(100% - 28px));padding:16px;max-height:calc(100dvh - 36px);overflow:auto;color-scheme:dark}
 .awareness-dialog header {display:flex;justify-content:space-between;align-items:center;gap:14px}
 .awareness-dialog h2 {margin:0;font-size:19px}
@@ -545,12 +541,45 @@ body:has(#wxTimeline:not([hidden])) {--map-controls-top:calc(var(--map-top) + 8p
 .report-key span {background:var(--badge);color:#121c23;border:1px solid #d5dfe8;border-radius:8px;padding:4px 8px;font-size:12px}
 #crimeMapStatus {position:fixed;z-index:770;right:12px;bottom:calc(var(--map-bottom) + 47px);max-width:calc(100% - 82px);padding:6px 9px;background:#14232e;color:#ebf5ff;border:1px solid #60778a;font-size:12px;text-align:left}
 #crimeMapStatus[hidden] {display:none}
-</style></head><body class="night-map"><button id="crimeMapStatus" type="button" hidden></button><button id="roadAheadBanner" type="button" aria-live="polite" hidden></button>
+.destination-input {display:flex;gap:6px}
+.destination-input input {flex:1;min-width:0}
+#destinationMic {min-width:46px;padding:8px}
+#destinationMic svg {display:block;width:22px;height:22px;margin:auto}
+.road-camera {display:block;width:100%;max-width:320px;max-height:30dvh;object-fit:contain;height:auto}
+.state-road-popup,.state-road-popup .leaflet-popup-content {touch-action:none}
+.road-group-pages {display:flex;gap:5px}
+.road-group-pages button {justify-content:center;text-align:center;min-height:34px}
+.road-group-list {display:grid;gap:4px;margin-top:8px}
+.road-group-list button,.road-detail-back {width:100%;min-height:42px;text-align:left;padding:5px 8px;font-size:12px}
+.road-group-list button {display:flex;align-items:center;gap:7px}
+.road-group-list .road-group-symbol {display:inline-grid;place-items:center;width:23px;height:23px;flex-shrink:0;border-radius:5px;color:#141c22;font-weight:bold}
+.road-detail-back {margin-bottom:8px}
+/* Persistent driving display and scrollable layer controls. */
+body:not(.has-trip) {--summary-height:58px}
+body:not(.has-trip) .drive-strip {inset:auto 0 0;height:var(--map-bottom);display:grid;grid-template-columns:minmax(94px,23%) minmax(0,1fr) minmax(94px,23%);padding:0 var(--ui-right) env(safe-area-inset-bottom) var(--ui-left);border:0;border-top:1px solid var(--hud-border);border-radius:0}
+body:not(.has-trip) #driveMetric,body.has-drive-reading:not(.has-trip) #driveMetric {display:block;position:static;width:100%;height:100%}
+body:not(.has-trip) .drive-strip .drive-trailing {display:flex}
+body:not(.has-trip) .drive-route {padding:3px 2px}
+body:not(.has-trip) .map-zoom {bottom:calc(var(--map-bottom) + 16px)}
+#mapLayers {position:fixed;max-height:calc(100dvh - var(--map-controls-top) - var(--map-bottom) - 62px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;align-content:start;scrollbar-width:thin}
+#facilityStatus {font-size:12px;line-height:1.4;padding:4px 7px;color:var(--muted)}
+.facility-pin {border:0;background:none}
+.facility-pin svg {display:block;filter:drop-shadow(0 1px 2px #0009)}
+
+.menu-grid [data-action="plan"] {grid-column:1 / -1;flex-direction:row;justify-content:center;gap:18px;background:#203543;border:1px solid #59798c;padding:10px}
+.menu-grid [data-action="plan"] .menu-circle {width:54px;height:54px}
+.menu-grid [data-action="plan"] .menu-circle svg {width:30px;height:30px}
+
+@media(orientation:landscape) { .map-zoom {grid-auto-flow:row;left:var(--ui-left);bottom:calc(var(--map-bottom) + 12px);gap:4px} }
+</style></head><body class="night-map"><button id="crimeMapStatus" type="button" hidden></button><button id="roadAheadNotice" type="button" aria-live="polite" hidden></button>
+<dialog id="obstructionDialog" class="awareness-dialog" aria-labelledby="obstructionTitle"><header><h2 id="obstructionTitle">Report obstruction</h2><button type="button" data-close="obstructionDialog" aria-label="Close report">×</button></header>
+<p>Choose a type to share at your GPS location. Reports expire after 90 minutes.</p>
+<div class="awareness-controls"><button type="button" data-obstruction="Debris in road">Debris</button><button type="button" data-obstruction="Stopped vehicle">Stopped vehicle</button><button type="button" data-obstruction="Crash">Crash</button><button type="button" data-obstruction="Road blocked">Blocked road</button></div><p id="obstructionStatus" role="status"></p></dialog>
 <dialog id="roadAheadDialog" class="awareness-dialog" aria-labelledby="roadAheadTitle">
 <header><h2 id="roadAheadTitle">Road ahead</h2><button type="button" data-close="roadAheadDialog" aria-label="Close Road ahead">×</button></header>
-<label><input id="roadAheadEnabled" type="checkbox"> Show alerts on the map</label><button id="roadAheadRefresh" type="button">Refresh</button>
-<p>California reports near your route. Distance is measured along the route.</p><p id="roadAheadStatus" role="status"></p><ul id="roadAheadList"></ul>
-<a href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener noreferrer">Open Caltrans QuickMap</a>
+<label><input id="roadAheadEnabled" type="checkbox"> Road Ahead alerts</label>
+<p>Automatically checks the next 8 route miles using agency feeds and reports from Route Weather drivers.</p><p id="roadAheadStatus" role="status"></p><ul id="roadAheadList"></ul>
+<button type="button" id="roadAheadReport">Report obstruction</button>
 </dialog>
 <dialog id="scannerDialog" class="awareness-dialog" aria-labelledby="scannerTitle">
 <header><h2 id="scannerTitle">Nearby scanners</h2><button type="button" data-close="scannerDialog" aria-label="Close Nearby scanners">×</button></header>
@@ -572,11 +601,11 @@ body:has(#wxTimeline:not([hidden])) {--map-controls-top:calc(var(--map-top) + 8p
 <section id="wxTimeline" aria-label="Weather timeline" hidden>
 <div class="wx-row"><select id="wxMode" aria-label="Weather layer"><option value="local">Local forecast</option><option value="storm">Forecast radar</option></select><button id="wxLive">Live</button><button id="wxClose" aria-label="Close weather timeline">×</button></div>
 <div class="wx-row"><button id="wxPlay">▶ Play</button><button id="wxPrev" aria-label="Previous weather frame">‹</button><input id="wxSlider" type="range" min="0" max="0" value="0" aria-label="Weather forecast time"><button id="wxNext" aria-label="Next weather frame">›</button></div>
-<div id="wxTime" role="status"></div><small id="wxCoverage" hidden></small><div id="wxArea" hidden><span id="wxAreaSource"></span><strong id="wxAreaReading"></strong></div><div class="wx-row" id="wxHourly" hidden><span id="wxPointName"></span><button id="wxHourlyButton" type="button">Hourly forecast</button></div></section><main><section class="workspace"><div class="map-wrap"><div id="map" aria-label="Route and weather map"></div><div class="map-tools"><button id="radar" aria-pressed="false">Radar</button><button id="openMapLayers" type="button" aria-expanded="false" aria-controls="mapLayers">Layers</button><button id="voiceDirections" type="button" aria-label="Spoken directions" aria-pressed="false" title="Enable spoken directions">Voice</button><button id="pinMode" aria-pressed="false">Drop pins</button><button id="follow" aria-pressed="false">Follow GPS</button></div><div class="pin-options" id="pinOptions"><span id="pinHint">Tap map for start</span> <button id="pinStart" class="subtle">Start</button><button id="pinEnd" class="subtle">End</button></div><section id="mapLayers" aria-label="Map layers" hidden><button id="showWeather" aria-pressed="false">Forecast</button><button id="showTraffic" aria-pressed="false">Traffic</button><button id="openStateRoads" type="button" aria-controls="stateRoadPanel" aria-expanded="false" aria-label="State road maps">State road maps</button><button id="layerHotspots" type="button" aria-pressed="false">Hotspots</button><button id="openRoadAhead" type="button" aria-pressed="false">Road ahead</button><div class="layer-switch-row"><button id="openScanners" type="button" aria-pressed="false">Nearby scanners</button><button id="scannerSettings" class="layer-settings" type="button" aria-label="Nearby scanners settings" title="Nearby scanners settings">⚙</button></div><div class="layer-switch-row"><button id="openCrime" type="button" aria-pressed="false">Reported incidents</button><button id="crimeSettings" class="layer-settings" type="button" aria-label="Reported incidents settings and sources" title="Reported incidents settings and sources">⚙</button></div><div id="trafficNote" hidden><div id="trafficMessage" role="status"></div></div><div id="wildfireStatus" role="status" hidden></div></section><div id="trafficZoomHint" role="status" hidden>Zoom in to see traffic speeds.</div><aside id="stateRoadPanel" aria-labelledby="stateRoadTitle" hidden>
+<div id="wxTime" role="status"></div><small id="wxCoverage" hidden></small><div id="wxArea" hidden><span id="wxAreaSource"></span><strong id="wxAreaReading"></strong></div><div class="wx-row" id="wxHourly" hidden><span id="wxPointName"></span><button id="wxHourlyButton" type="button">Hourly forecast</button></div></section><main><section class="workspace"><div class="map-wrap"><div id="map" aria-label="Route and weather map"></div><div class="map-tools"><button id="voiceDirections" type="button" aria-label="Spoken directions" aria-pressed="false" title="Enable spoken directions">Voice</button><button id="radar" aria-pressed="false">Radar</button><button id="openMapLayers" type="button" aria-expanded="false" aria-controls="mapLayers">Layers</button><button id="pinMode" aria-pressed="false">Drop pins</button><button id="follow" aria-pressed="false">Follow Me</button></div><div class="pin-options" id="pinOptions"><span id="pinHint">Tap map for start</span> <button id="pinStart" class="subtle">Start</button><button id="pinEnd" class="subtle">End</button></div><section id="mapLayers" aria-label="Map layers" hidden><button id="openRoadAhead" type="button" aria-pressed="false">Road ahead</button><button type="button" id="showScales" aria-pressed="false">Weigh stations</button><button type="button" id="findTruckStops" aria-pressed="false">Truck stops</button><button type="button" id="menuClearances" data-action="clearances" aria-pressed="false">Low clearances</button><button type="button" id="menuFire-fires" data-action="fire-fires" aria-pressed="false">Reported fires</button><button id="showWeather" aria-pressed="false">Forecast</button><button id="showTraffic" aria-pressed="false">Traffic</button><button id="openStateRoads" type="button" aria-controls="stateRoadPanel" aria-expanded="false" aria-label="State road maps">State road maps</button><button id="layerHotspots" type="button" aria-pressed="false">Satellite hotspots</button><div class="layer-switch-row"><button id="openScanners" type="button" aria-pressed="false">Nearby scanners</button><button id="scannerSettings" class="layer-settings" type="button" aria-label="Nearby scanners settings" title="Nearby scanners settings">⚙</button></div><div class="layer-switch-row"><button id="openCrime" type="button" aria-pressed="false">Reported incidents</button><button id="crimeSettings" class="layer-settings" type="button" aria-label="Reported incidents settings and sources" title="Reported incidents settings and sources">⚙</button></div><div id="facilityStatus" role="status" hidden></div><div id="trafficNote" hidden><div id="trafficMessage" role="status"></div></div><div id="wildfireStatus" role="status" hidden></div></section><div id="trafficZoomHint" role="status" hidden>Zoom in to see traffic speeds.</div><aside id="stateRoadPanel" aria-labelledby="stateRoadTitle" hidden>
 <div class="panel-head"><h2 id="stateRoadTitle">State road maps</h2><button id="closeStateRoads" type="button" aria-label="Close state road maps">×</button></div>
-<div id="stateOverlaySummary"><span id="stateOverlaySelection" class="help"></span><button id="stateLayerSettings" type="button">Layer settings</button></div>
+
 <input id="stateRoadSearch" type="search" aria-label="Find a state or road map" placeholder="Search state or map name">
-<div class="clearance-controls"><button id="toggleClearances" type="button" aria-pressed="false">All mapped clearances</button><button id="toggleTolls" type="button" aria-pressed="false">All toll roads</button></div>
+
 <details class="clearance-references"><summary>Official road references</summary><ul>
 <li><a href="https://data.transportation.gov/Roadways-and-Bridges/Toll-Facilities-in-the-U-S-Roads/ivir-ipr6" target="_blank" rel="noopener noreferrer">FHWA toll roads inventory ↗</a></li>
 <li><a href="https://data.transportation.gov/Roadways-and-Bridges/Toll-Facilities-in-the-US-Bridges-and-Tunnels/j8s5-cfp2" target="_blank" rel="noopener noreferrer">FHWA toll bridges and tunnels ↗</a></li>
@@ -592,7 +621,7 @@ body:has(#wxTimeline:not([hidden])) {--map-controls-top:calc(var(--map-top) + 8p
 <li><a href="https://dot.ca.gov/programs/traffic-operations/legal-truck-access/height" target="_blank" rel="noopener noreferrer">Caltrans low clearances ↗</a></li>
 <li><a href="https://www.oregon.gov/odot/mct/pages/oregon-route-maps.aspx" target="_blank" rel="noopener noreferrer">ODOT truck route maps ↗</a></li>
 </ul></details><div id="stateRoadList" aria-live="polite"></div>
-<p class="help"><a href="https://highways.fhwa.dot.gov/traffic-info" target="_blank" rel="noopener noreferrer">FHWA road-condition directory</a></p></aside><div id="clearanceNote" role="status" hidden></div><div id="tollNote" role="status" hidden></div><button class="map-menu" id="openMenu" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="map-zoom"><button id="centerGps" aria-label="Center and follow GPS"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></button><button id="zoomIn" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></svg></button><button id="zoomOut" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/></svg></button></div><div id="hudStatus" class="hud-status" role="status"><button id="hideStatus" aria-label="Dismiss status">×</button><span id="hudText"></span></div></section><footer class="drive-strip" aria-label="Route summary"><button id="driveMetric" type="button" aria-label="Compass unavailable. Tap to show speed"><div class="drive-metric-reading" id="driveHeadingReading"><small>Compass</small><strong id="driveHeading"><span id="driveCompass" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="M12 4l4 12-4-2-4 2z"/></svg></span><span id="driveCourse">—</span></strong></div><div class="drive-metric-reading" id="driveSpeedReading" hidden><small>SPEED</small><strong id="driveSpeed">— <span>MPH</span></strong></div></button><button class="drive-route" id="driveRoute"><strong id="driveName">Plan your drive</strong><small id="driveEtaCompact" hidden></small></button><div class="drive-trailing"><button id="toggleDrivePanel" type="button" class="drive-distance" aria-controls="driveWeather" aria-expanded="false"><small>DST</small><strong id="driveDistance">—</strong></button></div><span class="route-weather drive-detail" id="driveWeather"></span></footer></main><dialog id="menuDialog"><div class="surface-head"><div class="menu-heading"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h9a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h7M19 8v4"/></svg> ROUTE WEATHER</div><button data-close="menuDialog" aria-label="Close menu"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="menu-grid"><button class="menu-item" data-action="search" ><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg></span><span>Search</span></button><button class="menu-item" data-action="plan" ><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h9a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h7M19 8v4"/></svg></span><span>Plan Trip</span></button><button class="menu-item" data-action="state-roads"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3Zm6-3v15m6-12v15"/></svg></span><span>State road maps</span></button><button class="menu-item clear-route" data-action="clear-route" id="menuClearRoute"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></span><span>Clear route</span></button><button class="menu-item" data-action="weather" id="menuWeatherPoints" aria-pressed="true"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16H5a4 4 0 1 1 1-8 6 6 0 0 1 11-1 4.5 4.5 0 0 1 1 9h-2M9 18l-1 3m6-3-1 3"/></svg></span><span>Weather Points</span></button><button class="menu-item" data-action="radar" id="menuRadar"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m12 12 7-7M12 3v9h9"/></svg></span><span>Radar</span></button><button class="menu-item" data-action="roads" id="menuRoads" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 3 21m13-18 5 18M12 3v4m0 3v4m0 3v4"/></svg></span><span><span id="menuRoadName">State roads</span><small id="menuRoadState" style="display:block"></small></span></button><button class="menu-item" data-action="clearances" id="menuClearances" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 9h18M5 9v11m14-11v11M12 11v9m-2-7 2-2 2 2m-4 5 2 2 2-2"/></svg></span><span>Low clearances</span></button><button class="menu-item" data-action="tolls" id="menuTolls" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5h-4.5a1.75 1.75 0 1 0 0 3.5h3a1.75 1.75 0 1 1 0 3.5H9M12 6.5v11"/></svg></span><span>Toll roads</span></button><button class="menu-item" data-action="fire-fires" id="menuFire-fires" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c2 4-1 5 2 9 1-1 2-2 2-4 5 5 6 10 1 14-3 2-8 1-10-2-3-5 0-9 3-12-1 4 0 5 1 6 2-4 2-7 1-11Z"/></svg></span><span>Reported fires</span></button><button class="menu-item" data-action="fire-hotspots" id="menuFire-hotspots" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 3 3-3 3-3-3Zm-6 6 3 3-3 3-3-3Zm12 0 3 3-3 3-3-3Zm-6 6 3 3-3 3-3-3Z"/></svg></span><span>Satellite hotspots</span></button><button class="menu-item" data-action="theme" id="menuTheme"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/><path d="m18 2 .5 2.5L21 5l-2.5.5L18 8l-.5-2.5L15 5l2.5-.5Z"/></svg></span><span>Day / Night</span></button><button class="menu-item" data-action="gps" id="menuGps" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></span><span id="gpsMenuLabel">Follow GPS</span></button><button class="menu-item" data-action="pins" ><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg></span><span>Drop Pins</span></button></div><div class="menu-footer"><button type="button" id="downloadOfflineMap">Download route map</button><button type="button" id="useDownloadedMap" aria-pressed="false" disabled>Downloaded map</button><button type="button" id="trafficSettings">Traffic setup</button><button id="about"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-11v1"/></svg>About & sources</button></div></dialog><dialog id="tripDialog" aria-labelledby="tripPlannerTitle"><div class="surface-head"><button class="planner-back" type="button" data-close="tripDialog" aria-label="Back to map"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button><h2 id="tripPlannerTitle">Plan your drive</h2><button id="routeVia" type="button" aria-pressed="false">Tap road for waypoint</button></div><div class="surface-body"><form id="planner" novalidate><div class="planner-fields"><section><div class="planner-start"><label for="start">Start</label><button type="button" id="locate" class="subtle">Use GPS</button></div><input id="start" placeholder="Address or town" value="Anderson, CA" required><label for="end">Destination</label><input id="end" placeholder="Address or town" required><section class="planner-recents" id="plannerRecents" hidden><h3>Recent destinations</h3><ul id="recentDestinations"></ul></section><p class="sheet-note">Route uses standard driving roads. Check truck restrictions separately.</p></section><section><label for="departureMode">Departure</label><select id="departureMode"><option value="now">Leave now</option><option value="scheduled">Choose date & time</option></select><div id="departureFields" style="display:none;margin-top:10px"><label for="departure">Departure · your device time</label><input id="departure" type="datetime-local"></div><details id="advanced" open><summary class="advanced-label">Via point & stops</summary><label for="via">Via · optional town or address</label><input id="via" placeholder="e.g. Mount Shasta, CA"><div id="routeWaypoints"></div><label for="breaks" style="margin-top:10px">Total stops · minutes</label><input id="breaks" type="number" min="0" max="1440" value="0"></details></section><div id="tripSummary"></div><button id="editRoute" class="subtle" style="display:none">Edit route / departure</button></div><div class="planner-submit"><div id="routeStatus" class="status" role="status"></div><button class="primary" id="plan" type="submit">Calculate route</button></div></form></div></dialog><dialog id="roadsDialog"><div class="surface-head"><h2 id="activeRoadTitle">State roads</h2><button data-close="roadsDialog" aria-label="Close road controls"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="surface-body"><div class="panel-head"><button id="roadSettingsToggle" class="subtle">Road controls ▾</button><a id="activeRoadSource" href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener" style="font-size:12px">QuickMap ↗</a></div><div id="roadSettings"><button id="loadRoads" type="button">Refresh road feed</button><button id="caltransStateRoads" type="button">State road maps</button><label style="margin-top:12px"><input type="checkbox" id="nearRoute" style="width:auto;min-height:auto"> Within 10 miles of route, when planned</label><div id="roadStatus" class="help" role="status">Road conditions have not been loaded.</div></div><p class="help">Choose which reports to show. The map groups nearby reports as you zoom out.</p><label style="margin-top:14px"><input type="checkbox" id="showRoadMarkers" style="width:auto;min-height:auto"> Show road markers on map</label><div id="roadFilters" class="road-filters" aria-label="Road layers"></div><button id="viewRoadList" class="primary">View road conditions</button></div></dialog><dialog id="weatherDialog"><div class="surface-head"><h2 id="weatherTitle">Weather along your route</h2><button data-close="weatherDialog" aria-label="Close forecasts"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="weather-content"><nav class="tabs" aria-label="Information"><button data-tab="route" class="active">Along route</button><button data-tab="hourly">Hourly</button><button data-tab="daily">7 days</button><button data-tab="roads">Chain controls & closures</button><button data-tab="directions">Directions</button></nav><div id="panel"></div></div></dialog><dialog id="aboutDialog"><div class="panel-head"><h2>Your weather companion</h2><button id="closeAbout">Close</button></div><p>Route Weather by <a href="https://andysdevstudio.pages.dev" target="_blank" rel="noopener noreferrer">Andy's Dev Studio</a> combines route forecasts, NOAA radar, and Caltrans feeds used by QuickMap. Address search and routing are powered by TomTom. Live traffic availability depends on service capacity.</p><p><b>Map libraries:</b> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet</a> (<a href="/licenses/leaflet.txt" target="_blank" rel="noopener noreferrer">license</a>), <a href="https://github.com/Raruto/leaflet-rotate" target="_blank" rel="noopener noreferrer">Leaflet Rotate</a> (<a href="/licenses/leaflet-rotate.txt" target="_blank" rel="noopener noreferrer">GPLv3</a>), and Mapbox <a href="/licenses/vector-tile.txt" target="_blank" rel="noopener noreferrer">vector-tile</a>, <a href="/licenses/pbf.txt" target="_blank" rel="noopener noreferrer">pbf</a> and <a href="/licenses/point-geometry.txt" target="_blank" rel="noopener noreferrer">point-geometry</a>. Copyright and license notices are included with this app.</p><p><b>Route Weather 0.21</b> (<a href="https://github.com/kayrugold/route-weather/tree/v0.21" target="_blank" rel="noopener noreferrer">GPLv3 source code</a>, <a href="https://github.com/kayrugold/route-weather/archive/refs/tags/v0.21.zip" target="_blank" rel="noopener noreferrer">download source</a>) · NWS route forecasts, NOAA HRRR precipitation via Iowa State IEM, Caltrans road layers, NIFC fire and satellite feeds, and state road links from the FHWA directory.</p><p><b>Planning:</b> add a destination, optional waypoints, departure, and total stop time. Forecast points use estimated arrival times. Stop time is spread proportionally along the route. Routing uses TomTom's standard driving profile and does not check truck restrictions or road closures.</p><p><b>GPS:</b> follow shows your live location. Turn on Voice below Layers to hear directions along the planned route while the app is open. Use a truck navigation app for truck restrictions.</p><p><b>Conditions:</b> wind, gusts, visibility and precipitation are model forecasts. Icing labels are temperature/precipitation estimates, not pavement measurements. Radar shows recent observed precipitation, not a forecast. Roads are filtered by proximity, so nearby roads can appear too.</p><p><b>Privacy:</b> your trip is stored on this browser. Coordinates and address searches are sent to the data providers to retrieve results. GPS is requested only when you press a GPS button. <a href="https://route-weather.andy-596.workers.dev/route-weather-privacy.html" target="_blank" rel="noopener noreferrer">Privacy policy</a>.</p><p><b>Sources:</b> Official National Weather Service forecast grids, NOAA/NWS, Caltrans CWWP2, OpenStreetMap, and TomTom for address search and routing. Availability depends on those free services. Maps and live updates require internet; the last trip forecast is saved locally.</p><button id="clearTrip" style="margin-top:15px">Clear saved trip</button></dialog><dialog id="trafficDialog" aria-labelledby="trafficTitle"><div class="sheet-head"><h2 id="trafficTitle">Live traffic</h2><button data-close="trafficDialog" aria-label="Close traffic setup">Close</button></div><section class="traffic-legend" aria-labelledby="trafficLegendTitle"><h3 id="trafficLegendTitle">Traffic color key</h3><div id="trafficColors"><span>Free-flowing</span><span>Slower</span><span>Heavy</span><span>Stop and go</span></div></section><form id="trafficForm"><p>Route Weather can show live traffic from TomTom. You can optionally use your own TomTom key instead of the shared traffic allowance.</p><p>For a personal key with a domain allowlist, allow <strong id="trafficDomain"></strong>.</p><p><a href="https://developer.tomtom.com/" target="_blank" rel="noopener noreferrer">Get a free TomTom API key</a></p><label for="trafficKey">TomTom API key</label><input id="trafficKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="128"><p class="help">The key is saved in this browser. Traffic tiles use your TomTom account’s allowance. Roads without a color have no traffic reading.</p><p id="trafficSetupMessage" role="status"></p><div class="traffic-form-actions"><button class="primary" type="submit">Show traffic</button><button id="forgetTrafficKey" type="button" hidden>Remove key</button></div></form></dialog><dialog id="gpsDialog"><div class="panel-head"><h2>Location access</h2><button id="closeGpsHelp" aria-label="Close location help">Close</button></div><p id="gpsReason"></p><button id="openAndroidLocationSettings" type="button">Open app settings</button><button id="retryGps" class="primary">Try location again</button></dialog><script src="/leaflet.js"></script><script src="/leaflet-rotate.js" integrity="sha384-MtIdllebpZyms2pw9K3YJl8BEqrKNQCdSFAySjeglab6z2PkeFdF4Lb9cDsnxQuG" crossorigin="anonymous"></script><script src="/location.js"></script><script src="/offline.js"></script><script src="/tiles.js"></script><script>
+<p class="help"><a href="https://highways.fhwa.dot.gov/traffic-info" target="_blank" rel="noopener noreferrer">FHWA road-condition directory</a></p></aside><div id="clearanceNote" role="status" hidden></div><div id="tollNote" role="status" hidden></div><button class="map-menu" id="openMenu" aria-label="Open menu"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="map-zoom"><button id="centerGps" aria-label="Center and follow GPS"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></button><button id="zoomIn" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16M4 12h16"/></svg></button><button id="zoomOut" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/></svg></button></div><div id="hudStatus" class="hud-status" role="status"><button id="hideStatus" aria-label="Dismiss status">×</button><span id="hudText"></span></div></section><footer class="drive-strip" aria-label="Route summary"><button id="driveMetric" type="button" aria-label="Compass unavailable. Tap to show speed"><div class="drive-metric-reading" id="driveHeadingReading"><small>Compass</small><strong id="driveHeading"><span id="driveCompass" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><path d="M12 4l4 12-4-2-4 2z"/></svg></span><span id="driveCourse">—</span></strong></div><div class="drive-metric-reading" id="driveSpeedReading" hidden><small>SPEED</small><strong id="driveSpeed">— <span>MPH</span></strong></div><div class="drive-metric-reading" id="driveAltitudeReading" hidden><small id="driveAltitudeLabel">Altitude</small><strong id="driveAltitude">—</strong></div><div class="drive-metric-reading" id="driveGradeReading" hidden><small>Grade</small><strong id="driveGrade">—</strong></div></button><button class="drive-route" id="driveRoute"><strong id="driveName">Plan your drive</strong><small id="driveEtaCompact" hidden></small></button><div class="drive-trailing"><button id="toggleDrivePanel" type="button" class="drive-distance" aria-controls="driveWeather" aria-expanded="false"><small>DST</small><strong id="driveDistance">—</strong></button></div><span class="route-weather drive-detail" id="driveWeather"></span></footer></main><dialog id="menuDialog"><div class="surface-head"><div class="menu-heading"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h9a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h7M19 8v4"/></svg> ROUTE WEATHER</div><button data-close="menuDialog" aria-label="Close menu"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="menu-grid"><button class="menu-item" data-action="plan" ><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="18" r="2"/><circle cx="19" cy="6" r="2"/><path d="M7 18h9a4 4 0 0 0 0-8H8a4 4 0 0 1 0-8h7M19 8v4"/></svg></span><span>Plan Trip</span></button><button class="menu-item clear-route" data-action="clear-route" id="menuClearRoute"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></span><span>Clear route</span></button><button class="menu-item" data-action="weather" id="menuWeatherPoints" aria-pressed="true"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16H5a4 4 0 1 1 1-8 6 6 0 0 1 11-1 4.5 4.5 0 0 1 1 9h-2M9 18l-1 3m6-3-1 3"/></svg></span><span>Weather Points</span></button><button class="menu-item" data-action="roads" id="menuRoads" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 3 21m13-18 5 18M12 3v4m0 3v4m0 3v4"/></svg></span><span><span id="menuRoadName">State roads</span><small id="menuRoadState" style="display:block"></small></span></button><button class="menu-item" data-action="theme" id="menuTheme"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14a8 8 0 0 1-10-10 8 8 0 1 0 10 10Z"/><path d="m18 2 .5 2.5L21 5l-2.5.5L18 8l-.5-2.5L15 5l2.5-.5Z"/></svg></span><span>Day / Night</span></button><button class="menu-item" data-action="gps" id="menuGps" aria-pressed="false"><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4m0 14v4M1 12h4m14 0h4"/></svg></span><span id="gpsMenuLabel">Follow Me</span></button><button class="menu-item" data-action="pins" ><span class="menu-circle"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg></span><span>Drop Pins</span></button></div><div class="menu-footer"><button type="button" id="downloadOfflineMap">Download route map</button><button type="button" id="useDownloadedMap" aria-pressed="false" disabled>Downloaded map</button><button type="button" id="trafficSettings">Traffic setup</button><button id="about"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-11v1"/></svg>About & sources</button></div></dialog><dialog id="tripDialog" aria-labelledby="tripPlannerTitle"><div class="surface-head"><button class="planner-back" type="button" data-close="tripDialog" aria-label="Back to map"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5m7-7-7 7 7 7"/></svg></button><h2 id="tripPlannerTitle">Plan your drive</h2><button id="routeVia" type="button" aria-pressed="false">Tap road for waypoint</button></div><div class="surface-body"><form id="planner" novalidate><div class="planner-fields"><section><div class="planner-start"><label for="start">Start</label><button type="button" id="locate" class="subtle">Use GPS</button></div><input id="start" placeholder="Address or town" value="Anderson, CA" required><label for="end">Destination</label><div class="destination-input"><input id="end" placeholder="Address, town, or business" required><button id="destinationMic" type="button" aria-label="Speak destination" title="Speak destination" hidden><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4m-3 0h6"/></svg></button></div><section class="planner-recents" id="plannerRecents" hidden><h3>Recent destinations</h3><ul id="recentDestinations"></ul></section><p class="sheet-note">Route uses standard driving roads. Check truck restrictions separately.</p></section><section><label for="departureMode">Departure</label><select id="departureMode"><option value="now">Leave now</option><option value="scheduled">Choose date & time</option></select><div id="departureFields" style="display:none;margin-top:10px"><label for="departure">Departure · your device time</label><input id="departure" type="datetime-local"></div><details id="advanced" open><summary class="advanced-label">Via point & stops</summary><label for="via">Via · optional town or address</label><input id="via" placeholder="e.g. Mount Shasta, CA"><div id="routeWaypoints"></div><label for="breaks" style="margin-top:10px">Total stops · minutes</label><input id="breaks" type="number" min="0" max="1440" value="0"></details></section><div id="tripSummary"></div><button id="editRoute" class="subtle" style="display:none">Edit route / departure</button></div><div class="planner-submit"><div id="routeStatus" class="status" role="status"></div><button class="primary" id="plan" type="submit">Calculate route</button></div></form></div></dialog><dialog id="roadsDialog"><div class="surface-head"><h2 id="activeRoadTitle">State roads</h2><button data-close="roadsDialog" aria-label="Close road controls"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="surface-body"><div class="panel-head"><button id="roadSettingsToggle" class="subtle">Road controls ▾</button><a id="activeRoadSource" href="https://quickmap.dot.ca.gov/" target="_blank" rel="noopener" style="font-size:12px">QuickMap ↗</a></div><div id="roadSettings"><button id="loadRoads" type="button">Refresh road feed</button><button id="caltransStateRoads" type="button">State road maps</button><label style="margin-top:12px"><input type="checkbox" id="nearRoute" style="width:auto;min-height:auto"> Within 10 miles of route, when planned</label><div id="roadStatus" class="help" role="status">Road conditions have not been loaded.</div></div><p class="help">Choose which reports to show for this state.</p><label style="margin-top:14px"><input type="checkbox" id="showRoadMarkers" style="width:auto;min-height:auto"> Show road markers on map</label><div id="roadFilters" class="road-filters" aria-label="Road layers"></div><button id="viewRoadList" class="primary">View road conditions</button></div></dialog><dialog id="weatherDialog"><div class="surface-head"><h2 id="weatherTitle">Weather along your route</h2><button data-close="weatherDialog" aria-label="Close forecasts"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div><div class="weather-content"><nav class="tabs" aria-label="Information"><button data-tab="route" class="active">Along route</button><button data-tab="hourly">Hourly</button><button data-tab="daily">7 days</button><button data-tab="roads">Chain controls & closures</button><button data-tab="directions">Directions</button></nav><div id="panel"></div></div></dialog><dialog id="aboutDialog"><div class="panel-head"><h2>Your weather companion</h2><button id="closeAbout">Close</button></div><p>Route Weather by <a href="https://andysdevstudio.pages.dev" target="_blank" rel="noopener noreferrer">Andy's Dev Studio</a> combines route forecasts, NOAA radar, and Caltrans feeds used by QuickMap. Address search and routing are powered by TomTom. Live traffic availability depends on service capacity.</p><p><b>Map libraries:</b> <a href="https://leafletjs.com/" target="_blank" rel="noopener noreferrer">Leaflet</a> (<a href="/licenses/leaflet.txt" target="_blank" rel="noopener noreferrer">license</a>), <a href="https://github.com/Raruto/leaflet-rotate" target="_blank" rel="noopener noreferrer">Leaflet Rotate</a> (<a href="/licenses/leaflet-rotate.txt" target="_blank" rel="noopener noreferrer">GPLv3</a>), and Mapbox <a href="/licenses/vector-tile.txt" target="_blank" rel="noopener noreferrer">vector-tile</a>, <a href="/licenses/pbf.txt" target="_blank" rel="noopener noreferrer">pbf</a> and <a href="/licenses/point-geometry.txt" target="_blank" rel="noopener noreferrer">point-geometry</a>. Copyright and license notices are included with this app.</p><p><b>Route Weather 0.32</b> (<a href="https://github.com/kayrugold/route-weather/tree/v0.21" target="_blank" rel="noopener noreferrer">v0.21 GPLv3 source code</a>, <a href="https://github.com/kayrugold/route-weather/archive/refs/tags/v0.21.zip" target="_blank" rel="noopener noreferrer">v0.21 source archive</a>) · NWS route forecasts, NOAA HRRR precipitation via Iowa State IEM, Caltrans road layers, NIFC fire and satellite feeds, and state road links from the FHWA directory.</p><p><b>Planning:</b> add a destination, optional waypoints, departure, and total stop time. Forecast points use estimated arrival times. Stop time is spread proportionally along the route. Routing uses TomTom's standard driving profile and does not check truck restrictions or road closures.</p><p><b>GPS:</b> follow shows your live location. Turn on Voice below Layers to hear directions along the planned route while the app is open. Use a truck navigation app for truck restrictions.</p><p><b>Conditions:</b> wind, gusts, visibility and precipitation are model forecasts. Icing labels are temperature/precipitation estimates, not pavement measurements. Radar shows recent observed precipitation, not a forecast. Roads are filtered by proximity, so nearby roads can appear too.</p><p><b>Privacy:</b> your trip is stored on this browser. Coordinates and address searches are sent to the data providers to retrieve results. Location is requested on startup to center your blue dot, and when you use GPS features. <a href="https://route-weather.andy-596.workers.dev/route-weather-privacy.html" target="_blank" rel="noopener noreferrer">Privacy policy</a>.</p><p><b>Sources:</b> Official National Weather Service forecast grids, NOAA/NWS, Caltrans CWWP2, OpenStreetMap, and TomTom for address search and routing. Availability depends on those free services. Maps and live updates require internet; the last trip forecast is saved locally.</p><button id="clearTrip" style="margin-top:15px">Clear saved trip</button></dialog><dialog id="trafficDialog" aria-labelledby="trafficTitle"><div class="sheet-head"><h2 id="trafficTitle">Live traffic</h2><button data-close="trafficDialog" aria-label="Close traffic setup">Close</button></div><section class="traffic-legend" aria-labelledby="trafficLegendTitle"><h3 id="trafficLegendTitle">Traffic color key</h3><div id="trafficColors"><span>Free-flowing</span><span>Slower</span><span>Heavy</span><span>Stop and go</span></div></section><form id="trafficForm"><p>Route Weather can show live traffic from TomTom. You can optionally use your own TomTom key instead of the shared traffic allowance.</p><p>For a personal key with a domain allowlist, allow <strong id="trafficDomain"></strong>.</p><p><a href="https://developer.tomtom.com/" target="_blank" rel="noopener noreferrer">Get a free TomTom API key</a></p><label for="trafficKey">TomTom API key</label><input id="trafficKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" required maxlength="128"><p class="help">The key is saved in this browser. Traffic tiles use your TomTom account’s allowance. Roads without a color have no traffic reading.</p><p id="trafficSetupMessage" role="status"></p><div class="traffic-form-actions"><button class="primary" type="submit">Show traffic</button><button id="forgetTrafficKey" type="button" hidden>Remove key</button></div></form></dialog><dialog id="gpsDialog"><div class="panel-head"><h2>Location access</h2><button id="closeGpsHelp" aria-label="Close location help">Close</button></div><p id="gpsReason"></p><button id="openAndroidLocationSettings" type="button">Open app settings</button><button id="retryGps" class="primary">Try location again</button></dialog><script src="/leaflet.js"></script><script src="/leaflet-rotate.js" integrity="sha384-MtIdllebpZyms2pw9K3YJl8BEqrKNQCdSFAySjeglab6z2PkeFdF4Lb9cDsnxQuG" crossorigin="anonymous"></script><script src="/location.js"></script><script src="/offline.js"></script><script src="/tiles.js"></script><script>
 'use strict';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),fmt=(v,d=0)=>v==null?'—':Number(v).toFixed(d),time=t=>new Date(t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}),date=t=>new Date(t).toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
 let map,routeLayer,weatherLayer,roadsLayer,radarLayer,trip=null,selected=0,tab='route',roadData=[],roadFailures=[],roadFetched=null,pins={},pinTarget='start',pinning=false,watch=null,gpsMarker=null,planning=false,routeRevision=0;
@@ -606,7 +635,7 @@ function setDefaultDeparture(){
 }
 setDefaultDeparture();
 let hudTimer;
-function closeSurfaces(){for(const id of ['menuDialog','tripDialog','roadsDialog','weatherDialog','roadAheadDialog','scannerDialog','crimeDialog'])if($(id).open)$(id).close()}
+function closeSurfaces(){for(const id of ['menuDialog','tripDialog','roadsDialog','weatherDialog','roadAheadDialog','scannerDialog','crimeDialog','obstructionDialog'])if($(id).open)$(id).close()}
 function openSurface(id){closeSurfaces();setMapLayers(false);$(id).showModal()}
 function recentDestinations(){
   try{
@@ -664,7 +693,7 @@ function updateDrive(){
   document.body.classList.toggle('has-trip',!!trip);
   const eta=$('driveEtaCompact');
   eta.hidden=!trip;
-  if(!trip){$('driveName').textContent='Plan your drive';return}
+  if(!trip){$('driveName').textContent='Plan your drive';$('driveDistance').textContent='—';$('driveWeather').textContent='';updateDistanceButtonLabel();return}
   $('driveName').textContent=trip.points.at(-1).label.split(',')[0];
   const remaining=driveEta?.offRoute?null:(driveEta?.remaining??trip.route.distance);
   const distance=$('driveDistance');
@@ -710,7 +739,7 @@ function renderForecastPoints(){
   marker.bindTooltip(esc(location+' · '+detail)).on('click',()=>p.viaNumber?openSavedWaypoint(i):selectWeatherPoint(i));
 });
 }
-function fitRoute(){if(trip)map.fitBounds(L.latLngBounds(trip.route.geometry.coordinates.map(c=>[c[1],c[0]])),{padding:[40,40],animate:false})}
+function fitRoute(){if(trip){gpsView='overview';gpsFollowing=false;AndroidRoute.driving(false);resetMapBearing();syncGpsControls()}if(trip)map.fitBounds(L.latLngBounds(trip.route.geometry.coordinates.map(c=>[c[1],c[0]])),{padding:[40,40],animate:false})}
 function pointHeader(){return '<div class="panel-head"><div><h2>'+esc(trip.points[selected].label)+'</h2><small>Point '+(selected+1)+' · expected '+date(displayEta(trip.points[selected]))+' '+time(displayEta(trip.points[selected]))+'</small></div><button class="subtle" id="backRoute">All points</button></div>'}
 function renderPanel(){if(tab==='roads'){renderRoadPanel();return}if(!trip){$('panel').innerHTML='<div class="empty"><strong>Know what’s waiting down the road.</strong><br>Plan a drive to see forecast points at your arrival times, wind and gusts, visibility, and precipitation. Tap a road to add a waypoint or tap a numbered point for its forecast.</div>';return}if(tab==='route'){$('panel').innerHTML='<div class="panel-head"><div><h2>Weather along your route</h2><small>'+trip.points.length+' points · forecasts at estimated arrival</small></div><button class="subtle" id="refreshWeather">↻ Refresh</button></div><div class="cards">'+trip.points.map((p,i)=>{const w=wxAt(p),r=risk(w),cross=w.wind==null||w.direction==null||p.bearing==null?null:Math.abs(w.wind*Math.sin((w.direction-p.bearing)*Math.PI/180));return '<button class="weather-card '+(selected===i?'selected':'')+'" data-point="'+i+'"><small>'+(i+1)+' · '+Math.round(p.distance/1609.344)+' mi</small><h3 style="font-size:14px;margin-top:6px">'+esc(p.label)+'</h3><small>'+date(displayEta(p))+' '+time(displayEta(p))+'</small><div class="temp">'+symbol(w.code)+' '+fmt(w.temp)+'°</div><div class="condition">'+(p.forecastError?'Forecast unavailable':!p.forecast?'Loading forecast…':w.out?'Outside forecast window':condition(w.code))+'</div><div class="wind">Wind <b>'+fmt(w.wind)+' mph '+direction(w.direction)+'</b><br>Gusts <b>'+fmt(w.gust)+' mph</b><br>Crosswind ≈ '+fmt(cross)+' mph<br>Rain / snow '+fmt(w.chance)+'%<br>Visibility '+fmt(w.visibility==null?null:w.visibility/1609.344,1)+' mi</div><span class="badge">'+esc(r.join(' · ')||'View hourly & daily →')+'</span></button>'}).join('')+'</div><p class="help">Weather is forecast, including visibility. Crosswind is an estimate for the route heading at each sample. No flag does not establish safe conditions.</p>';document.querySelectorAll('[data-point]').forEach(b=>b.onclick=()=>{if(timelineForRoute)closeTimeline();selected=+b.dataset.point;openPointHourly()});$('refreshWeather').onclick=refreshWeather;return}
 if(tab==='directions'){$('panel').innerHTML='<h2>Route directions</h2><p class="help">Standard driving route · not truck navigation · closures do not change this route</p>'+trip.route.legs.flatMap(l=>l.steps).map(s=>'<div class="step"><b>'+esc(s.maneuver.type.replaceAll('_',' '))+' '+esc(s.maneuver.modifier||'')+'</b> '+esc(s.instruction||s.name||'unnamed road')+'<small> · '+fmt(s.distance/1609.344,1)+' mi</small></div>').join('');return}
@@ -747,14 +776,104 @@ async function geocode(text,key){
   if(previous&&Number.isFinite(previous.lat)&&Math.abs(previous.lat)<=90&&
     Number.isFinite(previous.lon)&&Math.abs(previous.lon)<=180)return previous;
   const revision=routeRevision;
-  const results=await api('/api/search?q='+encodeURIComponent(text));
+  const results=await destinationResults(text,key==='end'&&!/^\d+\s/.test(text)?'places':'');
   if(revision!==routeRevision)throw Error('Route cleared.');
   if(!results.length)throw Error('Could not find '+text+'. Try a town and state, full address, or map pin.');
   const selected=window.routePlannerAddress.exactAddress(results,text);
   if(selected)return {lat:+selected.lat,lon:+selected.lon,label:selected.display_name.split(',').slice(0,2).join(',')};
   return chooseLocation(results,text);
 }
-function chooseLocation(results,text){results.sort((a,b)=>Number(b.category==='boundary'||b.category==='place')-Number(a.category==='boundary'||a.category==='place'));return new Promise((resolve,reject)=>{const d=document.createElement('dialog');d.innerHTML='<h2>Choose location</h2><p class="help">'+esc(text)+'</p>'+results.map((x,i)=>'<button data-result="'+i+'" style="display:block;width:100%;margin-top:10px;text-align:left">'+esc(x.display_name)+'<br><small>'+esc(x.addresstype||x.type||x.category)+'</small></button>').join('')+'<button id="cancelSearch" style="margin-top:14px">Cancel</button>';document.body.append(d);function done(){d.close();d.remove()}d.querySelectorAll('[data-result]').forEach(b=>b.onclick=()=>{const x=results[+b.dataset.result];done();resolve({lat:+x.lat,lon:+x.lon,label:x.display_name.split(',').slice(0,2).join(',')})});d.querySelector('#cancelSearch').onclick=()=>{done();reject(Error('Location search cancelled.'))};d.oncancel=e=>{e.preventDefault();done();reject(Error('Location search cancelled.'))};d.showModal()})}
+let placeSearchCapability;
+function hasPlaceSearch(){
+  placeSearchCapability ||= api('/api/provider-status').then(result=>result.placesSearch===true).catch(()=>{
+    placeSearchCapability=null;
+    return false;
+  });
+  return placeSearchCapability;
+}
+async function destinationResults(text, mode, location){
+  if(mode&&!await hasPlaceSearch()){
+    if(mode==='truck-stops')throw Error('Truck-stop search needs the updated search service.');
+    mode='';
+  }
+  const params=new URLSearchParams({q:text});
+  if(mode){
+    const center=(location?L.latLng(location.latitude,location.longitude):gpsPosition?L.latLng(gpsPosition):map?.getCenter())?.wrap();
+    params.set('mode',mode);
+    if(center){params.set('lat',center.lat.toFixed(5));params.set('lon',center.lng.toFixed(5))}
+  }
+  const results=await api('/api/search?'+params);
+  if(mode==='truck-stops'||location){
+    results.sort((a,b)=>(a.distance??Infinity)-(b.distance??Infinity));
+  }
+  return results;
+}
+function chooseLocation(results,text){results.sort((a,b)=>Number(b.category==='boundary'||b.category==='place')-Number(a.category==='boundary'||a.category==='place'));return new Promise((resolve,reject)=>{const d=document.createElement('dialog');d.innerHTML='<h2>Choose location</h2><p class="help">'+esc(text)+'</p>'+results.map((x,i)=>'<button data-result="'+i+'" style="display:block;width:100%;margin-top:10px;text-align:left">'+esc(x.display_name)+'<br><small>'+esc(Number.isFinite(x.distance)?(x.distance/1609.344).toFixed(1)+' mi away':(x.addresstype||x.type||x.category||''))+'</small></button>').join('')+'<button id="cancelSearch" style="margin-top:14px">Cancel</button>';document.body.append(d);function done(){d.close();d.remove()}d.querySelectorAll('[data-result]').forEach(b=>b.onclick=()=>{const x=results[+b.dataset.result];done();resolve({lat:+x.lat,lon:+x.lon,label:x.display_name.split(',').slice(0,2).join(',')})});d.querySelector('#cancelSearch').onclick=()=>{done();reject(Error('Location search cancelled.'))};d.oncancel=e=>{e.preventDefault();done();reject(Error('Location search cancelled.'))};d.showModal()})}
+function bindDestinationSearch(){
+  const mic=$('destinationMic');
+  const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!AndroidRoute.recognizeDestination&&!Speech)return;
+  mic.hidden=false;
+  const received=(transcript,error)=>{
+    mic.disabled=false;
+    if(error){status(error,true);return}
+    if($('tripDialog').open&&transcript?.trim()){
+      if(destinationChoicePending||planning)return;
+      $('end').value=transcript.trim();
+      void pickDestination($('end').value,'places');
+    }
+  };
+  window.routeWeatherDestinationSpeech=received;
+  mic.onclick=()=>{
+    mic.disabled=true;
+    if(AndroidRoute.recognizeDestination){AndroidRoute.recognizeDestination();return}
+    const recognition=new Speech();
+    recognition.lang='en-US';
+    recognition.onresult=event=>received(event.results[0][0].transcript,'');
+    recognition.onerror=()=>received('','Speech recognition is unavailable. Try typing the destination.');
+    recognition.onend=()=>{mic.disabled=false};
+    try{recognition.start()}catch{received('','Could not start speech recognition.')}
+  };
+}
+let destinationChoicePending=false;
+async function pickDestination(query,mode){
+  if(destinationChoicePending||planning)return;
+  destinationChoicePending=true;
+  $('plan').disabled=true;
+  const revision=routeRevision;
+  const existing=$('end').value;
+  try{
+    status('Finding '+query+'…');
+    const nearby=mode==='places'&&(/\bnear me$/i.test(query)||/^[\p{L}\p{N}'&.-]+$/u.test(query));
+    let position=null;
+    if(nearby){
+      position=gpsPosition?{latitude:gpsPosition[0],longitude:gpsPosition[1]}:
+        await new Promise(resolve=>androidLocation.getCurrentPosition(fix=>resolve(fix.coords),()=>resolve(null),
+          {enableHighAccuracy:false,timeout:8000,maximumAge:60000}));
+      if(revision!==routeRevision||!$('tripDialog').open||$('end').value!==existing)return;
+      if(!position)status('GPS unavailable. Searching near the map center.');
+    }
+    if(mode==='places'&&!await hasPlaceSearch()){
+      if(revision===routeRevision&&$('tripDialog').open&&$('end').value===existing){
+        status('Destination entered. Business results need the updated search service.');
+      }
+      return;
+    }
+    const choices=await destinationResults(query.replace(/\s+near me$/i,''),mode,position);
+    if(revision!==routeRevision||!$('tripDialog').open||$('end').value!==existing)return;
+    if(!choices.length)throw Error(mode==='truck-stops'?'No truck stops found in this search area.':'No matching places found. Try adding a town and state.');
+    const result=await chooseLocation(choices,query);
+    if(revision!==routeRevision||!$('tripDialog').open)return;
+    $('end').value=result.label;
+    pins.end={...result,text:result.label};
+    status('Destination selected. Review the start, then calculate your route.');
+  }catch(error){
+    if(revision===routeRevision&&$('tripDialog').open&&error.message!=='Location search cancelled.')status(error.message,true);
+  }finally{
+    destinationChoicePending=false;
+    $('plan').disabled=planning;
+  }
+}
 function sampleRoute(route,stops,depart){const coords=route.geometry.coordinates,dist=[0],secs=[0];const ann=route.legs.flatMap(l=>l.annotation?.duration||[]);for(let i=1;i<coords.length;i++){dist.push(dist.at(-1)+km(coords[i-1],coords[i])*1000);secs.push(secs.at(-1)+(ann[i-1]??0))}const total=dist.at(-1),count=Math.min(24,Math.max(3,Math.ceil(total/40000)+1)),pts=[];for(let n=0;n<count;n++){const target=total*n/(count-1);let i=dist.findIndex(d=>d>=target);i=Math.max(i,0);const frac=i&&dist[i]>dist[i-1]?(target-dist[i-1])/(dist[i]-dist[i-1]):0;const a=coords[Math.max(0,i-1)],b=coords[i],c=[a[0]+(b[0]-a[0])*frac,a[1]+(b[1]-a[1])*frac],ratio=total?target/total:0,sec=secs.at(-1)>0?secs[Math.max(0,i-1)]+(secs[i]-secs[Math.max(0,i-1)])*frac:route.duration*ratio;pts.push({lat:c[1],lon:c[0],distance:route.distance*ratio,eta:depart+sec*1000+stops*60000*ratio,bearing:bearing(a,coords[Math.min(coords.length-1,i+1)]),label:n===0?'Start':n===count-1?'Destination':'Mile '+Math.round(route.distance*ratio/1609.344)})}return pts}
 const forecastCache=(()=>{try{return JSON.parse(localStorage.getItem('route-weather-nws-cache'))||{}}catch{return {}}})();
 async function fetchForecasts(points,revision){
@@ -797,7 +916,7 @@ function plannerInputs(){
 $('planner').onsubmit=e=>{e.preventDefault();return buildTrip()};
 async function buildTrip(routeEdit){
   document.activeElement?.blur();
-  if(planning)return;
+  if(planning||destinationChoicePending)return;
   const revision=routeRevision;
   planning=true;
   $('plan').disabled=true;
@@ -868,13 +987,13 @@ async function buildTrip(routeEdit){
     renderRoute();
     setTab('route');
     map.invalidateSize({pan:false});
-    fitRoute();
+    if(!gpsFollowing)fitRoute();
     syncTrafficScope();
     renderRoadMarkers();
     if(window.matchMedia('(max-width:760px)').matches){
       $('planner').classList.add('mobile-hidden');
       $('editRoute').style.display='block';
-      setTimeout(()=>{if(revision===routeRevision){map.invalidateSize();fitRoute()}},200);
+      setTimeout(()=>{if(revision===routeRevision){map.invalidateSize();if(!gpsFollowing)fitRoute()}},200);
     }
     save();
     const fails=await fetchForecasts(points,revision);
@@ -922,12 +1041,12 @@ async function refreshWeather(){
     if(revision===routeRevision)planning=false;
   }
 }
-function nearRoute(lon,lat){if(!$('nearRoute').checked||!trip)return true;const p=[lon,lat],cs=trip.route.geometry.coordinates;for(let i=1;i<cs.length;i++){const a=cs[i-1],b=cs[i],scale=Math.cos(lat*Math.PI/180),ax=(a[0]-lon)*scale,ay=a[1]-lat,bx=(b[0]-lon)*scale,by=b[1]-lat,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(ax+t*dx,ay+t*dy)*111.32<=16.1)return true}return false}
+function nearRoute(lon,lat){if(!roadFilterEnabled('nearRoute')||!trip)return true;const p=[lon,lat],cs=trip.route.geometry.coordinates;for(let i=1;i<cs.length;i++){const a=cs[i-1],b=cs[i],scale=Math.cos(lat*Math.PI/180),ax=(a[0]-lon)*scale,ay=a[1]-lat,bx=(b[0]-lon)*scale,by=b[1]-lat,dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,-(ax*dx+ay*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(ax+t*dx,ay+t*dy)*111.32<=16.1)return true}return false}
 function visibleRoads(){return activeRoadItems().filter(roadEnabled).filter(x=>{if(nearRoute(x.lon,x.lat))return true;if(!trip||!Number.isFinite(x.endLat)||!Number.isFinite(x.endLon))return false;if(nearRoute(x.endLon,x.endLat))return true;const scale=Math.cos(x.lat*Math.PI/180),dx=(x.endLon-x.lon)*scale,dy=x.endLat-x.lat;return trip.route.geometry.coordinates.some(p=>{const px=(p[0]-x.lon)*scale,py=p[1]-x.lat,t=Math.max(0,Math.min(1,(px*dx+py*dy)/(dx*dx+dy*dy||1)));return Math.hypot(px-t*dx,py-t*dy)*111.32<=16.1})}).sort((a,b)=>(a.type==='chain'?-1:1)-(b.type==='chain'?-1:1))}
 function roadRecord(x){return x.district?'Caltrans district '+x.district+' · '+x.timestamp+' Pacific':
   (x.source||'State road feed')+(x.updated?' · '+date(x.updated)+' '+time(x.updated):'')}
-function roadPopup(x){return '<b>'+esc(x.title)+'</b><br>'+esc(x.place)+'<br>'+esc(x.description)+'<br><small>'+esc(roadRecord(x))+'</small>'+(x.image?'<p><a href="'+esc(x.image)+'" target="_blank" rel="noopener">Open camera image</a></p>':'')}
-function renderRoadMarkers(){drawViewportRoads();if(tab==='roads')renderRoadPanel()}
+function roadPopup(x){return '<b>'+esc(x.title)+'</b><br>'+esc(x.place)+'<br>'+esc(x.description)+'<br><small>'+esc(roadRecord(x))+'</small>'+(x.image?'<p><a href="'+esc(x.image)+'" target="_blank" rel="noopener">Open camera image</a></p><img class="road-camera" loading="lazy" src="'+esc(x.image)+'" alt="Caltrans traffic camera snapshot">':'')+(x.video?'<p><a href="'+esc(x.video)+'" target="_blank" rel="noopener">Open live camera video</a></p>':'')}
+function renderRoadMarkers(){queueViewportRoads();if(tab==='roads')renderRoadPanel()}
 function renderRoadPanel(){
   const roads=visibleRoads(),entry=selectedRoadEntry();
   $('panel').innerHTML='<div class="panel-head"><h2>'+esc(entry.name)+' road conditions</h2><a href="'+esc(entry.url)+'" target="_blank" rel="noopener">Official map ↗</a></div>'+
@@ -939,30 +1058,36 @@ function renderRoadPanel(){
       '<details><summary>Source & timestamp</summary>'+esc(roadRecord(x))+'</details></article>').join(''));
   document.querySelectorAll('[data-road]').forEach(b=>b.onclick=()=>{
     const x=roads[+b.dataset.road];closeSurfaces();setRoadOverlay(activeStateRoad,true);map.setView([x.lat,x.lon],12);
-    L.popup().setLatLng([x.lat,x.lon]).setContent(roadPopup(x)).openOn(map);
+    showStateRoadPopup(x);
   });
 }
-$('nearRoute').onchange=renderRoadMarkers;
+$('nearRoute').onchange=()=>saveRoadFilter('nearRoute',$('nearRoute').checked);
 let gpsRetry=null,gpsStarting=false;
 function showGpsHelp(reason,retry){gpsRetry=retry||gpsRetry;$('gpsReason').textContent=reason;closeSurfaces();if(!$('gpsDialog').open)$('gpsDialog').showModal();status(reason,true)}
 async function gpsReady(){return true}
 function gpsFailure(e,retry){syncGpsUi(false);showGpsHelp(e.message||'Android location is unavailable. Try again.',retry)}
 async function gps(onSuccess){const retry=()=>gps(onSuccess);if(!await gpsReady(retry))return;androidLocation.getCurrentPosition(onSuccess,e=>gpsFailure(e,retry),{enableHighAccuracy:true,timeout:20000,maximumAge:30000})}
 $('locate').onclick=()=>{const revision=routeRevision;status('Requesting your device location…');gps(p=>{if(revision!==routeRevision)return;const text=p.coords.latitude.toFixed(5)+', '+p.coords.longitude.toFixed(5);$('start').value=text;pins.start={lat:p.coords.latitude,lon:p.coords.longitude,label:'GPS start',text};map.setView([p.coords.latitude,p.coords.longitude],11);status('GPS start set. Enter your destination.')})};
-async function toggleGpsFollow(){
+async function startGpsLocation(mode='center',startup=false){
   if(!map||gpsStarting)return;
-  if(watch!==null){stopGpsFollow();return}
+  gpsView=mode;
+  if(watch!==null){if(gpsPosition)applyGpsView(mode);return}
   gpsStarting=true;
   try{
-    if(!await gpsReady(toggleGpsFollow))return;
+    if(!await gpsReady(()=>startGpsLocation(mode)))return;
     gpsPending=true;
     status('Requesting live GPS location…');
     watch=androidLocation.watchPosition(onGpsFix,e=>{
       stopGpsFollow();
-      gpsFailure(e,toggleGpsFollow);
+      if(startup)status('Location unavailable. Tap the location button to retry, or plan a route manually.');
+      else gpsFailure(e,()=>startGpsLocation(mode));
     },{enableHighAccuracy:true,timeout:20000,maximumAge:5000});
     syncGpsControls();
   }finally{gpsStarting=false}
+}
+function toggleGpsFollow(){
+  if(gpsFollowing){showGpsOverview();return}
+  void startGpsLocation('follow');
 }
 $('follow').onclick=toggleGpsFollow;
 $('pinMode').onclick=()=>{pinning=!pinning;$('pinMode').classList.toggle('active',pinning);$('pinMode').setAttribute('aria-pressed',pinning);$('pinOptions').style.display=pinning?'block':'none'};$('pinStart').onclick=()=>{pinTarget='start';$('pinHint').textContent='Tap map for start'};$('pinEnd').onclick=()=>{pinTarget='end';$('pinHint').textContent='Tap map for destination'};
@@ -1022,7 +1147,11 @@ const roadCategories = {
   rwis: ['≋', 'Roadside weather', '#b5eab8'],
   winter: ['❅', 'Winter advisories', '#b8e2ff'],
   work: ['▰', 'Work zones', '#f2ce75'],
-  incident: ['!', 'Incidents & alerts', '#ffb274']
+  incident: ['!', 'Incidents & alerts', '#ffb274'],
+  police: ['🚔','CHP report','#a7d5ff'],
+  collision: ['✦','Collision','#ff8e83'],
+  stopped: ['▰','Stopped vehicle','#f4d07e'],
+  debris: ['◆','Debris','#f9bb74']
 };
 function roadKind(item) {
   if (item.type === 'chain' && item.district) {
@@ -1032,37 +1161,144 @@ function roadKind(item) {
   if (item.type === 'closure') return / · (Full|Road Closure)$/i.test(item.title) && !/rest area|ramp|shoulder/i.test(item.title) ? 'full' : 'lane';
   return item.type;
 }
-function roadEnabled(item) { return !!$('roadFilter-' + roadKind(item))?.checked; }
-function drawViewportRoads() {
-  if (!map || !roadsLayer || !map.hasLayer(roadsLayer)) return;
-  const bounds = map.getBounds();
-  const cells = new Map();
-  for (const item of activeRoadItems()) {
-    if (!roadEnabled(item) || !bounds.contains([item.lat, item.lon])) continue;
-    if ($('nearRoute').checked && !nearRoute(item.lon, item.lat)) continue;
-    const point = map.latLngToContainerPoint([item.lat, item.lon]);
-    const size = map.getZoom() >= 12 ? 31 : 53;
-    const key = Math.floor(point.x / size) + ':' + Math.floor(point.y / size);
-    if (!cells.has(key)) cells.set(key, []);
-    cells.get(key).push(item);
-  }
-  roadsLayer.clearLayers();
-  for (const items of cells.values()) {
-    const item = items[0], [icon, label, color] = roadCategories[roadKind(item)];
-    const html = items.length > 1 ? String(items.length) : icon;
-    const marker = L.marker([item.lat, item.lon], {
-      icon: L.divIcon({className:'road-icon viewport-road', html:'<span style="background:'+color+'">'+html+'</span>', iconSize:[29,29]}),
-      title: items.length > 1 ? items.length+' road reports' : label
-    }).addTo(roadsLayer);
-    const reports = items.slice(0, 12).map(roadPopup).join('<hr>');
-    marker.bindPopup(reports + (items.length > 12 ? '<p>Zoom in for more reports.</p>' : ''), {maxHeight:250});
-  }
+const stateRoadFilterStorage='route-weather-state-filters';
+let roadFilterState='CA',savedRoadFilters={};
+try{savedRoadFilters=JSON.parse(localStorage.getItem(stateRoadFilterStorage))||{}}catch{}
+function roadFilterEnabled(kind,code=activeStateRoad){
+  return savedRoadFilters[code]?.[kind]??(kind!=='rwis'&&kind!=='nearRoute');
 }
-let statewideRefresh = 0, loadingRoads = false;
+function saveRoadFilter(kind,checked){
+  savedRoadFilters[roadFilterState]={...savedRoadFilters[roadFilterState],[kind]:checked};
+  try{localStorage.setItem(stateRoadFilterStorage,JSON.stringify(savedRoadFilters))}catch{}
+  if(roadFilterState!==activeStateRoad)return;
+  renderRoadMarkers();
+  if(activeStateRoad==='CA')loadStatewide();
+}
+function roadEnabled(item){return roadFilterEnabled(roadKind(item))}
+let stateRoadPopup;
+function closeStateRoadPopup(){
+  stateRoadPopup?.remove();
+  stateRoadPopup=null;
+}
+function openStateRoadPopup(latlng,content){
+  if(stateRoadPopup?.isOpen()){
+    stateRoadPopup.setLatLng(latlng).setContent(content);
+    return;
+  }
+  if(waypointPopup)map.closePopup(waypointPopup);
+  stateRoadPopup=L.popup({pane:'roadDetails',className:'state-road-popup',autoClose:false,closeOnClick:false,closeOnEscapeKey:false,
+    maxWidth:300,maxHeight:280,autoPanPaddingTopLeft:[12,64],autoPanPaddingBottomRight:[12,72]})
+    .setLatLng(latlng).setContent(content).addTo(map);
+  L.DomEvent.off(stateRoadPopup.getElement(),'mousedown touchstart',L.DomEvent.stopPropagation);
+}
+function showStateRoadPopup(item){
+  openStateRoadPopup([item.lat,item.lon],window.sharedRoadReportDetails?.(item)??roadPopup(item));
+}
+function showRoadGroup(lead,items){
+  if(items.length===1){showStateRoadPopup(lead);return}
+  const {priority}=window.routeWeatherRoadDisplay;
+  const ordered=items.slice().sort((a,b)=>priority[a.kind]-priority[b.kind]);
+  const where=[lead.lat,lead.lon];
+  const root=document.createElement('section');
+  const heading=document.createElement('strong');
+  heading.textContent=ordered.length.toLocaleString()+' reports at this spot';
+  const list=document.createElement('div');
+  list.className='road-group-list';
+  root.append(heading,list);
+  let page=0;
+  const pageSize=4;
+  function renderPage(){
+    list.replaceChildren();
+    for(const item of ordered.slice(page*pageSize,(page+1)*pageSize)){
+      const [symbol,label,color]=roadCategories[item.kind];
+      const button=document.createElement('button'), icon=document.createElement('span');
+      button.type='button';
+      icon.className='road-group-symbol';
+      icon.style.background=color;
+      icon.textContent=symbol;
+      icon.setAttribute('aria-hidden','true');
+      button.append(icon,document.createTextNode([item.title||label,item.direction].filter(Boolean).join(' · ')));
+      button.onclick=event=>{
+        event.stopPropagation();
+        const content=document.createElement('section'), back=document.createElement('button'), detail=document.createElement('div');
+        back.type='button';
+        back.className='road-detail-back';
+        back.textContent='Back to reports';
+        back.onclick=event=>{event.stopPropagation();openStateRoadPopup(where,root)};
+        const sharedDetails=window.sharedRoadReportDetails?.(item);
+        if(sharedDetails)detail.append(sharedDetails);
+        else detail.innerHTML=roadPopup(item);
+        content.append(back,detail);
+        openStateRoadPopup([item.lat,item.lon],content);
+      };
+      list.append(button);
+    }
+    if(ordered.length>pageSize){
+      const controls=document.createElement('div');
+      controls.className='road-group-pages';
+      for(const [label,delta,disabled] of [
+        ['Previous',-1,page===0],['Next',1,(page+1)*pageSize>=ordered.length]
+      ]){
+        const button=document.createElement('button');
+        button.type='button';
+        button.textContent=label;
+        button.disabled=disabled;
+        button.onclick=event=>{
+          event.stopPropagation();
+          page+=delta;
+          renderPage();
+          stateRoadPopup?.update();
+        };
+        controls.append(button);
+      }
+      list.append(controls);
+    }
+  }
+  renderPage();
+  openStateRoadPopup(where,root);
+}
+let roadDisplay,roadDistanceCache=new WeakMap(),roadDistanceGeometry;
+function queueViewportRoads(){roadDisplay?.refresh()}
+function visibleRoadCanvasReports(bounds){
+  const enabled=new Set(Object.keys(roadCategories).filter(kind=>roadFilterEnabled(kind)));
+  const geometry=roadFilterEnabled('nearRoute')&&trip?.route?.geometry?.coordinates;
+  if(geometry!==roadDistanceGeometry){
+    roadDistanceGeometry=geometry;
+    roadDistanceCache=new WeakMap();
+  }
+  const items=[];
+  for(const report of activeRoadItems()){
+    const kind=roadKind(report);
+    if(!enabled.has(kind)||!bounds.contains([report.lat,report.lon]))continue;
+    if(geometry){
+      if(!roadDistanceCache.has(report))roadDistanceCache.set(report,nearRoute(report.lon,report.lat));
+      if(!roadDistanceCache.get(report))continue;
+    }
+    items.push({...report,kind});
+  }
+  return items;
+}
+let statewideRefresh = 0, loadingRoads = false, loadingChp = false;
 const districtFeeds = new Map();
 async function loadStatewide(force = false) {
   if (loadingRoads || !roadOverlayEnabled || activeStateRoad!=='CA') return;
-  const extra = ['cctv','rwis','cms'].filter(kind => $('roadFilter-'+kind).checked);
+  const extra = ['cctv','rwis','cms'].filter(kind => roadFilterEnabled(kind));
+  const includeChp=roadFilterEnabled('incident');
+  const previousChp=districtFeeds.get('chp');
+  if(includeChp&&!loadingChp&&(!previousChp||force||Date.now()-previousChp.at>180000)){
+    loadingChp=true;
+    // The CHP reader is shared with route warnings.
+    Promise.resolve().then(()=>window.readChpRoadEvents?.()).then(result=>{
+      if(!result)return;
+      districtFeeds.set('chp',{items:result.items,failures:[],at:Date.now()});
+      roadData=[...districtFeeds.values()].flatMap(feed=>feed.items);
+      if(activeStateRoad==='CA')renderRoadMarkers();
+    }).catch(()=>{
+      districtFeeds.set('chp',{items:[],failures:['CHP incidents'],at:Date.now()});
+      roadData=[...districtFeeds.values()].flatMap(feed=>feed.items);
+      if(activeStateRoad==='CA')renderRoadMarkers();
+    }).finally(()=>{loadingChp=false});
+  }
   const jobs = Array.from({length:12}, (_, i) => i+1).flatMap(district =>
     ['cc,lcs', ...extra].map(feeds => ({district, feeds, key:district+':'+feeds}))
   ).filter(job => force || Date.now() - (districtFeeds.get(job.key)?.at || 0) > 180000);
@@ -1087,7 +1323,7 @@ async function loadStatewide(force = false) {
       if(activeStateRoad==='CA'&&roadOverlayEnabled)$('roadStatus').textContent = 'Fetching California road feeds '+done+' / '+jobs.length+'…';
     }));
     roadData = [...districtFeeds.values()].flatMap(feed => feed.items);
-    if(activeStateRoad==='CA')drawViewportRoads();
+    if(activeStateRoad==='CA')queueViewportRoads();
   }
   roadFailures = [...districtFeeds.values()].flatMap(feed => feed.failures);
   if(done===jobs.length)roadFetched=statewideRefresh=Date.now();
@@ -1095,6 +1331,7 @@ async function loadStatewide(force = false) {
   updateRoadOverlayControls();
   if(activeStateRoad==='CA'&&tab==='roads')renderRoadPanel();
   if(done<jobs.length)refreshActiveRoads();
+  else if(extra.join(',')!==['cctv','rwis','cms'].filter(kind=>roadFilterEnabled(kind)).join(','))loadStatewide();
 }
 function pauseTimeline() {
   playing=false;
@@ -1715,17 +1952,17 @@ async function previewWaypoint(latlng) {
 }
 
 function projectOnRoute(route,point) {
-  let best=Infinity,along=0,total=0;
+  let best=Infinity,along=0,total=0,heading=null;
   const scale=Math.cos(point[1]*Math.PI/180);
   for(let i=1;i<route.length;i++){
     const a=route[i-1],b=route[i],dx=(b[0]-a[0])*scale,dy=b[1]-a[1];
     const fraction=Math.max(0,Math.min(1,(((point[0]-a[0])*scale)*dx+(point[1]-a[1])*dy)/(dx*dx+dy*dy||1)));
     const distance=km(point,[a[0]+(b[0]-a[0])*fraction,a[1]+(b[1]-a[1])*fraction]);
     const length=km(a,b);
-    if(distance<best){best=distance;along=total+fraction*length}
+    if(distance<best){best=distance;along=total+fraction*length;heading=length?bearing(a,b):null}
     total+=length;
   }
-  return {best,along,total};
+  return {best,along,total,heading};
 }
 let lastEtaUpdate=0, etaShift=0, gpsProgress=null, lastForecastRefresh=0;
 let driveEta=null, driveSpeedAverage=null, lastMovingFix=0;
@@ -1827,19 +2064,20 @@ $('routeVia').onclick=()=>{
 $('loadRoads').onclick=()=>refreshActiveRoads(true,true);
 for(const [kind,[icon,label,color]] of Object.entries(roadCategories)){
   const el=document.createElement('label');
-  el.innerHTML='<input type="checkbox" id="roadFilter-'+kind+'" '+(['cctv','rwis','cms'].includes(kind)?'':'checked')+'><span style="color:'+color+'">'+icon+'</span> '+label;
+  el.innerHTML='<input type="checkbox" id="roadFilter-'+kind+'" '+(kind==='rwis'?'':'checked')+'><span style="color:'+color+'">'+icon+'</span> '+label;
   el.dataset.roadKind=kind;
   $('roadFilters').append(el);
-  el.querySelector('input').onchange=()=>{drawViewportRoads();if(tab==='roads')renderRoadPanel();if(activeStateRoad==='CA')loadStatewide()};
+  el.querySelector('input').onchange=event=>saveRoadFilter(kind,event.target.checked);
 }
 function bindMapTools(){
   syncWeatherPointsButton();
   if(!map)return;
   routeWindLayer=L.layerGroup().addTo(map);
   renderRouteWind();
-  map.on('moveend',drawViewportRoads);
+  map.createPane('roadDetails',map.getPane('mapPane')).style.zIndex=760;
+  roadDisplay=window.routeWeatherRoadDisplay.createRoadDisplay(L,visibleRoadCanvasReports,showRoadGroup).addTo(roadsLayer);
   map.on('moveend',queueAreaWeather);
-  map.on('click',e=>previewWaypoint(e.latlng));
+  map.on('click',e=>{if(pinning||!window.pickRoadAhead?.(e.containerPoint)&&!roadDisplay.handleClick(e.containerPoint)&&!stateRoadPopup?.isOpen())previewWaypoint(e.latlng)});
 }
 setInterval(()=>{
   if(document.hidden) return;
@@ -1985,7 +2223,7 @@ function drawFirePerimeters(features){
 function toggleWildfireLayer(kind){
   if(wildfireEnabled.has(kind))wildfireEnabled.delete(kind);
   else wildfireEnabled.add(kind);
-  const button=$('menuFire-'+kind),on=wildfireEnabled.has(kind);
+  const button=$(kind==='hotspots'?'layerHotspots':'menuFire-'+kind),on=wildfireEnabled.has(kind);
   button.setAttribute('aria-pressed',String(on));
   button.classList.toggle('enabled',on);
   if(kind==='hotspots'&&!on)hotspotPopup?.close();
@@ -2004,8 +2242,8 @@ let activeStateRoad='CA',roadOverlayEnabled=false,roadOverlayRevision=0;
 const californiaRoadEntry={name:'California',system:'Caltrans QuickMap',url:'https://quickmap.dot.ca.gov/',overlay:'Chain controls, closures, cameras and more'};
 const stateRoadReports=new Map(),stateRoadLoads=new Map();
 const overlayCategories={
-  CA:['chain','hold','full','lane','cctv','cms','rwis'],
-  OR:['chain','full','winter','work','incident'],
+  CA:['chain','hold','full','lane','cctv','cms','rwis','incident'],
+  OR:['chain','full','winter','work','incident','cctv'],
   WA:['full','work','incident'],
   TN:['full','work','incident']
 };
@@ -2039,16 +2277,22 @@ function updateRoadOverlayControls(){
   $('menuRoadState').textContent=entry.name+' · '+(roadOverlayEnabled?'On':'Off');
   $('menuRoads').setAttribute('aria-pressed',String(roadOverlayEnabled));
   $('menuRoads').classList.toggle('enabled',roadOverlayEnabled);
-  $('stateOverlaySelection').textContent=entry.name+' overlay '+(roadOverlayEnabled?'on':'off')+' · '+entry.overlay;
-  $('activeRoadTitle').textContent=entry.name+' road layers';
-  $('activeRoadSource').textContent=entry.system+' ↗';
-  $('activeRoadSource').href=entry.url;
-  $('loadRoads').textContent='Refresh '+entry.name+' feeds';
-  $('loadRoads').disabled=!roadOverlayEnabled||(activeStateRoad==='CA'?loadingRoads:stateRoadLoads.has(activeStateRoad));
-  $('showRoadMarkers').checked=roadOverlayEnabled;
-  $('roadStatus').textContent=roadOverlayMessage();
+  const filterEntry=stateRoadData?.directory[roadFilterState]||californiaRoadEntry;
+  const showing=roadOverlayEnabled&&activeStateRoad===roadFilterState;
+  $('activeRoadTitle').textContent=filterEntry.name+' filters';
+  $('activeRoadSource').textContent=filterEntry.system+' ↗';
+  $('activeRoadSource').href=filterEntry.url;
+  $('loadRoads').textContent='Refresh '+filterEntry.name+' feeds';
+  $('loadRoads').disabled=!showing||(activeStateRoad==='CA'?loadingRoads:stateRoadLoads.has(activeStateRoad));
+  $('viewRoadList').disabled=!showing;
+  $('showRoadMarkers').checked=showing;
+  $('nearRoute').checked=roadFilterEnabled('nearRoute',roadFilterState);
+  $('roadStatus').textContent=showing?roadOverlayMessage():filterEntry.name+' overlay is off.';
+  const categories=overlayCategories[roadFilterState]||['work'];
   for(const label of $('roadFilters').children){
-    label.hidden=!(overlayCategories[activeStateRoad]||['work']).includes(label.dataset.roadKind);
+    const kind=label.dataset.roadKind;
+    label.hidden=!categories.includes(kind);
+    label.querySelector('input').checked=roadFilterEnabled(kind,roadFilterState);
   }
 }
 
@@ -2086,6 +2330,7 @@ function fitRoadStateIfOffscreen(code){
 function setRoadOverlay(code,enabled,fit=false){
   if(!map||!(code==='CA'||stateRoadData?.directory[code]?.overlay))return;
   roadOverlayRevision++;
+  if(code!==activeStateRoad||!enabled)closeStateRoadPopup();
   activeStateRoad=code;
   roadOverlayEnabled=enabled;
   if(enabled){
@@ -2093,7 +2338,6 @@ function setRoadOverlay(code,enabled,fit=false){
     if(fit)fitRoadStateIfOffscreen(code);
   }else{
     map.removeLayer(roadsLayer);
-    roadsLayer.clearLayers();
   }
   try{localStorage.setItem('route-weather-state-overlay',JSON.stringify({code,enabled}))}catch{}
   updateRoadOverlayControls();
@@ -2197,7 +2441,17 @@ function stateRoadSection(parent,title,entries){
         setRoadOverlay(code,!on,!on);
         $('openMapLayers').focus();
       };
-      actions.append(toggle);
+      const filters=document.createElement('button');
+      filters.type='button';
+      filters.textContent='Filters';
+      filters.setAttribute('aria-label',entry.name+' filters');
+      filters.onclick=()=>{
+        roadFilterState=code;
+        setStateRoadsOpen(false);
+        updateRoadOverlayControls();
+        openSurface('roadsDialog');
+      };
+      actions.append(toggle,filters);
     }else{
       const availability=document.createElement('small');
       availability.className='state-road-availability';
@@ -2306,12 +2560,6 @@ $('closeStateRoads').onclick=()=>{
   $('openMapLayers').focus();
 };
 
-$('stateLayerSettings').onclick=()=>{
-  setStateRoadsOpen(false);
-  updateRoadOverlayControls();
-  openSurface('roadsDialog');
-};
-
 let clearanceLayer,clearanceData,clearancesVisible=false,activeClearanceState=null,clearanceRevision=0,clearanceViewport=null,clearanceMoveTimer;
 const clearanceRequests=new Map();
 
@@ -2417,7 +2665,6 @@ function setClearances(on,code=null,fit=false){
   activeClearanceState=code;
   clearancesVisible=on;
   $('menuClearances').setAttribute('aria-pressed',String(on));
-  $('toggleClearances').setAttribute('aria-pressed',String(on&&!code));
   renderStateRoads();
   $('menuClearances').classList.toggle('enabled',on);
   $('clearanceNote').hidden=!on;
@@ -2439,7 +2686,6 @@ function bindClearanceLayer(){
       if(clearancesVisible&&!activeClearanceState)loadClearances(null);
     },260);
   });
-  $('toggleClearances').onclick=()=>{setStateRoadsOpen(false);setClearances(!(clearancesVisible&&!activeClearanceState));$('openMapLayers').focus()};
 }
 
 let tollLayer,tollsVisible=false,activeTollState=null,tollViewport=null,tollRevision=0,tollMoveTimer;
@@ -2517,9 +2763,6 @@ function setTollRoads(on,code=null,fit=false){
   tollViewport=null;
   activeTollState=code;
   tollsVisible=on;
-  $('menuTolls').setAttribute('aria-pressed',String(on));
-  $('menuTolls').classList.toggle('enabled',on);
-  $('toggleTolls').setAttribute('aria-pressed',String(on&&!code));
   $('tollNote').hidden=!on;
   tollLayer.clearLayers();
   renderStateRoads();
@@ -2539,11 +2782,7 @@ function bindTollRoads(){
       if(tollsVisible&&!activeTollState)loadTollRoads(null);
     },260);
   });
-  $('toggleTolls').onclick=()=>{
-    setStateRoadsOpen(false);
-    setTollRoads(!(tollsVisible&&!activeTollState));
-    $('openMapLayers').focus();
-  };
+
 }
 
 const streetCredit='OpenFreeMap © OpenMapTiles · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -2556,14 +2795,18 @@ const streetThemes={
 const highwayClasses=['motorway','trunk','primary','secondary','tertiary'];
 const roadClasses=[...highwayClasses,'minor','service','track'];
 function getStreetSource(){
-  const route=downloadedMapEnabled?offlineRoute:null;
+  const offlineTiles=window.routeWeatherOffline?.shouldUseOffline('tiles')
+    ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles);
+  const route=!offlineTiles&&downloadedMapEnabled?offlineRoute:null;
   if(!streetSource){
-    const metadata=route
-      ?caches.open(route.name).then(cache=>({url:route.template,cache}))
-      :fetch('https://tiles.openfreemap.org/planet',{signal:AbortSignal.timeout(10000)}).then(async response=>{
-        if(!response.ok)throw Error('Map index unavailable');
-        return {url:(await response.json()).tiles[0],cache:null};
-      });
+    const metadata=offlineTiles
+      ?Promise.resolve({url:'/offline-tiles/{z}/{x}/{y}.mvt',cache:null,offlinePmtiles:true})
+      :route
+        ?caches.open(route.name).then(cache=>({url:route.template,cache}))
+        :fetch('https://tiles.openfreemap.org/planet',{signal:AbortSignal.timeout(10000)}).then(async response=>{
+          if(!response.ok)throw Error('Map index unavailable');
+          return {url:(await response.json()).tiles[0],cache:null};
+        });
     const source=Promise.all([metadata,import('/vector-tile.mjs'),import('/pbf.mjs')])
       .then(([meta,{VectorTile},{default:Pbf}])=>({...meta,VectorTile,Pbf}))
       .catch(error=>{if(streetSource===source)streetSource=null;throw error});
@@ -2647,6 +2890,17 @@ function streetLabelCandidates(tiles,scale,origin,width,height,zoom,toScreen){
     const anchors=geometry().map(line=>streetAnchor(line.map(toScreen),width,height)).filter(Boolean);
     const anchor=anchors.sort((a,b)=>b.length-a.length)[0];
     if(anchor)labels.push({...anchor,angle:shield?0:anchor.angle,text,priority:shield?1:rank+2,size:shield?16:rank<5?17:15,kind:shield?'shield':'road',network});
+  });
+  streetGeometry(tiles,'place',scale,origin,(feature,geometry)=>{
+    if(feature.type!==1)return;
+    const {class:kind,name,name_en}=feature.properties;
+    const label=name_en||name;
+    if(!label||!['city','town','village'].includes(kind))return;
+    if(kind==='village'&&zoom<11)return;
+    if(kind==='town'&&zoom<8)return;
+    const wp=geometry()[0]?.[0];
+    const point=wp&&toScreen(wp);
+    if(point)labels.push({...point,angle:0,text:label,priority:kind==='city'?0.5:kind==='town'?1.5:3,size:kind==='city'?16:kind==='town'?14:12,kind:'place'});
   });
   return labels;
 }
@@ -2748,8 +3002,11 @@ function bindStreetLabels(){
   }
   async function render(){
     if(pinching)return;
-    const id=++revision,zoom=map.getZoom(),usingDownload=downloadedMapEnabled&&!!offlineRoute;
-    if(zoom<(usingDownload?7:14)){
+    const id=++revision,zoom=map.getZoom();
+    const hasOfflinePmtiles=Boolean(window.routeWeatherOffline?.shouldUseOffline('tiles')
+      ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles));
+    const usingDownload=hasOfflinePmtiles||(downloadedMapEnabled&&!!offlineRoute);
+    if(zoom<(hasOfflinePmtiles?4:usingDownload?7:14)){
       clear();
       if(androidBaseMap&&!map.hasLayer(androidBaseMap))androidBaseMap.addTo(map);
       return;
@@ -2826,29 +3083,50 @@ function bindStreetLabels(){
 }
 
 const drivingZoom=16;
-let gpsPosition=null,gpsFollowing=false,gpsPending=false,gpsOverview=null;
+let gpsPosition=null,gpsFollowing=false,gpsPending=false,gpsOverview=null,gpsAltitude=null,gpsGrade=null,gpsView='overview';
+const gradeTracker=window.routeWeatherLiveGrade.createGradeTracker((a,b)=>km(a,b)*1000);
 function syncStreetMap(){
   if(map)streetLabels?.refresh();
 }
 function syncGpsControls(){
-  const button=$('centerGps'), name=gpsPending?'Cancel GPS request':watch!==null?'Return to overview map':'Center and follow GPS';
+  const button=$('centerGps'), name=gpsPending?'Cancel GPS request':gpsView==='follow'?'Show route overview':gpsView==='center'?'Start Follow Me':'Center me at current zoom';
   button.classList.toggle('active',gpsFollowing);
   button.classList.toggle('gps-paused',watch!==null&&!gpsPending&&!gpsFollowing);
   button.setAttribute('aria-label',name);
   button.setAttribute('aria-pressed',String(watch!==null));
   button.title=name;
   for(const id of ['follow','menuGps']){
-    $(id).setAttribute('aria-pressed',String(watch!==null));
-    $(id).classList.toggle(id==='menuGps'?'enabled':'active',watch!==null);
+    $(id).setAttribute('aria-pressed',String(gpsFollowing));
+    $(id).classList.toggle(id==='menuGps'?'enabled':'active',gpsFollowing);
   }
-  $('gpsMenuLabel').textContent=watch!==null?'Stop GPS follow':'Follow GPS';
+  $('gpsMenuLabel').textContent=gpsFollowing?'Stop Following':'Follow Me';
+  $('follow').textContent=$('gpsMenuLabel').textContent;
 }
 function centerDrivingMap(){
+  applyGpsView('follow');
+}
+function applyGpsView(mode){
   if(!gpsPosition)return;
-  gpsOverview={center:map.getCenter(),zoom:map.getZoom()};
-  gpsFollowing=true;
-  map.setView(gpsPosition,drivingZoom,{animate:false});
+  gpsOverview||={center:map.getCenter(),zoom:map.getZoom()};
+  gpsView=mode;
+  gpsFollowing=mode==='follow';
+  AndroidRoute.driving(gpsFollowing);
+  if(!gpsFollowing)resetMapBearing();
+  map.setView(gpsPosition,gpsFollowing?drivingZoom:map.getZoom(),{animate:false});
   syncGpsControls();
+}
+function showGpsOverview(){
+  gpsView='overview';gpsFollowing=false;
+  AndroidRoute.driving(false);resetVoiceGuidance();resetMapBearing();
+  if(trip)fitRoute();
+  else if(gpsOverview)map.setView(gpsOverview.center,gpsOverview.zoom,{animate:false});
+  gpsOverview=null;
+  updateGpsMarkerHeading();syncGpsControls();
+}
+function cycleGpsView(){
+  if(gpsPending){stopGpsFollow();return}
+  if(gpsView==='follow'){showGpsOverview();return}
+  void startGpsLocation(gpsView==='center'?'follow':'center');
 }
 let courseAnchor=null, driveCourse=null, compassCourse=null, headingSource='', lastDriveSpeed=null;
 let movingForHeading=false, bearingTarget=null, bearingFrame=0, lastCompassSample=0;
@@ -2959,6 +3237,9 @@ function onGpsFix({coords,timestamp}){
   if(watch===null)return;
   gpsPosition=[coords.latitude,coords.longitude];
   lastDriveSpeed=coords.speed;
+  gpsAltitude=Number.isFinite(coords.altitude)&&!(coords.altitudeAccuracy>50)?coords.altitude:null;
+  gpsGrade=gradeTracker.update(coords,timestamp);
+  refreshTerrainAltitude();
   updateDriveCourse(coords,timestamp);
   const first=gpsPending;
   gpsPending=false;
@@ -2971,23 +3252,27 @@ function onGpsFix({coords,timestamp}){
   gpsMarker.setLatLng(gpsPosition);
   AndroidRoute.compassPosition(coords.latitude,coords.longitude,coords.altitude||0);
   if(first){
-    AndroidRoute.driving(true);
     syncTrafficScope();
-    centerDrivingMap();
+    applyGpsView(gpsView);
     $('hudStatus').classList.remove('visible');
   }else if(gpsFollowing&&map.latLngToContainerPoint(gpsPosition).distanceTo(map.getSize().divideBy(2))>=4){
     map.panTo(gpsPosition,{animate:false});
   }
   showDriveCourse();
   updateGpsEta(coords);
-  speakNextDirection(coords,timestamp);
+  if(gpsFollowing)speakNextDirection(coords,timestamp);
   queueAreaWeather();
 }
 function stopGpsFollow(){
   resetVoiceGuidance();
   AndroidRoute.driving(false);
   if(watch!==null)androidLocation.clearWatch(watch);
-  watch=null;gpsFollowing=false;gpsPending=false;gpsPosition=null;
+  watch=null;gpsFollowing=false;gpsPending=false;gpsPosition=null;gpsAltitude=null;gpsView='overview';
+  gpsGrade=gradeTracker.reset();
+  terrainAltitudeRequest?.abort();
+  terrainAltitudeRequest=null;
+  terrainAltitude=null;
+  terrainAltitudeChecked=0;
   courseAnchor=null;driveCourse=null;compassCourse=null;headingSource='';
   movingForHeading=false;lastDriveSpeed=null;lastCompassSample=0;
   clearLiveDriveEta();
@@ -3006,8 +3291,9 @@ function stopGpsFollow(){
   if($('hudText').textContent==='Requesting live GPS location…')$('hudStatus').classList.remove('visible');
 }
 function pauseGpsFollow(){
-  if(!gpsFollowing)return;
+  gpsView='overview';
   gpsFollowing=false;
+  AndroidRoute.driving(false);
   resetMapBearing();
   updateGpsMarkerHeading();
   syncGpsControls();
@@ -3368,25 +3654,65 @@ function bindTrafficLayer(){
 
 if(typeof L==='undefined'){status('Map library could not load. Check your internet connection and reload.',true)}else{map=L.map('map',{zoomControl:false,rotate:typeof L.Map.prototype.setBearing==='function',rotateControl:false,shiftKeyRotate:false,touchRotate:false}).setView([40.45,-122.3],12);androidBaseMap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',className:'base-map',maxZoom:18}).addTo(map);routeLayer=L.layerGroup().addTo(map);weatherLayer=L.layerGroup().addTo(map);roadsLayer=L.layerGroup();radarLayer=L.tileLayer.wms('/api/radar',{layers:'conus_bref_qcd',format:'image/png',transparent:true,version:'1.1.1',opacity:.65,attribution:'NOAA/NWS Radar',maxNativeZoom:12,maxZoom:18});let radarErrored=false;radarLayer.on('tileerror',()=>{if(!radarErrored){radarErrored=true;status('Some radar tiles failed to load. Missing imagery does not mean clear weather.',true)}});map.createPane('gfsForecast',map.getPane('rotatePane')||map.getPane('mapPane')).style.zIndex=215;map.getPane('gfsForecast').style.pointerEvents='none';map.createPane('hrrrForecast',map.getPane('rotatePane')||map.getPane('mapPane')).style.zIndex=216;map.getPane('hrrrForecast').style.pointerEvents='none';map.on('moveend',syncGlobalForecast);map.on('click',e=>{if(!pinning||editingVia)return;const k=pinTarget,text=e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5);$(k).value=text;pins[k]={lat:e.latlng.lat,lon:e.latlng.lng,label:k==='start'?'Map start':'Map destination',text};L.popup().setLatLng(e.latlng).setContent(esc(k==='start'?'Start set':'Destination set')).openOn(map);pinTarget=k==='start'?'end':'start';$('pinHint').textContent='Tap map for '+(pinTarget==='start'?'start':'destination')});if(saved?.route&&saved?.points?.length){trip=saved;try{const fields=JSON.parse(localStorage.getItem('route-weather-fields'));if(fields)for(const k of ['start','end','via','breaks'])$(k).value=fields[k]??''}catch{}restoreRoutePlan(trip,plannerInputs());renderRoute();fitRoute();status('Saved forecast from '+date(trip.fetched)+' '+time(trip.fetched)+'. Plan again for a new departure.')}renderPanel()}
 
-let driveMetricMode='compass';
+const driveMetricModes=['compass','speed','altitude','grade'];
+let driveMetricMode='compass',terrainAltitude=null,terrainAltitudeRequest=null,terrainAltitudeChecked=0;
 try{
-  if(localStorage.getItem('route-weather-drive-metric')==='speed')driveMetricMode='speed';
+  const savedMode=localStorage.getItem('route-weather-drive-metric');
+  if(driveMetricModes.includes(savedMode))driveMetricMode=savedMode;
 }catch{}
+function nextDriveMetric(){
+  return driveMetricModes[(driveMetricModes.indexOf(driveMetricMode)+1)%driveMetricModes.length];
+}
+function currentTerrainAltitude(){
+  if(!terrainAltitude||!gpsPosition)return null;
+  const current=[gpsPosition[1],gpsPosition[0]];
+  return km(current,terrainAltitude.coordinates)<.12?terrainAltitude.elevation:null;
+}
+function refreshTerrainAltitude(){
+  if(driveMetricMode!=='altitude'||gpsAltitude!==null||!gpsPosition||terrainAltitudeRequest||
+    (terrainAltitude&&km([gpsPosition[1],gpsPosition[0]],terrainAltitude.coordinates)<.055)||
+    Date.now()-terrainAltitudeChecked<(terrainAltitude?2500:15000)||!window.routeWeatherTerrain)return;
+  terrainAltitudeChecked=Date.now();
+  const request=terrainAltitudeRequest=new AbortController();
+  const sample={coordinates:[gpsPosition[1],gpsPosition[0]]};
+  const timer=setTimeout(()=>request.abort(),12000);
+  window.routeWeatherTerrain.readTerrain([sample],request.signal).then(()=>{
+    if(!request.signal.aborted&&Number.isFinite(sample.elevation))terrainAltitude=sample;
+  }).catch(()=>{}).finally(()=>{
+    clearTimeout(timer);
+    if(terrainAltitudeRequest!==request)return;
+    terrainAltitudeRequest=null;
+    renderDriveMetric();
+  });
+}
 function renderDriveMetric(){
-  const compass=driveMetricMode==='compass';
-  $('driveHeadingReading').hidden=!compass;
-  $('driveSpeedReading').hidden=compass;
+  $('driveHeadingReading').hidden=driveMetricMode!=='compass';
+  $('driveSpeedReading').hidden=driveMetricMode!=='speed';
+  $('driveAltitudeReading').hidden=driveMetricMode!=='altitude';
+  $('driveGradeReading').hidden=driveMetricMode!=='grade';
   const heading=$('driveCourse').textContent;
   const speed=$('driveSpeed').textContent;
-  const label=compass
-    ?(heading==='—'?'Compass unavailable':'Compass '+heading)+'. Tap to show speed'
-    :(speed.startsWith('—')?'Speed unavailable':'Speed '+speed)+'. Tap to show compass';
-  $('driveMetric').setAttribute('aria-label',label);
+  const altitude=gpsAltitude??currentTerrainAltitude();
+  const source=gpsAltitude===null&&altitude!==null?'Terrain':'Altitude';
+  const feet=altitude===null?'—':Math.round(altitude*3.28084).toLocaleString()+' ft';
+  $('driveAltitudeLabel').textContent=source;
+  $('driveAltitude').textContent=feet;
+  const grade=gpsGrade===null?null:Math.round(gpsGrade*10)/10;
+  const gradeText=grade===null?'—':(grade>0?'+':'')+grade.toFixed(1)+'%';
+  $('driveGrade').textContent=gradeText;
+  const labels={
+    compass:heading==='—'?'Compass unavailable':'Compass '+heading,
+    speed:speed.startsWith('—')?'Speed unavailable':'Speed '+speed,
+    altitude:altitude===null?'Altitude unavailable':source+' '+feet,
+    grade:grade===null?'Grade unavailable':'Estimated grade '+gradeText
+  };
+  $('driveMetric').setAttribute('aria-label',labels[driveMetricMode]+'. Tap to show '+nextDriveMetric());
 }
 $('driveMetric').onclick=()=>{
-  driveMetricMode=driveMetricMode==='compass'?'speed':'compass';
+  driveMetricMode=nextDriveMetric();
   try{localStorage.setItem('route-weather-drive-metric',driveMetricMode)}catch{}
   renderDriveMetric();
+  refreshTerrainAltitude();
 };
 renderDriveMetric();
 function syncGpsUi(on,coords){
@@ -3394,7 +3720,7 @@ function syncGpsUi(on,coords){
   $('driveSpeed').innerHTML=(on&&Number.isFinite(coords?.speed)?Math.round(coords.speed*2.236936):'—')+' <span>MPH</span>';
   const heading=on&&Number.isFinite(coords?.heading)?coords.heading:null;
   const hasSpeed=on&&Number.isFinite(coords?.speed);
-  document.body.classList.toggle('has-drive-reading',hasSpeed||heading!=null);
+  document.body.classList.toggle('has-drive-reading',hasSpeed||heading!=null||on&&gpsPosition!==null);
   $('driveCompass').hidden=heading==null;
   $('driveCompass').style.setProperty('--course',(heading??0)+'deg');
   $('driveCourse').textContent=heading==null?'—':direction(heading);
@@ -3402,7 +3728,7 @@ function syncGpsUi(on,coords){
   renderDriveMetric();
 }
 function setTheme(day){document.body.classList.toggle('day-mode',day);document.body.classList.toggle('night-map',!day);$('menuTheme').classList.toggle('enabled',day);$('menuTheme').setAttribute('aria-pressed',String(day));try{localStorage.setItem('route-weather-day',String(day))}catch{}syncStreetMap()}
-$('openMenu').onclick=()=>{ setStateRoadsOpen(false); $('menuClearRoute').disabled=!trip&&!planning; $('menuRadar').classList.toggle('enabled',$('radar').getAttribute('aria-pressed')==='true');openSurface('menuDialog')};
+$('openMenu').onclick=()=>{ setStateRoadsOpen(false); $('menuClearRoute').disabled=!trip&&!planning; openSurface('menuDialog')};
 $('showWeather').onclick=openAreaForecast;$('driveRoute').onclick=()=>trip?openWeather('route'):openPlanner();
 const compactDriveLayout=matchMedia('(orientation:landscape) and (max-height:540px)');
 const collapsedDrivePanel={compact:true,regular:true};
@@ -3462,16 +3788,17 @@ sizeWeatherDock();
 if(map&&typeof ResizeObserver==='function'){
   new ResizeObserver(()=>map.invalidateSize({pan:true,debounceMoveend:true})).observe($('map'));
 }
-$('centerGps').onclick=toggleGpsFollow;$('zoomIn').onclick=()=>map?.zoomIn(1,{animate:false});$('zoomOut').onclick=()=>map?.zoomOut(1,{animate:false});
+$('centerGps').onclick=cycleGpsView;$('zoomIn').onclick=()=>map?.zoomIn(1,{animate:false});$('zoomOut').onclick=()=>map?.zoomOut(1,{animate:false});
 $('openAndroidLocationSettings').onclick=()=>AndroidRoute.openLocationSettings();$('closeGpsHelp').onclick=()=>$('gpsDialog').close();$('retryGps').onclick=()=>{$('gpsDialog').close();if(gpsRetry)gpsRetry()};
 $('hideStatus').onclick=()=>$('hudStatus').classList.remove('visible');
-$('showRoadMarkers').onchange=()=>setRoadOverlay(activeStateRoad,$('showRoadMarkers').checked);
+$('showRoadMarkers').onchange=()=>setRoadOverlay(roadFilterState,$('showRoadMarkers').checked);
 $('viewRoadList').onclick=()=>openWeather('roads');
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
 document.querySelectorAll('[data-action]').forEach(b=>b.onclick=()=>{const a=b.dataset.action;if(a==='search'||a==='plan')openPlanner(a==='search');else if(a==='clear-route')clearRoute();else if(a==='weather'){closeSurfaces();toggleWeatherPoints()}else if(a==='roads'){closeSurfaces();if(activeStateRoad)setRoadOverlay(activeStateRoad,!roadOverlayEnabled);else showStateRoads()}else if(a==='state-roads')showStateRoads();else if(a==='clearances'){closeSurfaces();setClearances(!clearancesVisible,activeClearanceState)}else if(a==='tolls'){closeSurfaces();setTollRoads(!tollsVisible,activeTollState)}else if(a.startsWith('fire-')){closeSurfaces();toggleWildfireLayer(a.slice(5))}else if(a==='theme')setTheme(!document.body.classList.contains('day-mode'));else if(a==='radar'){closeSurfaces();$('radar').click()}else if(a==='gps'){closeSurfaces();$('follow').click()}else if(a==='pins'){closeSurfaces();$('pinMode').click();status('Tap the map to set your start, then your destination. Plan Trip builds the route.')}});
+bindDestinationSearch();
 try{setTheme(localStorage.getItem('route-weather-day')==='true')}catch{}
 updateDrive();
 bindMapTools();
 initializeRoadOverlay();
-if(map){bindWildfireLayers();bindClearanceLayer();bindTollRoads();bindDrivingMap();bindTrafficLayer();bindVoiceDirections()}
-</script><script src="/road-awareness.js"></script></body></html>
+if(map){bindWildfireLayers();bindClearanceLayer();bindTollRoads();bindDrivingMap();bindTrafficLayer();bindVoiceDirections();void startGpsLocation('center',true)}
+</script><script src="/truck-facilities.js"></script><script src="/route-terrain.js"></script><script src="/road-awareness.js"></script></body></html>

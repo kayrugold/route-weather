@@ -2,6 +2,7 @@ package com.andysdevstudio.routeweather;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.GeomagneticField;
@@ -23,6 +24,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
@@ -40,6 +42,10 @@ import android.webkit.WebViewClient;
 
 import org.json.JSONObject;
 
+import com.andysdevstudio.routeweather.offline.OfflineEngine;
+import com.andysdevstudio.routeweather.offline.OfflinePackageManager;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -58,6 +64,7 @@ import javax.net.ssl.HttpsURLConnection;
 public final class MainActivity extends Activity implements SensorEventListener {
     private static final String ORIGIN = "https://appassets.androidplatform.net";
     private static final int LOCATION_REQUEST = 12;
+    private static final int DESTINATION_SPEECH_REQUEST = 13;
     private static final int RESPONSE_LIMIT = 12 * 1024 * 1024;
     private static final Set<String> PROVIDERS = new HashSet<>(Arrays.asList(
         "api.weather.gov",
@@ -91,6 +98,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private long utteranceSequence;
     private AudioFocusRequest voiceFocus;
     private final List<String> fallbackVoiceEngines = new ArrayList<>();
+    private OfflineEngine offlineEngine;
 
     private void notifyVoice(String event) {
         if (web != null) web.evaluateJavascript("window.routeWeatherSpeechEvent?.(" + JSONObject.quote(event) + ")", null);
@@ -248,6 +256,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
                     .put("latitude", fix.getLatitude()).put("longitude", fix.getLongitude())
                     .put("accuracy", fix.getAccuracy())
                     .put("altitude", fix.hasAltitude() ? fix.getAltitude() : JSONObject.NULL)
+                    .put("altitudeAccuracy", fix.hasVerticalAccuracy() ? fix.getVerticalAccuracyMeters() : JSONObject.NULL)
                     .put("heading", fix.hasBearing() ? fix.getBearing() : JSONObject.NULL)
                     .put("speed", fix.hasSpeed() ? fix.getSpeed() : JSONObject.NULL);
                 JSONObject position = new JSONObject().put("coords", coords).put("timestamp", fix.getTime());
@@ -288,6 +297,25 @@ public final class MainActivity extends Activity implements SensorEventListener 
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        offlineEngine = new OfflineEngine(this, new OfflinePackageManager.Listener() {
+            @Override public void onProgress(String packageId, String state, long downloadedBytes, long totalBytes, String message) {
+                runOnUiThread(() -> {
+                    if (web == null) return;
+                    try {
+                        JSONObject ev = new JSONObject()
+                            .put("packageId", packageId).put("state", state)
+                            .put("downloadedBytes", downloadedBytes).put("totalBytes", totalBytes)
+                            .put("message", message);
+                        web.evaluateJavascript("window.routeWeatherOfflineEvent?.(" + ev.toString() + ")", null);
+                    } catch (Exception ignored) {}
+                });
+            }
+            @Override public void onInstalledChanged() {
+                runOnUiThread(() -> {
+                    if (web != null) web.evaluateJavascript("window.routeWeatherOfflineChanged?.()", null);
+                });
+            }
+        });
         sensors = getSystemService(SensorManager.class);
         compass = sensors.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
         web = new WebView(this);
@@ -304,6 +332,21 @@ public final class MainActivity extends Activity implements SensorEventListener 
                 if (!isLocal(uri)) return null;
                 String name = uri.getPath();
                 if (name == null || name.equals("/")) name = "/index.html";
+                if (name.startsWith("/offline-tiles/") && offlineEngine != null) {
+                    String[] parts = name.substring("/offline-tiles/".length()).replace(".mvt", "").split("/");
+                    if (parts.length == 3) {
+                        try {
+                            int z = Integer.parseInt(parts[0]);
+                            int x = Integer.parseInt(parts[1]);
+                            int y = Integer.parseInt(parts[2]);
+                            byte[] tile = offlineEngine.getVectorTile(z, x, y);
+                            if (tile != null) {
+                                return new WebResourceResponse("application/vnd.mapbox-vector-tile", null, new ByteArrayInputStream(tile));
+                            }
+                        } catch (Exception ignored) {}
+                    }
+                    return new WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", java.util.Collections.emptyMap(), null);
+                }
                 try {
                     return new WebResourceResponse(assetType(name), "UTF-8", getAssets().open(name.substring(1)));
                 } catch (Exception ignored) {
@@ -370,6 +413,37 @@ public final class MainActivity extends Activity implements SensorEventListener 
         }
     }
 
+    private void sendDestinationSpeech(String transcript, String error) {
+        if (web != null) web.evaluateJavascript("window.routeWeatherDestinationSpeech?.("
+            + JSONObject.quote(transcript) + "," + JSONObject.quote(error) + ")", null);
+    }
+
+    private void requestDestinationSpeech() {
+        stopVoice();
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Say a destination");
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        try {
+            startActivityForResult(intent, DESTINATION_SPEECH_REQUEST);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            sendDestinationSpeech("", "Speech recognition is unavailable. Type a destination instead.");
+        }
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != DESTINATION_SPEECH_REQUEST) return;
+        if (result != RESULT_OK) {
+            sendDestinationSpeech("", "");
+            return;
+        }
+        List<String> results = data == null ? null : data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+        String transcript = results == null || results.isEmpty() ? "" : results.get(0);
+        sendDestinationSpeech(transcript, transcript == null || transcript.trim().isEmpty()
+            ? "No destination heard. Try again or type it." : "");
+    }
+
     private static String assetType(String name) {
         if (name.endsWith(".css")) return "text/css";
         if (name.endsWith(".js") || name.endsWith(".mjs")) return "application/javascript";
@@ -386,6 +460,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     }
 
     private final class Bridge {
+        @JavascriptInterface public void recognizeDestination() { runOnUiThread(MainActivity.this::requestDestinationSpeech); }
         @JavascriptInterface public void speakDirections(String text) { runOnUiThread(() -> speakVoice(text)); }
         @JavascriptInterface public void stopDirections() { runOnUiThread(() -> stopVoice()); }
         @JavascriptInterface public void fetch(int id, String spec, String accept, boolean wifiOnly) {
@@ -430,6 +505,33 @@ public final class MainActivity extends Activity implements SensorEventListener 
                 hasDeclination = true;
             });
         }
+        @JavascriptInterface public String offlineStatus() {
+            return offlineEngine != null ? offlineEngine.statusJson() : "{}";
+        }
+        @JavascriptInterface public String offlineSearch(String query, String mode, double lat, double lon, int limit) {
+            if (offlineEngine == null) return "[]";
+            Double nLat = Double.isFinite(lat) ? lat : null;
+            Double nLon = Double.isFinite(lon) ? lon : null;
+            return offlineEngine.searchJson(query, mode, nLat, nLon, limit);
+        }
+        @JavascriptInterface public String offlineFacilities(String kind, double west, double south, double east, double north, int offset) {
+            return offlineEngine != null ? offlineEngine.facilitiesJson(kind, west, south, east, north, offset) : "{\"items\":[],\"total\":0,\"offset\":0}";
+        }
+        @JavascriptInterface public String offlineRoute(String coords, String profile) {
+            return offlineEngine != null ? offlineEngine.routeJson(coords, profile) : "{\"error\":\"Offline engine unavailable.\"}";
+        }
+        @JavascriptInterface public void offlineDownloadPackage(String packageJson) {
+            if (offlineEngine != null) offlineEngine.getPackageManager().startPackageDownload(packageJson);
+        }
+        @JavascriptInterface public void offlinePauseDownload(String packageId) {
+            if (offlineEngine != null) offlineEngine.getPackageManager().pauseDownload(packageId);
+        }
+        @JavascriptInterface public boolean offlineDeletePackage(String packageId) {
+            return offlineEngine != null && offlineEngine.getPackageManager().deletePackage(packageId);
+        }
+        @JavascriptInterface public void offlineReload() {
+            if (offlineEngine != null) offlineEngine.reloadInstalledData();
+        }
     }
 
     private void fetchProvider(int id, String spec, String accept, boolean wifiOnly) {
@@ -439,8 +541,11 @@ public final class MainActivity extends Activity implements SensorEventListener 
             String host = url.getHost().toLowerCase(Locale.ROOT);
             boolean studio = ("https://" + host).equalsIgnoreCase(BuildConfig.SERVICE_ORIGIN)
                 && url.getPath().startsWith("/app-api/");
+            boolean terrain = host.equals("s3.amazonaws.com")
+                && url.getPath().matches("/elevation-tiles-prod/terrarium/10/[0-9]{1,4}/[0-9]{1,4}\\.png")
+                && url.getQuery() == null;
             if (!"https".equals(url.getProtocol()) || (url.getPort() != -1 && url.getPort() != 443)
-                || url.getUserInfo() != null || !(studio || PROVIDERS.contains(host))) throw new IllegalArgumentException();
+                || url.getUserInfo() != null || !(studio || terrain || PROVIDERS.contains(host))) throw new IllegalArgumentException();
             if (wifiOnly && !wifiConnected()) throw new IllegalStateException();
             connection = (HttpsURLConnection) url.openConnection();
             connection.setInstanceFollowRedirects(false);
@@ -532,6 +637,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
         for (int id : new java.util.ArrayList<>(locations.keySet())) stopLocation(id);
         sensors.unregisterListener(this);
         requests.shutdownNow();
+        if (offlineEngine != null) { offlineEngine.close(); offlineEngine = null; }
         if (web != null) { web.destroy(); web = null; }
         super.onDestroy();
     }
