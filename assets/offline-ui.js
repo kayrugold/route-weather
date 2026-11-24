@@ -194,12 +194,100 @@
 
     el('offlineCheckCatalogBtn')?.addEventListener('click', refreshCatalog);
 
+    bindOfflinePoiLayers();
+
     window.routeWeatherOffline?.onEvent(ev => {
       if (ev.type === 'progress' && ev.packageId) {
         activeProgress.set(ev.packageId, ev);
       }
       if (dialog.open) renderDialog();
     });
+  }
+
+  // Toggleable offline POI map layers inside the Layers dropdown
+  const POI_LAYERS = [
+    { id: 'layerRestAreas', kind: 'rest-areas', label: 'Rest areas', badge: 'R', color: '#2ea043' },
+    { id: 'layerHospitals', kind: 'hospitals',  label: 'Hospitals',  badge: 'H', color: '#e5484d' },
+    { id: 'layerPolice',    kind: 'police',     label: 'Police & CHP', badge: 'P', color: '#2f81f7' },
+    { id: 'layerRepair',    kind: 'repair',     label: 'Auto & truck repair', badge: '🔧', color: '#d29922' },
+  ];
+
+  function bindOfflinePoiLayers() {
+    const active = new Map(); // kind -> { def, group }
+
+    function refreshAll() {
+      const m = window.routeWeatherMap || window.map;
+      const bridge = window.AndroidRoute;
+      if (!m || !bridge || typeof bridge.offlineFacilities !== 'function') return;
+      const b = m.getBounds();
+      const west = b.getWest(), south = b.getSouth(), east = b.getEast(), north = b.getNorth();
+      for (const { def, group } of active.values()) {
+        group.clearLayers();
+        try {
+          const data = JSON.parse(bridge.offlineFacilities(def.kind, west, south, east, north, 0) || '{}');
+          const items = Array.isArray(data.items) ? data.items : [];
+          for (const item of items) {
+            if (!Number.isFinite(item.lat) || !Number.isFinite(item.lon)) continue;
+            const icon = L.divIcon({
+              className: 'offline-poi-pin',
+              html: `<div style="width:24px;height:24px;border-radius:50%;background:${def.color};color:#fff;border:2px solid #fff;font:700 12px/20px system-ui,sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.45)">${def.badge}</div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+            });
+            const marker = L.marker([item.lat, item.lon], { icon });
+            const title = escHtml(item.name || def.label);
+            const sub = escHtml(item.address || def.label);
+            marker.bindPopup(
+              `<strong>${title}</strong><br><small>${sub}</small><br>` +
+              `<button type="button" class="primary" style="margin-top:6px;padding:4px 10px" ` +
+              `onclick="window.routeWeatherRouteToPoi(${item.lat},${item.lon},${JSON.stringify(item.name || def.label).replace(/"/g, '&quot;')})">Route here</button>`
+            );
+            marker.addTo(group);
+          }
+        } catch {}
+      }
+    }
+
+    window.routeWeatherRouteToPoi = (lat, lon, label) => {
+      const endInput = el('end');
+      if (endInput) endInput.value = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      const m = window.routeWeatherMap || window.map;
+      if (m) m.closePopup();
+      if (typeof window.openPlanner === 'function') window.openPlanner();
+      if (typeof window.status === 'function') window.status('Destination set to ' + label + '. Tap Calculate route.');
+    };
+
+    let moveBound = false;
+    for (const def of POI_LAYERS) {
+      const btn = el(def.id);
+      if (!btn) continue;
+      btn.addEventListener('click', () => {
+        const m = window.routeWeatherMap || window.map;
+        if (!m || typeof L === 'undefined') return;
+        if (!moveBound) {
+          moveBound = true;
+          m.on('moveend', refreshAll);
+        }
+        if (active.has(def.kind)) {
+          const entry = active.get(def.kind);
+          m.removeLayer(entry.group);
+          active.delete(def.kind);
+          btn.setAttribute('aria-pressed', 'false');
+          btn.classList.remove('enabled');
+        } else {
+          const st = window.routeWeatherOffline?.getStatus?.();
+          if (!st?.hasSearch) {
+            if (typeof window.status === 'function') window.status('Install an offline map package to show ' + def.label + ' offline.', true);
+            return;
+          }
+          const group = L.layerGroup().addTo(m);
+          active.set(def.kind, { def, group });
+          btn.setAttribute('aria-pressed', 'true');
+          btn.classList.add('enabled');
+          refreshAll();
+        }
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

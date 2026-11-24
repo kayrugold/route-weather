@@ -86,7 +86,7 @@ public final class OfflineRouter {
         rc.localFunction = profileFile.getAbsolutePath();
         rc.carMode = true;
         rc.considerTurnRestrictions = true;
-        rc.memoryclass = 64;
+        rc.memoryclass = 96;
         rc.keyValues = new HashMap<>();
         rc.keyValues.put("turnInstructionMode", "3");
 
@@ -274,7 +274,6 @@ public final class OfflineRouter {
     }
 
     private static void copyAssetIfMissing(Context context, String assetPath, File target) {
-        if (target.isFile() && target.length() > 0) return;
         try (InputStream in = context.getAssets().open(assetPath);
              FileOutputStream out = new FileOutputStream(target)) {
             byte[] buf = new byte[8192];

@@ -38,7 +38,7 @@ assign p_standby        = 250    # %p_standby% | Watt | number
 assign turnInstructionMode          = 1     # %turnInstructionMode% | Mode for the generated turn instructions | [0=none, 1=auto-choose, 2=locus-style, 3=osmand-style, 4=comment-style, 5=gpsies-style, 6=orux-style, 7=locus-old-style]
 
 # Technical parameters
-assign pass1coefficient    = 1.3
+assign pass1coefficient    = 1.6
 
 
 ---context:way   # following code refers to way-tags

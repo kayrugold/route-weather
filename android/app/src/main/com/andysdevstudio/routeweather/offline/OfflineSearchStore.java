@@ -126,10 +126,21 @@ public final class OfflineSearchStore implements Closeable {
     }
 
     /**
-     * Bounding-box facility query matching /api/search?mode=facilities&kind=truck-stops|weigh-stations
+     * Bounding-box facility/POI query matching /api/search?mode=facilities&kind=...
+     * Supports: truck-stops, weigh-stations, rest-areas, hospitals, police, repair, fuel, lodging.
      */
     public synchronized JSONObject searchFacilities(String kind, double west, double south, double east, double north, int offset) {
-        String category = "weigh-stations".equals(kind) ? "weigh_station" : "truck_stop";
+        String category;
+        switch (kind != null ? kind : "") {
+            case "weigh-stations": category = "weigh_station"; break;
+            case "rest-areas":     category = "rest_area"; break;
+            case "hospitals":      category = "hospital"; break;
+            case "police":         category = "police"; break;
+            case "repair":         category = "repair"; break;
+            case "fuel":           category = "fuel"; break;
+            case "lodging":        category = "lodging"; break;
+            default:               category = "truck_stop"; break;
+        }
         JSONArray items = new JSONArray();
         int total = 0;
         for (SQLiteDatabase db : databases) {
@@ -186,9 +197,10 @@ public final class OfflineSearchStore implements Closeable {
 
     private void queryFts(SQLiteDatabase db, String ftsQuery, String normQuery, String mode,
                           Double nearLat, Double nearLon, List<Candidate> out) {
+        // Subquery caps FTS4 scan at 150 rows before joining/sorting for <30ms latency
         String sql = "SELECT p.name, p.subtitle, p.category, p.lat, p.lon, p.rank "
-                + "FROM places_fts JOIN places p ON p.id = places_fts.docid "
-                + "WHERE places_fts MATCH ? "
+                + "FROM (SELECT docid FROM places_fts WHERE places_fts MATCH ? LIMIT 150) f "
+                + "JOIN places p ON p.id = f.docid "
                 + "ORDER BY p.rank DESC LIMIT 40";
         try (Cursor cursor = db.rawQuery(sql, new String[]{ftsQuery})) {
             while (cursor.moveToNext()) {
@@ -262,13 +274,27 @@ public final class OfflineSearchStore implements Closeable {
         String expanded = expandAbbreviations(raw);
         if (expanded.isEmpty()) return "";
         String[] tokens = expanded.split("\\s+");
-        StringBuilder sb = new StringBuilder();
+        // Filter out ultra-common 2-letter state/country tokens (e.g. "ca", "us") when more specific tokens exist
+        List<String> specific = new ArrayList<>(tokens.length);
         for (String token : tokens) {
             if (token.isEmpty()) continue;
+            if (tokens.length > 1 && isCommonStateToken(token)) continue;
+            specific.add(token);
+        }
+        if (specific.isEmpty()) {
+            for (String token : tokens) if (!token.isEmpty()) specific.add(token);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String token : specific) {
             if (sb.length() > 0) sb.append(' ');
             sb.append(token).append('*');
         }
         return sb.toString();
+    }
+
+    private static boolean isCommonStateToken(String t) {
+        return t.length() == 2 && ("ca".equals(t) || "us".equals(t) || "tx".equals(t) || "ny".equals(t)
+                || "fl".equals(t) || "wa".equals(t) || "or".equals(t) || "nv".equals(t) || "az".equals(t));
     }
 
     static double haversineMeters(double lat1, double lon1, double lat2, double lon2) {

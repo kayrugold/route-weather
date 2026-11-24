@@ -120,23 +120,28 @@ public final class OsmSearchExtractor {
             }
         }
 
-        // 2. Driving POIs (truck stops, weigh stations, fuel, rest areas, hospitals, lodging, food, parking)
+        // 2. Driving & Safety POIs (truck stops, weigh stations/DOT scales, fuel, rest areas, hospitals, police, fire, repair, lodging, food, parking)
         String amenity = str(tags, "amenity");
         String highway = str(tags, "highway");
+        String barrier = str(tags, "barrier");
         String tourism = str(tags, "tourism");
+        String shop = str(tags, "shop");
         String brand = firstNonEmpty(str(tags, "brand"), str(tags, "operator"), "");
         String city = str(tags, "addr:city");
         String state = firstNonEmpty(str(tags, "addr:state"), defaultState);
+        String nameLower = name != null ? name.toLowerCase(Locale.US) : "";
 
         if ("weighbridge".equals(amenity) || "weigh_station".equals(amenity)
-                || (name != null && name.toLowerCase(Locale.US).contains("weigh station"))) {
+                || "weigh_station".equals(highway) || "weighbridge".equals(barrier)
+                || nameLower.contains("weigh station") || nameLower.contains("inspection facility")
+                || nameLower.contains("truck scale") || nameLower.contains("cat scale")) {
             String display = appendCityState(name != null ? name : "Weigh Station", city, state);
-            writeRow(out, display, "Weigh Station", "weigh_station", brand, lat, lon, 65, counts);
+            writeRow(out, display, "Weigh Station", "weigh_station", brand, lat, lon, 68, counts);
             return;
         }
         if ("rest_area".equals(highway) || "services".equals(highway)) {
             String display = appendCityState(name != null ? name : "Rest Area", city, state);
-            writeRow(out, display, "Rest Area", "rest_area", brand, lat, lon, 62, counts);
+            writeRow(out, display, "Rest Area", "rest_area", brand, lat, lon, 64, counts);
             return;
         }
         if ("fuel".equals(amenity)) {
@@ -147,8 +152,26 @@ public final class OsmSearchExtractor {
                     isTruck ? "truck_stop" : "fuel", brand, lat, lon, isTruck ? 72 : 50, counts);
             return;
         }
-        if ("hospital".equals(amenity) && name != null) {
-            writeRow(out, appendCityState(name, city, state), "Hospital", "hospital", brand, lat, lon, 68, counts);
+        if (("hospital".equals(amenity) || "clinic".equals(amenity)) && name != null) {
+            String sub = "hospital".equals(amenity) ? "Hospital" : "Urgent Care / Clinic";
+            writeRow(out, appendCityState(name, city, state), sub, "hospital", brand, lat, lon, "hospital".equals(amenity) ? 70 : 58, counts);
+            return;
+        }
+        if ("police".equals(amenity) && name != null) {
+            writeRow(out, appendCityState(name, city, state), "Police / Patrol", "police", brand, lat, lon, 62, counts);
+            return;
+        }
+        if ("fire_station".equals(amenity) && name != null) {
+            writeRow(out, appendCityState(name, city, state), "Fire Station", "fire_station", brand, lat, lon, 54, counts);
+            return;
+        }
+        if (("car_repair".equals(shop) || "tyres".equals(shop) || "truck_repair".equals(amenity)) && name != null) {
+            String sub = "tyres".equals(shop) ? "Tire Shop" : "Auto / Truck Repair";
+            writeRow(out, appendCityState(name, city, state), sub, "repair", brand, lat, lon, 52, counts);
+            return;
+        }
+        if ("pharmacy".equals(amenity) && name != null) {
+            writeRow(out, appendCityState(name, city, state), "Pharmacy", "pharmacy", brand, lat, lon, 46, counts);
             return;
         }
         if (("hotel".equals(tourism) || "motel".equals(tourism)) && name != null) {

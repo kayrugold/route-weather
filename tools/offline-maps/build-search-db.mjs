@@ -10,10 +10,13 @@ import fs from 'node:fs';
 import readline from 'node:readline';
 import { DatabaseSync } from 'node:sqlite';
 
-const [,, tsvPath, dbPath, flag] = process.argv;
-const skipAddresses = flag === '--compact';
+const args = process.argv.slice(2);
+const [tsvPath, dbPath] = args;
+const skipAddresses = args.includes('--compact');
+const caScalesArg = args.find(a => a.startsWith('--ca-scales='));
+const caScalesPath = caScalesArg ? caScalesArg.slice('--ca-scales='.length) : '';
 if (!tsvPath || !dbPath) {
-  console.error('Usage: node --experimental-sqlite build-search-db.mjs <input.tsv> <output.db> [--compact]');
+  console.error('Usage: node --experimental-sqlite build-search-db.mjs <input.tsv> <output.db> [--compact] [--ca-scales=path]');
   process.exit(1);
 }
 
@@ -118,6 +121,19 @@ for (const row of rows) {
   }
   insert.run(name, subtitle, cat, brand, lat, lon, rank);
   count++;
+}
+if (caScalesPath && fs.existsSync(caScalesPath)) {
+  const data = JSON.parse(fs.readFileSync(caScalesPath, 'utf8'));
+  for (const s of data.stations || []) {
+    if (!Number.isFinite(s.lat) || !Number.isFinite(s.lon)) continue;
+    const hwy = s.route ? `Hwy ${s.route}` : '';
+    const dir = s.direction ? ` ${s.direction}` : '';
+    const name = `${s.name} Weigh Station (${hwy}${dir}), CA`.replace(/\(\s*\)/, '').trim();
+    const sub = ['Caltrans Scales', s.county ? `${s.county} County` : '', s.description || ''].filter(Boolean).join(' · ');
+    insert.run(name, sub, 'weigh_station', 'Caltrans', s.lat, s.lon, 82);
+    count++;
+  }
+  console.log(`Merged ${(data.stations || []).length} official Caltrans weigh stations from ${caScalesPath}`);
 }
 db.exec('COMMIT');
 console.log('Source category counts:', counts);
