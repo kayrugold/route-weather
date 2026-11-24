@@ -529,6 +529,18 @@ public final class MainActivity extends Activity implements SensorEventListener 
         @JavascriptInterface public String offlineRoute(String coords, String profile) {
             return offlineEngine != null ? offlineEngine.routeJson(coords, profile) : "{\"error\":\"Offline engine unavailable.\"}";
         }
+        @JavascriptInterface public void offlineRouteAsync(int reqId, String coords, String profile) {
+            requests.execute(() -> {
+                String json = offlineEngine != null
+                    ? offlineEngine.routeJson(coords, profile)
+                    : "{\"error\":\"Offline engine unavailable.\"}";
+                runOnUiThread(() -> {
+                    if (web != null) {
+                        web.evaluateJavascript("window.routeWeatherOfflineRouteReply?.(" + reqId + "," + JSONObject.quote(json) + ")", null);
+                    }
+                });
+            });
+        }
         @JavascriptInterface public void offlineDownloadPackage(String packageJson) {
             if (offlineEngine != null) offlineEngine.getPackageManager().startPackageDownload(packageJson);
         }

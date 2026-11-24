@@ -1,143 +1,48 @@
 #
-# Route Weather Commercial Truck Profile (Advisory — OSM data)
-# Explicitly distinct from passenger car routing.
-# IMPORTANT: OpenStreetMap commercial vehicle restrictions (bridge clearances,
-# weight limits, hazmat/truck bans) are community-mapped and incomplete.
-# Drivers MUST verify all posted signs, bridge clearances, and weight limits.
+# Route Weather Fast Commercial Truck Profile (Advisory — OSM data)
+# Strongly prefers interstates/US/state highways and avoids residential/unpaved roads.
+# IMPORTANT: OSM commercial vehicle restrictions are incomplete — always obey posted signs.
 #
----model:btools.router.KinematicModel
-
 ---context:global
 
 assign validForCars        = true
-assign avoid_toll          = false
-assign avoid_unpaved       = true
-assign avoid_motorways     = false
-assign add_beeline         = false
-assign use_offroad         = false
-
-# Commercial truck kinematic parameters (~65 mph max, ~80,000 lb / 36t)
-assign vmax                = 105
-assign recup_efficiency    = 0.3
-assign totalweight         = 36000
-assign f_roll              = 2200
-assign f_air               = 3.2
-assign f_recup             = 800
-assign p_standby           = 1500
-
-# Turn instructions settings (3 = OsmAnd-style detailed turn instructions)
 assign turnInstructionMode = 3
-assign pass1coefficient    = 1.6
+assign pass1coefficient    = 1.5
+assign pass2coefficient    = 0
+assign downhillcost        = 0
+assign uphillcost          = 0
 
 ---context:way
 
-assign classifier_none     = 1
-assign classifier_ferry    = 2
+assign isresidential = or highway=residential|living_street living_street=yes
+assign badoneway = if reversedirection=yes then ( if oneway= then junction=roundabout else oneway=yes|true|1 ) else oneway=-1
+assign isunpaved = or surface=gravel|dirt|earth|mud|sand|grass|ground|unpaved tracktype=grade2|grade3|grade4|grade5
 
-assign is_avoided_toll_road and avoid_toll toll=yes
-assign is_avoided_motorway  and avoid_motorways highway=motorway|motorway_link
-assign isresidentialorliving = or highway=residential|living_street living_street=yes
-
-# Reject roads explicitly tagged motor_vehicle=no or access=no
-assign hgv_forbidden = or motor_vehicle=no|private
-                          access=no|private
-
-assign caraccess
-       if hgv_forbidden then 0
-       else switch motorcar=
-              switch motor_vehicle=
-                     switch vehicle=
-                            switch access=
-                                   switch highway=motorway|motorway_link       1
-                                   switch highway=trunk|trunk_link             1
-                                   switch highway=primary|primary_link         1
-                                   switch highway=secondary|secondary_link     1
-                                   switch highway=tertiary|tertiary_link       1
-                                   switch highway=unclassified                 1
-                                   switch route=ferry                          1
-                                   switch isresidentialorliving                1
-                                   switch highway=service                      1
-                                   0
-                                   access=yes|permissive|designated|destination
-                            vehicle=yes|designated|destination
-                     motor_vehicle=yes|permissive|designated|destination
-              motorcar=yes|permissive|designated|destination
-
-assign caraccess_destination
-       switch motorcar=
-              switch motor_vehicle=
-                     switch vehicle=
-                            access=destination
-                            vehicle=destination
-                     motor_vehicle=destination
-              motorcar=destination
-
-assign initialclassifier =
-     if route=ferry then classifier_ferry
-     else classifier_none
+assign caraccess =
+  if badoneway then 0
+  else if isunpaved then 0
+  else if or motor_vehicle=no|private access=no|private then 0
+  else if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link|unclassified|service then 1
+  else if isresidential then 1
+  else 0
 
 assign initialcost =
-     if      ( and highway= not route=ferry ) then 10000
-     else if ( equal initialclassifier classifier_ferry ) then 10000
-     else if isresidentialorliving then 500
-     else if highway=service then 300
-     else 0
-
-assign accessspeedlimit = if caraccess then 999 else 0
-assign isbadoneway = if reversedirection=yes then ( if oneway= then junction=roundabout else oneway=yes|true|1 ) else oneway=-1
-assign onewayspeedlimit = if isbadoneway then 0 else 999
-assign islinktype = highway=motorway_link|trunk_link|primary_link|secondary_link|tertiary_link
-
-assign maxspeed_surface =
-  switch or surface= surface=paved|asphalt|concrete 999
-  switch surface=paving_stones|cobblestone|sett 20
-  0
-
-assign maxspeed_tracktype =
-  switch tracktype= 999
-  switch tracktype=grade1 20
-  0
-
-assign maxspeed_implicit =
-  switch highway=motorway                  105
-  switch highway=motorway_link              75
-  switch highway=trunk                      95
-  switch highway=trunk_link                 65
-  switch highway=primary|primary_link       85
-  switch highway=secondary|secondary_link   70
-  switch highway=tertiary|tertiary_link     55
-  switch highway=unclassified               40
-  switch route=ferry                        10
-  switch isresidentialorliving              20
-  switch highway=service                    15
-  0
-
-assign maxspeed =
-  min onewayspeedlimit
-  min accessspeedlimit
-  min maxspeed_implicit
-  min maxspeed_surface maxspeed_tracktype
-
-# Strongly prefer highways/arterials; penalize residential/local cut-throughs
-assign truck_road_penalty =
-  if      ( highway=motorway|motorway_link ) then 0
-  else if ( highway=trunk|trunk_link       ) then 0.05
-  else if ( highway=primary|primary_link   ) then 0.15
-  else if ( highway=secondary|secondary_link ) then 0.45
-  else if ( highway=tertiary|tertiary_link ) then 1.2
-  else if ( highway=unclassified           ) then 3.0
-  else if ( isresidentialorliving          ) then 8.0
-  else if ( highway=service                ) then 6.0
-  else 10.0
+  if not caraccess then 1000000
+  else if isresidential then 600
+  else if highway=service then 400
+  else 0
 
 assign costfactor =
-  if ( equal maxspeed 0 ) then 10000
-  else if is_avoided_toll_road then 10000
-  else if is_avoided_motorway then 10
-  else add 1 truck_road_penalty
-
-assign minspeed =
-  switch highway=motorway|motorway_link|trunk 65 0
+  if not caraccess then 10000
+  else if highway=motorway|motorway_link then 1.0
+  else if highway=trunk|trunk_link then 1.15
+  else if highway=primary|primary_link then 1.45
+  else if highway=secondary|secondary_link then 2.4
+  else if highway=tertiary|tertiary_link then 4.0
+  else if highway=unclassified then 7.0
+  else if isresidential then 18.0
+  else if highway=service then 15.0
+  else 25.0
 
 assign priorityclassifier =
   if      ( highway=motorway                  ) then  30
@@ -151,48 +56,25 @@ assign priorityclassifier =
   else if ( highway=tertiary                  ) then  22
   else if ( highway=tertiary_link             ) then  21
   else if ( highway=unclassified              ) then  20
-  else if ( isresidentialorliving             ) then  6
-  else if ( highway=service                   ) then  6
+  else if ( isresidential                     ) then   6
+  else if ( highway=service                   ) then   6
   else 0
 
 assign isgoodoneway = if reversedirection=yes then oneway=-1
                       else if oneway= then junction=roundabout else oneway=yes|true|1
 assign isroundabout = junction=roundabout
-assign isgoodforcars = if greater priorityclassifier 6 then true
-                  else if or isresidentialorliving highway=service then true
-                  else false
+assign islinktype   = highway=motorway_link|trunk_link|primary_link|secondary_link|tertiary_link
+assign isgoodforcars = greater priorityclassifier 5
 
-assign classifiermask add          isbadoneway
+assign classifiermask add          badoneway
                       add multiply isgoodoneway   2
                       add multiply isroundabout   4
                       add multiply islinktype     8
                       add multiply isgoodforcars 16
-                      add multiply isresidentialorliving 32
-                          multiply caraccess_destination 64
+                          multiply isresidential 32
 
 ---context:node
 
-assign caraccess
-       switch motorcar=
-              switch motor_vehicle=
-                     switch vehicle=
-                            switch access=
-                                   not barrier=gate|bollard|lift_gate|cycle_barrier|height_restrictor
-                                   access=yes|permissive|designated|destination
-                            vehicle=yes|designated|destination
-                     motor_vehicle=yes|permissive|designated|destination
-              motorcar=yes|permissive|designated|destination
-
 assign initialcost =
-       switch and avoid_toll barrier=toll_booth 1000000
-       switch caraccess 0 1000000
-
-assign maxspeed =
-       if or crossing=traffic_signals highway=traffic_signals
-       then
-         switch greater way:priorityclassifier 24 5
-         switch greater way:priorityclassifier 22 3
-         switch greater way:priorityclassifier 20 1
-         0
-       else if railway=level_crossing then 0
-       else 999
+  if barrier=gate|bollard|lift_gate|cycle_barrier|height_restrictor then 1000000
+  else 0

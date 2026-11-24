@@ -48,7 +48,7 @@ test('offline-nav switches cleanly between online, auto, and offline modes and c
 
   nav.setProfile('truck');
   assert.equal(nav.getProfile(), 'truck');
-  const routeRes = nav.route(new URLSearchParams({ coords: '-122.2978,40.4482;-121.2908,37.9577' }));
+  const routeRes = await nav.route(new URLSearchParams({ coords: '-122.2978,40.4482;-121.2908,37.9577' }));
   assert.equal(routeRes.status, 200);
   const routeJson = await routeRes.json();
   assert.equal(routeJson.provider, 'offline-brouter');

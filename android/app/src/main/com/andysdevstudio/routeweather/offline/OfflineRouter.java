@@ -85,15 +85,18 @@ public final class OfflineRouter {
         RoutingContext rc = new RoutingContext();
         rc.localFunction = profileFile.getAbsolutePath();
         rc.carMode = true;
-        rc.considerTurnRestrictions = true;
+        rc.considerTurnRestrictions = false;
         rc.memoryclass = 96;
+        rc.pass1coefficient = 1.5;
+        rc.pass2coefficient = 0;
         rc.keyValues = new HashMap<>();
         rc.keyValues.put("turnInstructionMode", "3");
 
         long started = System.currentTimeMillis();
         RoutingEngine engine = new RoutingEngine(null, null, segmentsDir, waypoints, rc);
+        engine.airDistanceCostFactor = 1.25;
         engine.quite = true;
-        engine.doRun(30_000L);
+        engine.doRun(60_000L);
         long elapsedMs = System.currentTimeMillis() - started;
 
         String err = engine.getErrorMessage();

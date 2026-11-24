@@ -69,12 +69,17 @@
     return !isOnline();
   }
 
-  function route(searchParams) {
-    const bridge = getBridge();
-    if (!bridge) return Response.json({ error: 'Offline routing requires Android.' }, { status: 503 });
-    const coords = searchParams.get('coords') || '';
-    const profile = searchParams.get('profile') || getProfile();
-    const raw = bridge.offlineRoute(coords, profile);
+  const pendingRoutes = new Map();
+  let nextRouteReq = 0;
+
+  window.routeWeatherOfflineRouteReply = (reqId, raw) => {
+    const resolve = pendingRoutes.get(reqId);
+    if (!resolve) return;
+    pendingRoutes.delete(reqId);
+    resolve(parseRouteResponse(raw));
+  };
+
+  function parseRouteResponse(raw) {
     try {
       const parsed = JSON.parse(raw);
       if (parsed.error) return Response.json(parsed, { status: 404 });
@@ -82,6 +87,26 @@
     } catch {
       return Response.json({ error: 'Offline router returned an invalid response.' }, { status: 500 });
     }
+  }
+
+  function route(searchParams) {
+    const bridge = getBridge();
+    if (!bridge) return Promise.resolve(Response.json({ error: 'Offline routing requires Android.' }, { status: 503 }));
+    const coords = searchParams.get('coords') || '';
+    const profile = searchParams.get('profile') || getProfile();
+    if (typeof bridge.offlineRouteAsync === 'function') {
+      return new Promise(resolve => {
+        const id = ++nextRouteReq;
+        pendingRoutes.set(id, resolve);
+        try {
+          bridge.offlineRouteAsync(id, coords, profile);
+        } catch {
+          pendingRoutes.delete(id);
+          resolve(Response.json({ error: 'Offline router failed to start.' }, { status: 500 }));
+        }
+      });
+    }
+    return Promise.resolve(parseRouteResponse(bridge.offlineRoute(coords, profile)));
   }
 
   function search(searchParams) {
