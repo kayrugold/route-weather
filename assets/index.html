@@ -2797,7 +2797,7 @@ function bindTollRoads(){
 
 const streetCredit='OpenFreeMap © OpenMapTiles · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const streetTiles=new Map();
-let streetLabels,streetSource;
+let streetLabels,streetSource,streetSourceOffline=null;
 const streetThemes={
   day:{ground:'#eef0e9',park:'#d6e6c6',water:'#b6d6e7',building:'#deded7',street:'#fffefa',edge:'#c8cbc1',highway:'#f6d891',highwayEdge:'#d6b76e',ink:'#253645',halo:'#fcfcf5',exit:'#16643a'},
   night:{ground:'#192026',park:'#23352e',water:'#203a4a',building:'#29343b',street:'#414c54',edge:'#242c34',highway:'#8b724a',highwayEdge:'#35332e',ink:'#f4f8fb',halo:'#171d23',exit:'#a5ffc8'}
@@ -2805,8 +2805,13 @@ const streetThemes={
 const highwayClasses=['motorway','trunk','primary','secondary','tertiary'];
 const roadClasses=[...highwayClasses,'minor','service','track'];
 function getStreetSource(){
-  const offlineTiles=window.routeWeatherOffline?.shouldUseOffline('tiles')
-    ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles);
+  const offlineTiles=Boolean(window.routeWeatherOffline?.shouldUseOffline('tiles')
+    ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles));
+  if(streetSourceOffline!==null&&streetSourceOffline!==offlineTiles){
+    streetSource=null;
+    streetTiles.clear();
+  }
+  streetSourceOffline=offlineTiles;
   const route=!offlineTiles&&downloadedMapEnabled?offlineRoute:null;
   if(!streetSource){
     const metadata=offlineTiles
@@ -3046,7 +3051,7 @@ function bindStreetLabels(){
       const tiles=(await Promise.allSettled(jobs)).flatMap(result=>result.status==='fulfilled'?[result.value]:[]);
       if(id!==revision)return;
       const {x:width,y:height}=map.getSize(),ratio=Math.min(window.devicePixelRatio||1,2);
-      if(!tiles.length){clear();if(navigator.onLine&&androidBaseMap&&!map.hasLayer(androidBaseMap))androidBaseMap.addTo(map);return} if(!ctx||!textContext||width<1||height<1)return;
+      if(!tiles.length&&!hasOfflinePmtiles){clear();if(navigator.onLine&&androidBaseMap&&!map.hasLayer(androidBaseMap))androidBaseMap.addTo(map);return} if(!ctx||!textContext||width<1||height<1)return;
       const angle=bearing*Math.PI/180, cos=Math.cos(angle), sin=Math.sin(angle);
       for(const layer of [canvas,text]){
         layer.width=Math.round(width*ratio);
