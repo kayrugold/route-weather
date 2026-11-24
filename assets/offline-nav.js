@@ -50,6 +50,14 @@
     }
   }
 
+  function isOnline() {
+    const bridge = getBridge();
+    if (bridge && typeof bridge.hasInternet === 'function') {
+      try { return Boolean(bridge.hasInternet()); } catch {}
+    }
+    return navigator.onLine !== false;
+  }
+
   function shouldUseOffline(kind) {
     const status = getStatus();
     if (!status.available) return false;
@@ -58,7 +66,7 @@
     const mode = getMode();
     if (mode === 'offline') return true;
     if (mode === 'online') return false;
-    return !navigator.onLine;
+    return !isOnline();
   }
 
   function route(searchParams) {

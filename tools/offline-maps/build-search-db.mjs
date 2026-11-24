@@ -66,13 +66,32 @@ for await (const line of rl) {
   }
 }
 
+// Build a fast spatial grid of cities/towns/villages (0.25 deg cells) so tagging 224k+ streets takes <0.5s
+const townGrid = new Map();
+for (const t of towns) {
+  const gx = Math.floor(t.lon * 4);
+  const gy = Math.floor(t.lat * 4);
+  const key = `${gx},${gy}`;
+  let bucket = townGrid.get(key);
+  if (!bucket) { bucket = []; townGrid.set(key, bucket); }
+  bucket.push(t);
+}
+
 function nearestTown(lat, lon) {
+  const gx = Math.floor(lon * 4);
+  const gy = Math.floor(lat * 4);
   let best = null, bestD2 = Infinity;
-  for (const t of towns) {
-    const dLat = t.lat - lat;
-    const dLon = (t.lon - lon) * 0.78;
-    const d2 = dLat * dLat + dLon * dLon;
-    if (d2 < bestD2) { bestD2 = d2; best = t; }
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      const bucket = townGrid.get(`${gx + dx},${gy + dy}`);
+      if (!bucket) continue;
+      for (const t of bucket) {
+        const dLat = t.lat - lat;
+        const dLon = (t.lon - lon) * 0.78;
+        const d2 = dLat * dLat + dLon * dLon;
+        if (d2 < bestD2) { bestD2 = d2; best = t; }
+      }
+    }
   }
   return best && bestD2 < 0.25 ? best.name : '';
 }
@@ -80,15 +99,21 @@ function nearestTown(lat, lon) {
 db.exec('BEGIN');
 for (const row of rows) {
   let [name, subtitle, cat, brand, lat, lon, rank] = row;
-  if ((cat === 'weigh_station' || cat === 'truck_stop' || cat === 'rest_area')
-      && !name.includes(',') || /^(cat scale|weigh station|rest area|pilot|love'?s|ta|petro)(,\s*[A-Z]{2})?$/i.test(name)) {
-    if (cat === 'weigh_station' || cat === 'truck_stop' || cat === 'rest_area') {
+  if (cat === 'weigh_station' || cat === 'truck_stop' || cat === 'rest_area') {
+    if (!name.includes(',') || /^(cat scale|weigh station|rest area|pilot|love'?s|ta|petro)(,\s*[A-Z]{2})?$/i.test(name)) {
       const base = name.replace(/,\s*[A-Z]{2}$/, '');
       const near = nearestTown(lat, lon);
       if (near && !base.toLowerCase().includes(near.split(',')[0].toLowerCase())) {
         name = `${base} · ${near}`;
         subtitle = `${subtitle} · near ${near}`;
       }
+    }
+  } else if (cat === 'street') {
+    // Attach nearest town/city to streets so "Balls Ferry Rd, Anderson, CA" matches!
+    const base = name.replace(/,\s*[A-Z]{2}$/, '');
+    const near = nearestTown(lat, lon);
+    if (near && !base.toLowerCase().includes(near.split(',')[0].toLowerCase())) {
+      name = `${base}, ${near}`;
     }
   }
   insert.run(name, subtitle, cat, brand, lat, lon, rank);

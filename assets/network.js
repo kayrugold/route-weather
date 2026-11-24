@@ -61,6 +61,16 @@
             {error:'This build needs the Route Weather service URL.'},{status:503}));
         }
         return window.routeProviderFetch(serviceOrigin+'/app-api'+url.pathname.slice(4)+url.search,options)
+          .then(response=>{
+            if(!response.ok&&response.status>=500&&offline&&offline.getMode()!=='online'){
+              if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
+              if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);
+              if(url.pathname==='/api/provider-status'&&offline.getStatus().hasSearch){
+                return Response.json({studioTraffic:false,placesSearch:true,offlineReady:true});
+              }
+            }
+            return response;
+          })
           .catch(error=>{
             if(offline&&offline.getMode()!=='online'){
               if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);

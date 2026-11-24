@@ -459,6 +459,14 @@ public final class MainActivity extends Activity implements SensorEventListener 
         return network != null && network.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
     }
 
+    private boolean hasInternetConnection() {
+        ConnectivityManager manager = getSystemService(ConnectivityManager.class);
+        NetworkCapabilities network = manager.getNetworkCapabilities(manager.getActiveNetwork());
+        return network != null
+            && network.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            && network.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+    }
+
     private final class Bridge {
         @JavascriptInterface public void recognizeDestination() { runOnUiThread(MainActivity.this::requestDestinationSpeech); }
         @JavascriptInterface public void speakDirections(String text) { runOnUiThread(() -> speakVoice(text)); }
@@ -468,6 +476,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
             requests.execute(() -> fetchProvider(id, spec, accept, wifiOnly));
         }
         @JavascriptInterface public boolean wifi() { return wifiConnected(); }
+        @JavascriptInterface public boolean hasInternet() { return hasInternetConnection(); }
         @JavascriptInterface public String serviceOrigin() { return BuildConfig.SERVICE_ORIGIN; }
         @JavascriptInterface public void locationStart(int id, boolean watch, int timeout, int maximumAge) {
             runOnUiThread(() -> {

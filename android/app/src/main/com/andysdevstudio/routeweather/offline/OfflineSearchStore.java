@@ -59,12 +59,44 @@ public final class OfflineSearchStore implements Closeable {
             }
             Collections.sort(all, Comparator.comparingDouble(c -> c.distanceMeters));
         } else {
-            String ftsQuery = buildFtsQuery(rawQuery);
-            if (ftsQuery.isEmpty()) return new JSONArray();
-            String normQuery = rawQuery == null ? "" : rawQuery.trim().toLowerCase(Locale.US).replaceAll("[,\\s]+", " ");
-            for (SQLiteDatabase db : databases) {
-                queryFts(db, ftsQuery, normQuery, mode, nearLat, nearLon, all);
+            String trimmed = rawQuery == null ? "" : rawQuery.trim();
+            // Strip trailing 5-digit US ZIP code if present (e.g. "Anderson, CA 96007")
+            String noZip = trimmed.replaceAll("\\b\\d{5}(?:-\\d{4})?\\b", " ").trim();
+            // Check if query starts with a street house number (e.g. "2500 Balls Ferry Rd, Anderson, CA")
+            String houseNumber = null;
+            String withoutHouse = noZip;
+            java.util.regex.Matcher hm = java.util.regex.Pattern.compile("^(\\d+[A-Za-z]?)\\s+(.+)$").matcher(noZip);
+            if (hm.matches()) {
+                houseNumber = hm.group(1);
+                withoutHouse = hm.group(2).trim();
             }
+
+            // 1. Try full normalized query first
+            runFtsPass(noZip, mode, nearLat, nearLon, all);
+
+            // 2. If user entered a house number and got no exact hits, search the street + city
+            if (all.isEmpty() && houseNumber != null && !withoutHouse.isEmpty()) {
+                runFtsPass(withoutHouse, mode, nearLat, nearLon, all);
+                if (!all.isEmpty()) {
+                    for (int i = 0; i < all.size(); i++) {
+                        Candidate c = all.get(i);
+                        if ("street".equals(c.category)) {
+                            all.set(i, new Candidate(houseNumber + " " + c.name, "Street (approx. " + houseNumber + ")",
+                                    "address", c.lat, c.lon, c.rank + 10, c.distanceMeters, c.score + 20.0));
+                        }
+                    }
+                }
+            }
+
+            // 3. If still empty and comma-separated (e.g. "Some St, Anderson, CA"), try the street alone or city/state
+            if (all.isEmpty() && withoutHouse.contains(",")) {
+                String[] parts = withoutHouse.split(",", 2);
+                String firstPart = parts[0].trim();
+                String restPart = parts[1].trim();
+                if (firstPart.length() >= 3) runFtsPass(firstPart, mode, nearLat, nearLon, all);
+                if (all.isEmpty() && restPart.length() >= 2) runFtsPass(restPart, mode, nearLat, nearLon, all);
+            }
+
             Collections.sort(all, (a, b) -> {
                 int scoreCmp = Double.compare(b.score, a.score);
                 if (scoreCmp != 0) return scoreCmp;
@@ -183,10 +215,53 @@ public final class OfflineSearchStore implements Closeable {
         }
     }
 
-    static String buildFtsQuery(String raw) {
+    private void runFtsPass(String queryText, String mode, Double nearLat, Double nearLon, List<Candidate> out) {
+        String ftsQuery = buildFtsQuery(queryText);
+        if (ftsQuery.isEmpty()) return;
+        String normQuery = expandAbbreviations(queryText);
+        for (SQLiteDatabase db : databases) {
+            queryFts(db, ftsQuery, normQuery, mode, nearLat, nearLon, out);
+        }
+    }
+
+    static String expandAbbreviations(String raw) {
         if (raw == null) return "";
         String cleaned = raw.trim().toLowerCase(Locale.US).replaceAll("[^a-z0-9\\s]", " ");
         String[] tokens = cleaned.split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (String t : tokens) {
+            if (t.isEmpty()) continue;
+            String exp = expandToken(t);
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(exp);
+        }
+        return sb.toString();
+    }
+
+    private static String expandToken(String t) {
+        switch (t) {
+            case "rd": return "road";
+            case "st": return "street";
+            case "ave": return "avenue";
+            case "blvd": return "boulevard";
+            case "dr": return "drive";
+            case "ln": return "lane";
+            case "ct": return "court";
+            case "pl": return "place";
+            case "cir": return "circle";
+            case "hwy": return "highway";
+            case "pkwy": return "parkway";
+            case "trl": return "trail";
+            case "ter": return "terrace";
+            case "wy": return "way";
+            default: return t;
+        }
+    }
+
+    static String buildFtsQuery(String raw) {
+        String expanded = expandAbbreviations(raw);
+        if (expanded.isEmpty()) return "";
+        String[] tokens = expanded.split("\\s+");
         StringBuilder sb = new StringBuilder();
         for (String token : tokens) {
             if (token.isEmpty()) continue;
