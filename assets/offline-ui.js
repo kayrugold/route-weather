@@ -255,9 +255,13 @@
             marker.bindPopup(
               `<strong>${title}</strong><br><small>${sub}</small><br>` +
               `<button type="button" class="primary" style="margin-top:6px;padding:4px 10px" ` +
-              `onclick="window.routeWeatherRouteToPoi(${item.lat},${item.lon},${JSON.stringify(item.name || def.label).replace(/"/g, '&quot;')})">Route here</button>`,
-              { closeOnClick: false, autoClose: false, autoPan: false }
+              `onclick="event.stopPropagation();window.routeWeatherRouteToPoi(${item.lat},${item.lon},${JSON.stringify(item.name || def.label).replace(/"/g, '&quot;')})">Route here</button>`,
+              { className: 'state-road-popup', closeOnClick: false, autoClose: false, closeOnEscapeKey: false, autoPan: false }
             );
+            marker.on('popupopen', e => {
+              const elPopup = e.popup?.getElement?.();
+              if (elPopup) L.DomEvent.off(elPopup, 'mousedown touchstart', L.DomEvent.stopPropagation);
+            });
             marker.addTo(group);
             markers.set(key, marker);
           }
