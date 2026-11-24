@@ -19,7 +19,19 @@
 
 ---
 
-## 2. Lower 48 (Continental US) Storage Projection (Based on Real Measured Data)
+## 2. Real Measured All-of-California Package Sizes (Full-State Benchmark)
+Built from `california-latest.osm.pbf` (1,275.7 MB from Geofabrik):
+
+| Component | File(s) | Measured Size | Contents |
+| :--- | :--- | ---: | :--- |
+| **Vector Maps** | `california.pmtiles` (`z0–z14`) | **354.40 MB** | Full state roads, exits, shields, street names, cities/towns, parks, waterways, borders |
+| **Routing Graph** | 6× BRouter `.rd5` tiles (`W120_N30/35/40`, `W125_N30/35/40`) | **191.84 MB** *(unpruned)* | Entire state from Oregon border to Mexico border + NV border (~100 MB driving-pruned) |
+| **Offline Search & POI Layers** | `california-search.db` (FTS4) | **92.15 MB** | **537,146 records**: 7,237 cities/towns, 456,440 city-tagged streets, 2,522 hospitals/clinics, 812 police/CHP, 2,559 fire stations, 4,686 auto/truck repair & tire shops, 301 rest areas, 266 weigh stations + 53 official Caltrans scales (incl. Cottonwood), 205 truck stops, 7,810 fuel stations, 1,699 pharmacies, 5,670 hotels/motels, 46,790 food |
+| **All-of-California Total** | 8 files (`manifest.json` SHA-256 verified) | **638.40 MB** | **California is ~12% of US population/roads → Lower 48 fits comfortably in ~3.5–4.5 GB (≤ 5 GB target)** |
+
+---
+
+## 3. Lower 48 (Continental US) Storage Projection (Based on Real Measured Data)
 Northern California represents roughly **~5–6%** of Continental US OSM road/feature density (Bay Area + Sacramento + Central Valley + Northern CA is one of the densest OSM regions in the US).
 
 | Component | Measured NorCal | Projected Lower 48 (Optimized) | Target Budget |
