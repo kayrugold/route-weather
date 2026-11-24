@@ -74,15 +74,18 @@ public final class OfflineEngine implements Closeable {
     public boolean hasSearch() { return searchStore.hasDatabases(); }
 
     public byte[] getVectorTile(int z, int x, int y) {
+        byte[] best = null;
         for (PMTilesReader reader : tileReaders) {
             try {
                 byte[] tile = reader.getTile(z, x, y);
-                if (tile != null) return tile;
+                if (tile != null && (best == null || tile.length > best.length)) {
+                    best = tile;
+                }
             } catch (IOException e) {
                 Log.w(TAG, "Error reading tile " + z + "/" + x + "/" + y + " from " + reader.file.getName(), e);
             }
         }
-        return null;
+        return best;
     }
 
     public String searchJson(String query, String mode, Double lat, Double lon, int limit) {
