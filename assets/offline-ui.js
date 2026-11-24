@@ -1,6 +1,6 @@
 (() => {
   const MANIFEST_URL_KEY = 'route-weather-offline-manifest-url';
-  const DEFAULT_MANIFEST_URL = 'https://maps.routeweather.pages.dev/offline-maps/manifest.json';
+  const DEFAULT_MANIFEST_URL = 'https://pub-4389a2be46a544d1a2a9390b67835338.r2.dev/offline-maps/manifest.json';
 
   let catalog = null;
   const activeProgress = new Map();
@@ -23,7 +23,9 @@
 
   function getManifestUrl() {
     try {
-      return localStorage.getItem(MANIFEST_URL_KEY) || DEFAULT_MANIFEST_URL;
+      const saved = localStorage.getItem(MANIFEST_URL_KEY);
+      if (saved && !saved.includes('maps.routeweather.pages.dev')) return saved;
+      return DEFAULT_MANIFEST_URL;
     } catch {
       return DEFAULT_MANIFEST_URL;
     }
