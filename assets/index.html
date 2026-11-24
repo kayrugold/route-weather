@@ -3031,7 +3031,8 @@ function bindStreetLabels(){
       return;
     }
     try{
-      const z=usingDownload?Math.max(0,Math.min(14,Math.floor(zoom))):14,scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
+      const offlineMaxZ=hasOfflinePmtiles?(window.routeWeatherOffline?.getStatus().maxTileZoom||13):14;
+      const z=usingDownload?Math.max(0,Math.min(offlineMaxZ,Math.floor(zoom))):14,scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
       const corners=[[0,0],[size.x,0],[0,size.y],[size.x,size.y]].map(point=>map.containerPointToLayerPoint(point));
       const offset=corners[0],origin=pixelOrigin.add(offset), bearing=map.getBearing?.()||0;
       const bounds=L.bounds(corners.map(point=>pixelOrigin.add(point)));

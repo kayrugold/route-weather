@@ -119,10 +119,18 @@ public final class OfflineEngine implements Closeable {
 
     public String statusJson() {
         JSONObject status = packageManager.getStatusJson();
+        int maxTileZoom = 14;
+        if (!tileReaders.isEmpty()) {
+            maxTileZoom = 0;
+            for (PMTilesReader r : tileReaders) {
+                if (r.maxZoom > maxTileZoom) maxTileZoom = r.maxZoom;
+            }
+        }
         try {
             status.put("hasTiles", hasTiles());
             status.put("hasRouting", hasRouting());
             status.put("hasSearch", hasSearch());
+            status.put("maxTileZoom", maxTileZoom);
         } catch (JSONException ignored) {}
         return status.toString();
     }
