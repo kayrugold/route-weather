@@ -45,7 +45,8 @@ const insert = db.prepare(
 
 let count = 0;
 const counts = {};
-db.exec('BEGIN');
+const rows = [];
+const towns = [];
 const rl = readline.createInterface({ input: fs.createReadStream(tsvPath, 'utf8'), crlfDelay: Infinity });
 for await (const line of rl) {
   if (!line) continue;
@@ -58,19 +59,52 @@ for await (const line of rl) {
   const lon = Number(parts[5]);
   const rank = Number(parts[6]) || 0;
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-  insert.run(parts[0], parts[1], cat, parts[3], lat, lon, rank);
+  const row = [parts[0], parts[1], cat, parts[3], lat, lon, rank];
+  rows.push(row);
+  if (cat === 'place' && rank >= 70) {
+    towns.push({ name: parts[0], lat, lon });
+  }
+}
+
+function nearestTown(lat, lon) {
+  let best = null, bestD2 = Infinity;
+  for (const t of towns) {
+    const dLat = t.lat - lat;
+    const dLon = (t.lon - lon) * 0.78;
+    const d2 = dLat * dLat + dLon * dLon;
+    if (d2 < bestD2) { bestD2 = d2; best = t; }
+  }
+  return best && bestD2 < 0.25 ? best.name : '';
+}
+
+db.exec('BEGIN');
+for (const row of rows) {
+  let [name, subtitle, cat, brand, lat, lon, rank] = row;
+  if ((cat === 'weigh_station' || cat === 'truck_stop' || cat === 'rest_area')
+      && !name.includes(',') || /^(cat scale|weigh station|rest area|pilot|love'?s|ta|petro)(,\s*[A-Z]{2})?$/i.test(name)) {
+    if (cat === 'weigh_station' || cat === 'truck_stop' || cat === 'rest_area') {
+      const base = name.replace(/,\s*[A-Z]{2}$/, '');
+      const near = nearestTown(lat, lon);
+      if (near && !base.toLowerCase().includes(near.split(',')[0].toLowerCase())) {
+        name = `${base} · ${near}`;
+        subtitle = `${subtitle} · near ${near}`;
+      }
+    }
+  }
+  insert.run(name, subtitle, cat, brand, lat, lon, rank);
   count++;
 }
 db.exec('COMMIT');
 console.log('Source category counts:', counts);
 
-console.log(`Inserted ${count.toLocaleString()} places. Building FTS5 + spatial indexes...`);
+console.log(`Inserted ${count.toLocaleString()} places. Building FTS4 (Android-compatible) + spatial indexes...`);
 db.exec(`
   CREATE INDEX idx_places_cat_lat_lon ON places(category, lat, lon);
-  CREATE VIRTUAL TABLE places_fts USING fts5(
+  CREATE INDEX idx_places_name_lower ON places(lower(name));
+  CREATE VIRTUAL TABLE places_fts USING fts4(
+    content="places",
     name, subtitle, brand,
-    content='places', content_rowid='id',
-    tokenize='unicode61 remove_diacritics 2'
+    tokenize=unicode61
   );
   INSERT INTO places_fts(places_fts) VALUES('rebuild');
   INSERT INTO places_fts(places_fts) VALUES('optimize');
@@ -79,15 +113,15 @@ db.exec(`
 
 // Smoke-test key queries right here
 const probe = db.prepare(`
-  SELECT p.name, p.subtitle, p.category, p.lat, p.lon
-  FROM places_fts JOIN places p ON p.id = places_fts.rowid
+  SELECT p.name, p.subtitle, p.category, p.lat, p.lon, p.rank
+  FROM places_fts JOIN places p ON p.id = places_fts.docid
   WHERE places_fts MATCH ?
-  ORDER BY bm25(places_fts) ASC, p.rank DESC LIMIT 3
+  ORDER BY p.rank DESC LIMIT 3
 `);
 
-for (const q of ['anderson* ca*', 'stockton* ca*', 'pilot*']) {
-  const rows = probe.all(q);
-  console.log(`Query "${q}" ->`, rows.map(r => `${r.name} (${r.subtitle}) [${r.lat}, ${r.lon}]`).join(' | '));
+for (const q of ['anderson* ca*', 'stockton* ca*', 'pilot*', 'cat* scale*']) {
+  const found = probe.all(q);
+  console.log(`Query "${q}" ->`, found.map(r => `${r.name} (${r.subtitle}) [${r.lat}, ${r.lon}]`).join(' | '));
 }
 
 db.close();

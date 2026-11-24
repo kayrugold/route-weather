@@ -61,8 +61,9 @@ public final class OfflineSearchStore implements Closeable {
         } else {
             String ftsQuery = buildFtsQuery(rawQuery);
             if (ftsQuery.isEmpty()) return new JSONArray();
+            String normQuery = rawQuery == null ? "" : rawQuery.trim().toLowerCase(Locale.US).replaceAll("[,\\s]+", " ");
             for (SQLiteDatabase db : databases) {
-                queryFts(db, ftsQuery, mode, nearLat, nearLon, all);
+                queryFts(db, ftsQuery, normQuery, mode, nearLat, nearLon, all);
             }
             Collections.sort(all, (a, b) -> {
                 int scoreCmp = Double.compare(b.score, a.score);
@@ -151,12 +152,12 @@ public final class OfflineSearchStore implements Closeable {
         }
     }
 
-    private void queryFts(SQLiteDatabase db, String ftsQuery, String mode,
+    private void queryFts(SQLiteDatabase db, String ftsQuery, String normQuery, String mode,
                           Double nearLat, Double nearLon, List<Candidate> out) {
-        String sql = "SELECT p.name, p.subtitle, p.category, p.lat, p.lon, p.rank, bm25(places_fts) AS relevance "
-                + "FROM places_fts JOIN places p ON p.id = places_fts.rowid "
+        String sql = "SELECT p.name, p.subtitle, p.category, p.lat, p.lon, p.rank "
+                + "FROM places_fts JOIN places p ON p.id = places_fts.docid "
                 + "WHERE places_fts MATCH ? "
-                + "ORDER BY relevance ASC, p.rank DESC LIMIT 25";
+                + "ORDER BY p.rank DESC LIMIT 40";
         try (Cursor cursor = db.rawQuery(sql, new String[]{ftsQuery})) {
             while (cursor.moveToNext()) {
                 String name = cursor.getString(0);
@@ -165,18 +166,20 @@ public final class OfflineSearchStore implements Closeable {
                 double cLat = cursor.getDouble(3);
                 double cLon = cursor.getDouble(4);
                 int rank = cursor.getInt(5);
-                double bm25 = cursor.getDouble(6);
                 double dist = (nearLat != null && nearLon != null)
                         ? haversineMeters(nearLat, nearLon, cLat, cLon) : Double.NaN;
-                double score = -bm25 * 10.0 + rank * 0.5;
-                if ("place".equals(category)) score += 15.0;
+                String normName = name.toLowerCase(Locale.US).replaceAll("[,\\s]+", " ").trim();
+                double score = rank;
+                if (normName.equals(normQuery)) score += 200.0;
+                else if (normName.startsWith(normQuery)) score += 80.0;
+                if ("place".equals(category)) score += 30.0;
                 if ("places".equals(mode) && Double.isFinite(dist)) {
-                    score += Math.max(0.0, 20.0 - dist / 5000.0);
+                    score += Math.max(0.0, 25.0 - dist / 5000.0);
                 }
                 out.add(new Candidate(name, subtitle, category, cLat, cLon, rank, dist, score));
             }
         } catch (Exception e) {
-            Log.w(TAG, "FTS query failed for: " + ftsQuery, e);
+            Log.w(TAG, "FTS4 query failed for: " + ftsQuery, e);
         }
     }
 
