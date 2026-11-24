@@ -92,6 +92,7 @@
 .offline-warn{padding:9px 11px;border-radius:9px;background:rgba(242,206,117,.12);border:1px solid rgba(242,206,117,.4);color:var(--gold);font-size:13px;line-height:1.4;margin:0 0 12px}
 .offline-pkg-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px}
 .offline-prog-msg{font-size:12px;color:var(--cyan);margin-top:4px}
+#offlinePoiSubmenu:not([hidden]){display:flex;flex-direction:column;gap:4px;padding-left:12px;border-left:2px solid var(--line);margin:2px 0 4px}
 #trafficDialog label{display:block;margin-bottom:6px}
 #trafficDialog input{width:100%;min-height:46px;font-size:16px}
 .traffic-form-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -607,7 +608,7 @@ body:not(.has-trip) .map-zoom {bottom:calc(var(--map-bottom) + 16px)}
 <section id="wxTimeline" aria-label="Weather timeline" hidden>
 <div class="wx-row"><select id="wxMode" aria-label="Weather layer"><option value="local">Local forecast</option><option value="storm">Forecast radar</option></select><button id="wxLive">Live</button><button id="wxClose" aria-label="Close weather timeline">×</button></div>
 <div class="wx-row"><button id="wxPlay">▶ Play</button><button id="wxPrev" aria-label="Previous weather frame">‹</button><input id="wxSlider" type="range" min="0" max="0" value="0" aria-label="Weather forecast time"><button id="wxNext" aria-label="Next weather frame">›</button></div>
-<div id="wxTime" role="status"></div><small id="wxCoverage" hidden></small><div id="wxArea" hidden><span id="wxAreaSource"></span><strong id="wxAreaReading"></strong></div><div class="wx-row" id="wxHourly" hidden><span id="wxPointName"></span><button id="wxHourlyButton" type="button">Hourly forecast</button></div></section><main><section class="workspace"><div class="map-wrap"><div id="map" aria-label="Route and weather map"></div><div class="map-tools"><button id="voiceDirections" type="button" aria-label="Spoken directions" aria-pressed="false" title="Enable spoken directions">Voice</button><button id="radar" aria-pressed="false">Radar</button><button id="openMapLayers" type="button" aria-expanded="false" aria-controls="mapLayers">Layers</button><button id="pinMode" aria-pressed="false">Drop pins</button><button id="follow" aria-pressed="false">Follow Me</button></div><div class="pin-options" id="pinOptions"><span id="pinHint">Tap map for start</span> <button id="pinStart" class="subtle">Start</button><button id="pinEnd" class="subtle">End</button></div><section id="mapLayers" aria-label="Map layers" hidden><button id="openRoadAhead" type="button" aria-pressed="false">Road ahead</button><button type="button" id="showScales" aria-pressed="false">Weigh stations</button><button type="button" id="findTruckStops" aria-pressed="false">Truck stops</button><button type="button" id="layerRestAreas" aria-pressed="false">Rest areas</button><button type="button" id="layerHospitals" aria-pressed="false">Hospitals</button><button type="button" id="layerPolice" aria-pressed="false">Police & CHP</button><button type="button" id="layerRepair" aria-pressed="false">Auto & truck repair</button><button type="button" id="menuClearances" data-action="clearances" aria-pressed="false">Low clearances</button><button type="button" id="menuFire-fires" data-action="fire-fires" aria-pressed="false">Reported fires</button><button id="showWeather" aria-pressed="false">Forecast</button><button id="showTraffic" aria-pressed="false">Traffic</button><button id="openStateRoads" type="button" aria-controls="stateRoadPanel" aria-expanded="false" aria-label="State road maps">State road maps</button><button id="layerHotspots" type="button" aria-pressed="false">Satellite hotspots</button><div class="layer-switch-row"><button id="openScanners" type="button" aria-pressed="false">Nearby scanners</button><button id="scannerSettings" class="layer-settings" type="button" aria-label="Nearby scanners settings" title="Nearby scanners settings">⚙</button></div><div class="layer-switch-row"><button id="openCrime" type="button" aria-pressed="false">Reported incidents</button><button id="crimeSettings" class="layer-settings" type="button" aria-label="Reported incidents settings and sources" title="Reported incidents settings and sources">⚙</button></div><div id="facilityStatus" role="status" hidden></div><div id="trafficNote" hidden><div id="trafficMessage" role="status"></div></div><div id="wildfireStatus" role="status" hidden></div></section><div id="trafficZoomHint" role="status" hidden>Zoom in to see traffic speeds.</div><aside id="stateRoadPanel" aria-labelledby="stateRoadTitle" hidden>
+<div id="wxTime" role="status"></div><small id="wxCoverage" hidden></small><div id="wxArea" hidden><span id="wxAreaSource"></span><strong id="wxAreaReading"></strong></div><div class="wx-row" id="wxHourly" hidden><span id="wxPointName"></span><button id="wxHourlyButton" type="button">Hourly forecast</button></div></section><main><section class="workspace"><div class="map-wrap"><div id="map" aria-label="Route and weather map"></div><div class="map-tools"><button id="voiceDirections" type="button" aria-label="Spoken directions" aria-pressed="false" title="Enable spoken directions">Voice</button><button id="radar" aria-pressed="false">Radar</button><button id="openMapLayers" type="button" aria-expanded="false" aria-controls="mapLayers">Layers</button><button id="pinMode" aria-pressed="false">Drop pins</button><button id="follow" aria-pressed="false">Follow Me</button></div><div class="pin-options" id="pinOptions"><span id="pinHint">Tap map for start</span> <button id="pinStart" class="subtle">Start</button><button id="pinEnd" class="subtle">End</button></div><section id="mapLayers" aria-label="Map layers" hidden><button id="openRoadAhead" type="button" aria-pressed="false">Road ahead</button><button type="button" id="showScales" aria-pressed="false">Weigh stations</button><button type="button" id="findTruckStops" aria-pressed="false">Truck stops</button><button type="button" id="togglePlacesCategory" aria-expanded="false" aria-controls="offlinePoiSubmenu">Places &amp; services ▾</button><div id="offlinePoiSubmenu" hidden><button type="button" id="layerRestAreas" aria-pressed="false">Rest areas</button><button type="button" id="layerHospitals" aria-pressed="false">Hospitals</button><button type="button" id="layerPolice" aria-pressed="false">Police &amp; CHP</button><button type="button" id="layerRepair" aria-pressed="false">Auto &amp; truck repair</button></div><button type="button" id="menuClearances" data-action="clearances" aria-pressed="false">Low clearances</button><button type="button" id="menuFire-fires" data-action="fire-fires" aria-pressed="false">Reported fires</button><button id="showWeather" aria-pressed="false">Forecast</button><button id="showTraffic" aria-pressed="false">Traffic</button><button id="openStateRoads" type="button" aria-controls="stateRoadPanel" aria-expanded="false" aria-label="State road maps">State road maps</button><button id="layerHotspots" type="button" aria-pressed="false">Satellite hotspots</button><div class="layer-switch-row"><button id="openScanners" type="button" aria-pressed="false">Nearby scanners</button><button id="scannerSettings" class="layer-settings" type="button" aria-label="Nearby scanners settings" title="Nearby scanners settings">⚙</button></div><div class="layer-switch-row"><button id="openCrime" type="button" aria-pressed="false">Reported incidents</button><button id="crimeSettings" class="layer-settings" type="button" aria-label="Reported incidents settings and sources" title="Reported incidents settings and sources">⚙</button></div><div id="facilityStatus" role="status" hidden></div><div id="trafficNote" hidden><div id="trafficMessage" role="status"></div></div><div id="wildfireStatus" role="status" hidden></div></section><div id="trafficZoomHint" role="status" hidden>Zoom in to see traffic speeds.</div><aside id="stateRoadPanel" aria-labelledby="stateRoadTitle" hidden>
 <div class="panel-head"><h2 id="stateRoadTitle">State road maps</h2><button id="closeStateRoads" type="button" aria-label="Close state road maps">×</button></div>
 
 <input id="stateRoadSearch" type="search" aria-label="Find a state or road map" placeholder="Search state or map name">
@@ -2831,7 +2832,7 @@ function getStreetTile(source,z,x,y){
       return new source.VectorTile(new source.Pbf(await r.arrayBuffer())).layers;
     }).catch(error=>{if(streetTiles.get(url)===response)streetTiles.delete(url);throw error});
     streetTiles.set(url,response);
-    if(streetTiles.size>42)streetTiles.delete(streetTiles.keys().next().value);
+    if(streetTiles.size>160)streetTiles.delete(streetTiles.keys().next().value);
   }
   return streetTiles.get(url);
 }
@@ -3013,13 +3014,13 @@ function bindStreetLabels(){
     const hasOfflinePmtiles=Boolean(window.routeWeatherOffline?.shouldUseOffline('tiles')
       ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles));
     const usingDownload=hasOfflinePmtiles||(downloadedMapEnabled&&!!offlineRoute);
-    if(zoom<(hasOfflinePmtiles?4:usingDownload?7:14)){
+    if(zoom<(hasOfflinePmtiles?0:usingDownload?7:14)){
       clear();
       if(androidBaseMap&&!map.hasLayer(androidBaseMap))androidBaseMap.addTo(map);
       return;
     }
     try{
-      const z=usingDownload?Math.min(14,Math.floor(zoom)):14,scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
+      const z=usingDownload?Math.max(0,Math.min(14,Math.floor(zoom))):14,scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
       const corners=[[0,0],[size.x,0],[0,size.y],[size.x,size.y]].map(point=>map.containerPointToLayerPoint(point));
       const offset=corners[0],origin=pixelOrigin.add(offset), bearing=map.getBearing?.()||0;
       const bounds=L.bounds(corners.map(point=>pixelOrigin.add(point)));
@@ -3074,6 +3075,7 @@ function bindStreetLabels(){
     if(!pinching||event.touches.length>1)return;
     pinching=false;
     requestAnimationFrame(render);
+    setTimeout(render,180);
   };
   document.addEventListener('touchend',endPinch,{capture:true,passive:true});
   document.addEventListener('touchcancel',endPinch,{capture:true,passive:true});
@@ -3085,7 +3087,10 @@ function bindStreetLabels(){
       layer.style[L.DomUtil.TRANSFORM]=`translate3d(${position.x}px,${position.y}px,0) rotate(${-paintedView.bearing}deg) scale(${scale})`;
     }
   });
-  map.on('moveend resize bearingpaint',render);
+  map.on('moveend zoomend resize bearingpaint',()=>{
+    if(pinching)pinching=false;
+    render();
+  });
   streetLabels={refresh:render};
 }
 

@@ -213,7 +213,19 @@
   ];
 
   function bindOfflinePoiLayers() {
-    const active = new Map(); // kind -> { def, group }
+    // Expandable "Places & services" category inside Layers menu
+    const catBtn = el('togglePlacesCategory');
+    const subMenu = el('offlinePoiSubmenu');
+    if (catBtn && subMenu) {
+      catBtn.addEventListener('click', () => {
+        const open = subMenu.hidden;
+        subMenu.hidden = !open;
+        catBtn.setAttribute('aria-expanded', String(open));
+        catBtn.textContent = open ? 'Places & services ▴' : 'Places & services ▾';
+      });
+    }
+
+    const active = new Map(); // kind -> { def, group, markers: Map<id, L.Marker> }
 
     function refreshAll() {
       const m = window.routeWeatherMap || window.map;
@@ -221,13 +233,16 @@
       if (!m || !bridge || typeof bridge.offlineFacilities !== 'function') return;
       const b = m.getBounds();
       const west = b.getWest(), south = b.getSouth(), east = b.getEast(), north = b.getNorth();
-      for (const { def, group } of active.values()) {
-        group.clearLayers();
+      for (const { def, group, markers } of active.values()) {
         try {
           const data = JSON.parse(bridge.offlineFacilities(def.kind, west, south, east, north, 0) || '{}');
           const items = Array.isArray(data.items) ? data.items : [];
+          const seen = new Set();
           for (const item of items) {
             if (!Number.isFinite(item.lat) || !Number.isFinite(item.lon)) continue;
+            const key = String(item.id || `${item.lat.toFixed(5)},${item.lon.toFixed(5)}`);
+            seen.add(key);
+            if (markers.has(key)) continue;
             const icon = L.divIcon({
               className: 'offline-poi-pin',
               html: `<div style="width:24px;height:24px;border-radius:50%;background:${def.color};color:#fff;border:2px solid #fff;font:700 12px/20px system-ui,sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.45)">${def.badge}</div>`,
@@ -240,9 +255,18 @@
             marker.bindPopup(
               `<strong>${title}</strong><br><small>${sub}</small><br>` +
               `<button type="button" class="primary" style="margin-top:6px;padding:4px 10px" ` +
-              `onclick="window.routeWeatherRouteToPoi(${item.lat},${item.lon},${JSON.stringify(item.name || def.label).replace(/"/g, '&quot;')})">Route here</button>`
+              `onclick="window.routeWeatherRouteToPoi(${item.lat},${item.lon},${JSON.stringify(item.name || def.label).replace(/"/g, '&quot;')})">Route here</button>`,
+              { closeOnClick: false, autoClose: false, autoPan: false }
             );
             marker.addTo(group);
+            markers.set(key, marker);
+          }
+          // Remove only off-screen markers that do NOT have an open popup
+          for (const [key, marker] of markers.entries()) {
+            if (!seen.has(key) && !marker.isPopupOpen()) {
+              group.removeLayer(marker);
+              markers.delete(key);
+            }
           }
         } catch {}
       }
@@ -281,7 +305,7 @@
             return;
           }
           const group = L.layerGroup().addTo(m);
-          active.set(def.kind, { def, group });
+          active.set(def.kind, { def, group, markers: new Map() });
           btn.setAttribute('aria-pressed', 'true');
           btn.classList.add('enabled');
           refreshAll();
