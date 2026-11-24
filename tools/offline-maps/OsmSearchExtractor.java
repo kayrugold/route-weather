@@ -1,4 +1,4 @@
-import com.carrotsearch.hppc.LongLongHashMap;
+import com.onthegomap.planetiler.collection.LongLongMap;
 import com.onthegomap.planetiler.reader.osm.OsmBlockSource;
 import com.onthegomap.planetiler.reader.osm.OsmElement;
 import com.onthegomap.planetiler.reader.osm.OsmInputFile;
@@ -6,6 +6,7 @@ import com.onthegomap.planetiler.reader.osm.OsmInputFile;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Locale;
@@ -38,33 +39,39 @@ public final class OsmSearchExtractor {
         boolean includeHouseNumbers = args.length >= 4 && "--include-house-numbers".equals(args[3]);
 
         long t0 = System.currentTimeMillis();
-        // Store node coordinates packed as (latE7 << 32) | (lonE7 & 0xFFFFFFFFL)
-        LongLongHashMap nodeCoords = new LongLongHashMap(4_000_000);
-        Set<String> seenStreets = new HashSet<>(200_000);
-        Set<String> seenAddresses = new HashSet<>(500_000);
+        // Memory-mapped disk-backed node coordinate map (handles 500M+ nodes in <1 GB RAM!)
+        Path nodeMapFile = Files.createTempFile("rw-nodemap-", ".bin");
+        Set<String> seenStreets = new HashSet<>(500_000);
+        Set<String> seenAddresses = new HashSet<>(100_000);
         int[] counts = new int[1];
 
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(outPath.toFile(), StandardCharsets.UTF_8), 1 << 20);
+        try (LongLongMap nodeCoords = LongLongMap.from("sparsearray", "mmap", nodeMapFile, true);
+             BufferedWriter out = new BufferedWriter(new FileWriter(outPath.toFile(), StandardCharsets.UTF_8), 1 << 20);
              OsmBlockSource source = OsmInputFile.readFrom(pbf)) {
+
+            final LongLongMap.Writer[] writerRef = new LongLongMap.Writer[]{ nodeCoords.newWriter() };
 
             source.forEachBlock(block -> {
                 for (OsmElement el : block.decodeElements()) {
                     if (el instanceof OsmElement.Node node) {
                         long packed = pack(node.lat(), node.lon());
-                        nodeCoords.put(node.id(), packed);
+                        writerRef[0].put(node.id(), packed);
                         Map<String, Object> tags = node.tags();
                         if (!tags.isEmpty()) {
                             emitFeature(out, tags, node.lat(), node.lon(), defaultState, includeHouseNumbers, seenAddresses, counts);
                         }
                     } else if (el instanceof OsmElement.Way way) {
+                        if (writerRef[0] != null) {
+                            try { writerRef[0].close(); } catch (Exception ignored) {}
+                            writerRef[0] = null;
+                        }
                         Map<String, Object> tags = way.tags();
                         if (tags.isEmpty()) continue;
                         var nodes = way.nodes();
                         if (nodes == null || nodes.isEmpty()) continue;
                         long midNodeId = nodes.get(nodes.size() / 2);
-                        int idx = nodeCoords.indexOf(midNodeId);
-                        if (idx < 0) continue;
-                        long packed = nodeCoords.indexGet(idx);
+                        long packed = nodeCoords.get(midNodeId);
+                        if (packed == LongLongMap.MISSING_VALUE) continue;
                         double lat = unpackLat(packed);
                         double lon = unpackLon(packed);
 
@@ -93,6 +100,11 @@ public final class OsmSearchExtractor {
                     }
                 }
             });
+            if (writerRef[0] != null) {
+                try { writerRef[0].close(); } catch (Exception ignored) {}
+            }
+        } finally {
+            Files.deleteIfExists(nodeMapFile);
         }
         System.out.printf(Locale.US, "Extracted %,d search records in %.1f s%n",
                 counts[0], (System.currentTimeMillis() - t0) / 1000.0);
