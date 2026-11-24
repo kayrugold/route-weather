@@ -44,7 +44,7 @@ public final class PMTilesReader implements Closeable {
     private final Entry[] rootEntries;
     private final Map<Long, Entry[]> leafCache = new LinkedHashMap<Long, Entry[]>(32, 0.75f, true) {
         @Override
-        protected boolean removeEldestEntry(Map.Entry<Long, Entry[]> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<Long, PMTilesReader.Entry[]> eldest) {
             return size() > 32;
         }
     };

@@ -3,7 +3,7 @@
 ## 1. Baseline & Git Status
 - **Repository:** `c:\Users\kayru_tolw96q\Desktop\route-weather` (`https://github.com/kayrugold/route-weather.git`)
 - **Baseline branch / commit:** `main` @ `d2b544874200d268e8ec0d78418b1de07f54cb0b`
-- **Development branch:** `offline-navigation` (created via WSL `git`; `main` untouched, pre-existing uncommitted v0.32 work preserved).
+- **Development branch:** `offline-navigation` @ `c4e7626b360ab173b8299c3cb139347e19fee4b1` (created via WSL `git`; `main` untouched, pre-existing uncommitted v0.32 work preserved).
 - **Large map binaries:** All downloaded `.osm.pbf`, `planetiler.jar`, and generated `.pmtiles`/`.rd5`/`-search.db` files live inside `dist/offline-build/` (already listed in `.gitignore`).
 
 ## 2. Selected Architecture Summary
