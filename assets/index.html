@@ -2971,6 +2971,15 @@ function paintStreetMap(ctx,tiles,scale,origin,zoom,palette){
   ctx.strokeStyle=palette.water;
   ctx.lineWidth=2;
   streetGeometry(tiles,'waterway',scale,origin,(feature,geometry)=>{streetPath(ctx,geometry());ctx.stroke()});
+  ctx.save();
+  ctx.strokeStyle=document.body.classList.contains('day-mode')?'rgba(80,95,115,0.45)':'rgba(180,205,230,0.35)';
+  ctx.lineWidth=1.5;
+  ctx.setLineDash([6,4]);
+  streetGeometry(tiles,'boundary',scale,origin,(feature,geometry)=>{
+    const lvl=feature.properties.admin_level;
+    if(feature.type===2&&(lvl===2||lvl===4)){streetPath(ctx,geometry());ctx.stroke()}
+  });
+  ctx.restore();
   const roads=roadClasses.map(()=>[]);
   streetGeometry(tiles,'transportation',scale,origin,(feature,geometry)=>{
     const rank=roadClasses.indexOf(feature.properties.class);
@@ -3050,9 +3059,15 @@ function bindStreetLabels(){
       textContext.setTransform(ratio,0,0,ratio,0,0);
       const palette=streetThemes[document.body.classList.contains('day-mode')?'day':'night'];
       ctx.fillStyle=palette.ground;
+      if(hasOfflinePmtiles){
+        ctx.fillRect(0,0,width,height);
+        if(androidBaseMap&&map.hasLayer(androidBaseMap))map.removeLayer(androidBaseMap);
+      }
       ctx.transform(cos,sin,-sin,cos,0,0);
       const tilePixels=256*scale;
-      for(const {x,y} of tiles)ctx.fillRect(x*tilePixels-origin.x,y*tilePixels-origin.y,tilePixels+.25,tilePixels+.25);
+      if(!hasOfflinePmtiles){
+        for(const {x,y} of tiles)ctx.fillRect(x*tilePixels-origin.x,y*tilePixels-origin.y,tilePixels+.25,tilePixels+.25);
+      }
       paintStreetMap(ctx,tiles,scale,origin,zoom,palette);
       const toScreen=({x,y})=>({x:cos*x-sin*y,y:sin*x+cos*y});
       paintStreetLabels(textContext,streetLabelCandidates(tiles,scale,origin,width,height,zoom,toScreen),palette,width,height);
