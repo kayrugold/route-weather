@@ -193,22 +193,30 @@ public final class OfflineRouter {
                 legGeoJsons.add(futures.get(i).get());
             }
 
-            // Self-healing fallback: if a sub-leg timed out, bisect it at the midpoint (cuts search area by 4x)
+            // Self-healing fallback: NEVER invent an unverified midpoint (which can land on a disconnected road island).
+            // Instead retry failed sub-leg with conservative pass1=1.5 & 96MB, or skip a bad hub if island detected.
             List<JSONObject> stitchedLegs = new ArrayList<>();
-            for (int i = 0; i < legCount; i++) {
+            int i = 0;
+            while (i < legCount) {
                 JSONObject cur = legGeoJsons.get(i);
                 if (cur != null) {
                     stitchedLegs.add(cur);
+                    i++;
                 } else {
                     double[] a = expandedCoords.get(i);
                     double[] b = expandedCoords.get(i + 1);
-                    double[] mid = new double[]{(a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0};
                     try {
-                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, mid), profileFile, 64, 40_000L));
-                        stitchedLegs.add(runSingleBRouter(Arrays.asList(mid, b), profileFile, 64, 40_000L));
-                    } catch (Exception bisectErr) {
-                        // Last resort: retry direct leg with higher memory & 60s timeout
-                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, b), profileFile, 96, 60_000L));
+                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, b), profileFile, 96, 50_000L));
+                        i++;
+                    } catch (Exception retryErr) {
+                        if (i + 2 <= legCount) {
+                            stitchedLegs.add(runSingleBRouter(
+                                    Arrays.asList(a, expandedCoords.get(i + 2)),
+                                    profileFile, 96, 55_000L));
+                            i += 2;
+                        } else {
+                            throw retryErr;
+                        }
                     }
                 }
             }

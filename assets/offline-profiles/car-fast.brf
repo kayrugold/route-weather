@@ -34,14 +34,14 @@ assign initialcost =
 assign costfactor =
   if not caraccess then 10000
   else if highway=motorway|motorway_link then 1.0
-  else if highway=trunk|trunk_link then 1.2
-  else if highway=primary|primary_link then 1.55
+  else if highway=trunk|trunk_link then 1.18
+  else if highway=primary|primary_link then 1.45
   else if highway=secondary|secondary_link then 2.2
-  else if highway=tertiary|tertiary_link then 3.2
-  else if highway=unclassified then 4.5
-  else if isresidential then 10.0
-  else if highway=service then 14.0
-  else 20.0
+  else if highway=tertiary|tertiary_link then 3.5
+  else if highway=unclassified then 5.5
+  else if isresidential then 12.0
+  else if highway=service then 18.0
+  else 25.0
 
 assign priorityclassifier =
   if      ( highway=motorway                  ) then  30

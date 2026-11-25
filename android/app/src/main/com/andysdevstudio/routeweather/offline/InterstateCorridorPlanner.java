@@ -378,13 +378,60 @@ final class InterstateCorridorPlanner {
         return options;
     }
 
+    private static final Map<String, String> CITY_NAMES = new HashMap<>();
+    static {
+        CITY_NAMES.put("SEA", "Seattle"); CITY_NAMES.put("PDX", "Portland"); CITY_NAMES.put("MFR", "Medford");
+        CITY_NAMES.put("RDD", "Redding"); CITY_NAMES.put("SAC", "Sacramento"); CITY_NAMES.put("SFO", "Bay Area");
+        CITY_NAMES.put("FAT", "Fresno"); CITY_NAMES.put("BFL", "Bakersfield"); CITY_NAMES.put("LAX", "Los Angeles");
+        CITY_NAMES.put("SAN", "San Diego"); CITY_NAMES.put("DAG", "Barstow"); CITY_NAMES.put("IGM", "Kingman");
+        CITY_NAMES.put("RNO", "Reno"); CITY_NAMES.put("EKO", "Elko"); CITY_NAMES.put("LAS", "Las Vegas");
+        CITY_NAMES.put("BOI", "Boise"); CITY_NAMES.put("GEG", "Spokane"); CITY_NAMES.put("MSO", "Missoula");
+        CITY_NAMES.put("BTM", "Butte"); CITY_NAMES.put("BIL", "Billings"); CITY_NAMES.put("GTF", "Great Falls");
+        CITY_NAMES.put("PIH", "Pocatello"); CITY_NAMES.put("SLC", "Salt Lake City"); CITY_NAMES.put("CVF", "Cove Fort");
+        CITY_NAMES.put("GJT", "Grand Jct"); CITY_NAMES.put("RWL", "Rawlins"); CITY_NAMES.put("CYS", "Cheyenne");
+        CITY_NAMES.put("DEN", "Denver"); CITY_NAMES.put("PHX", "Phoenix"); CITY_NAMES.put("FLG", "Flagstaff");
+        CITY_NAMES.put("TUS", "Tucson"); CITY_NAMES.put("ABQ", "Albuquerque"); CITY_NAMES.put("ELP", "El Paso");
+        CITY_NAMES.put("RAP", "Rapid City"); CITY_NAMES.put("BIS", "Bismarck"); CITY_NAMES.put("FAR", "Fargo");
+        CITY_NAMES.put("FSD", "Sioux Falls"); CITY_NAMES.put("LBF", "North Platte"); CITY_NAMES.put("OMA", "Omaha");
+        CITY_NAMES.put("SLN", "Salina"); CITY_NAMES.put("ICT", "Wichita"); CITY_NAMES.put("AMA", "Amarillo");
+        CITY_NAMES.put("OKC", "Oklahoma City"); CITY_NAMES.put("FSM", "Fort Smith"); CITY_NAMES.put("DAL", "Dallas");
+        CITY_NAMES.put("FTW", "Fort Worth"); CITY_NAMES.put("MAF", "Midland"); CITY_NAMES.put("SAT", "San Antonio");
+        CITY_NAMES.put("LRD", "Laredo"); CITY_NAMES.put("HOU", "Houston"); CITY_NAMES.put("MSP", "Minneapolis");
+        CITY_NAMES.put("DSM", "Des Moines"); CITY_NAMES.put("MCI", "Kansas City"); CITY_NAMES.put("SGF", "Springfield");
+        CITY_NAMES.put("LIT", "Little Rock"); CITY_NAMES.put("SHV", "Shreveport"); CITY_NAMES.put("BTR", "Baton Rouge");
+        CITY_NAMES.put("MSY", "New Orleans"); CITY_NAMES.put("STL", "St. Louis"); CITY_NAMES.put("MEM", "Memphis");
+        CITY_NAMES.put("JAN", "Jackson"); CITY_NAMES.put("MSN", "Madison"); CITY_NAMES.put("ORD", "Chicago");
+        CITY_NAMES.put("IND", "Indianapolis"); CITY_NAMES.put("SDF", "Louisville"); CITY_NAMES.put("BNA", "Nashville");
+        CITY_NAMES.put("BHM", "Birmingham"); CITY_NAMES.put("MOB", "Mobile"); CITY_NAMES.put("DTW", "Detroit");
+        CITY_NAMES.put("TOL", "Toledo"); CITY_NAMES.put("CLE", "Cleveland"); CITY_NAMES.put("CMH", "Columbus");
+        CITY_NAMES.put("CVG", "Cincinnati"); CITY_NAMES.put("LEX", "Lexington"); CITY_NAMES.put("TYS", "Knoxville");
+        CITY_NAMES.put("CHA", "Chattanooga"); CITY_NAMES.put("ATL", "Atlanta"); CITY_NAMES.put("TLH", "Tallahassee");
+        CITY_NAMES.put("JAX", "Jacksonville"); CITY_NAMES.put("MCO", "Orlando"); CITY_NAMES.put("TPA", "Tampa");
+        CITY_NAMES.put("MIA", "Miami"); CITY_NAMES.put("PIT", "Pittsburgh"); CITY_NAMES.put("CRW", "Charleston");
+        CITY_NAMES.put("ROA", "Roanoke"); CITY_NAMES.put("CLT", "Charlotte"); CITY_NAMES.put("RDU", "Raleigh");
+        CITY_NAMES.put("SAV", "Savannah"); CITY_NAMES.put("RIC", "Richmond"); CITY_NAMES.put("DCA", "Washington DC");
+        CITY_NAMES.put("PHL", "Philadelphia"); CITY_NAMES.put("NYC", "New York"); CITY_NAMES.put("BUF", "Buffalo");
+        CITY_NAMES.put("SYR", "Syracuse"); CITY_NAMES.put("ALB", "Albany"); CITY_NAMES.put("BOS", "Boston");
+        CITY_NAMES.put("BGR", "Bangor"); CITY_NAMES.put("YVR", "Vancouver"); CITY_NAMES.put("YKA", "Kamloops");
+        CITY_NAMES.put("YYC", "Calgary"); CITY_NAMES.put("YEG", "Edmonton"); CITY_NAMES.put("YQR", "Regina");
+        CITY_NAMES.put("YXE", "Saskatoon"); CITY_NAMES.put("YWG", "Winnipeg"); CITY_NAMES.put("YQT", "Thunder Bay");
+        CITY_NAMES.put("YAM", "Sault Ste. Marie"); CITY_NAMES.put("YSB", "Sudbury"); CITY_NAMES.put("YYZ", "Toronto");
+        CITY_NAMES.put("YOW", "Ottawa"); CITY_NAMES.put("YUL", "Montreal"); CITY_NAMES.put("YQB", "Quebec City");
+        CITY_NAMES.put("YFC", "Fredericton"); CITY_NAMES.put("YHZ", "Halifax");
+    }
+
+    private static String cityName(String id) {
+        String name = CITY_NAMES.get(id);
+        return name != null ? name : id;
+    }
+
     private static String buildCorridorLabel(List<String> ids) {
-        if (ids.isEmpty()) return "Direct highway";
-        if (ids.size() == 1) return "Via " + ids.get(0);
+        if (ids.isEmpty()) return "Direct";
+        if (ids.size() == 1) return "Via " + cityName(ids.get(0));
         int mid1 = ids.size() / 3;
         int mid2 = (ids.size() * 2) / 3;
-        if (mid1 == mid2) return "Via " + ids.get(mid1);
-        return "Via " + ids.get(mid1) + " · " + ids.get(mid2);
+        if (mid1 == mid2) return "Via " + cityName(ids.get(mid1));
+        return "Via " + cityName(ids.get(mid1)) + " · " + cityName(ids.get(mid2));
     }
 
     private static List<double[]> planCorridor(double[] from, double[] to, double directMeters, File segmentsDir) {

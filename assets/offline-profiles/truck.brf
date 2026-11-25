@@ -41,8 +41,8 @@ assign costfactor =
   else if highway=tertiary|tertiary_link then 4.0
   else if highway=unclassified then 7.0
   else if isresidential then 18.0
-  else if highway=service then 15.0
-  else 25.0
+  else if highway=service then 25.0
+  else 35.0
 
 assign priorityclassifier =
   if      ( highway=motorway                  ) then  30
