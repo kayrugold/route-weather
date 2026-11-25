@@ -1,0 +1,2226 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedAt": "2026-11-25",
+  "tiers": {
+    "1": "Native interactive geographic data (JSON/WZDx/CWZ/Open511/WFS/FeatureServer)",
+    "2": "Official geographic map overlay (ArcGIS MapServer / WMS / WMTS)",
+    "3": "Embedded official DOT website (in-app viewer where permitted)",
+    "4": "External official DOT website link"
+  },
+  "jurisdictions": {
+    "AL": {
+      "code": "AL",
+      "country": "US",
+      "name": "Alabama",
+      "system": "ALGO Traffic",
+      "officialUrl": "https://algotraffic.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/alabama",
+      "highestTier": 2,
+      "coverageStatus": "gis_overlay",
+      "liveConditions": {
+        "tier": 3,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "ALGO_API_KEY",
+          "apiType": "rest",
+          "url": "https://algotraffic.com/",
+          "regUrl": "mailto:algodeveloper@dot.state.al.us",
+          "note": "Contact algodeveloper@dot.state.al.us for authorized ALGO Traffic feed access (23 CFR Part 511)"
+        },
+        "embedAllowed": true,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/alabama.html",
+        "tollCoverage": false,
+        "freightUrl": "https://www.dot.state.al.us/programs/FreightPlanning.html",
+        "freightLabel": "Alabama Freight Network",
+        "regulationsUrl": "https://alison.legislature.state.al.us/code-of-alabama?section=32-9-20",
+        "regulationsLabel": "Alabama Code § 32-9-20 (Size & Weight)"
+      },
+      "referenceMaps": {
+        "tier": 2,
+        "title": "ALDOT Highway & Construction Network",
+        "type": "arcgis_mapserver",
+        "url": "https://aldotgis.dot.state.al.us/pubgis2/rest/services/Roads/EGISRoutes_WGS84/MapServer",
+        "layers": "show:0,1,4",
+        "bounds": [
+          -88.47,
+          30.14,
+          -84.89,
+          35.01
+        ],
+        "extraServices": [
+          {
+            "title": "ALDOT Milemarkers",
+            "url": "https://aldotgis.dot.state.al.us/pubgis2/rest/services/Roads/Milemarker/MapServer"
+          },
+          {
+            "title": "ALDOT Traffic Counter Stations",
+            "url": "https://aldotgis.dot.state.al.us/pubgis2/rest/services/EGISATDServices/TDMPublic/MapServer"
+          },
+          {
+            "title": "ALDOT Transportation Routes",
+            "url": "https://aldotgis.dot.state.al.us/pubgis2/rest/services/TSI_Services/TSIRoutes/MapServer"
+          }
+        ]
+      }
+    },
+    "AK": {
+      "code": "AK",
+      "country": "US",
+      "name": "Alaska",
+      "system": "Alaska 511",
+      "officialUrl": "https://511.alaska.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/alaska",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/alaska.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "AZ": {
+      "code": "AZ",
+      "country": "US",
+      "name": "Arizona",
+      "system": "AZ511",
+      "officialUrl": "https://www.az511.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/arizona",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/arizona.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "AR": {
+      "code": "AR",
+      "country": "US",
+      "name": "Arkansas",
+      "system": "IDrive Arkansas",
+      "officialUrl": "https://www.idrivearkansas.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/arkansas",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/arkansas.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA": {
+      "code": "CA",
+      "country": "US",
+      "name": "California",
+      "system": "Caltrans QuickMap",
+      "officialUrl": "https://quickmap.dot.ca.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/california",
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents, closures & conditions",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Clearance pins on selected state routes",
+        "clearanceUrl": "https://dot.ca.gov/programs/traffic-operations/legal-truck-access/height",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CO": {
+      "code": "CO",
+      "country": "US",
+      "name": "Colorado",
+      "system": "COtrip",
+      "officialUrl": "https://www.cotrip.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/colorado",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "COTRIP_API_KEY",
+          "apiType": "cwz",
+          "url": "https://data.cotrip.org/api/v1/cwz",
+          "regUrl": "https://data.cotrip.org/",
+          "note": "Free Colorado DOT COtrip developer account (WZDx/CWZ + incidents)"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/colorado.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CT": {
+      "code": "CT",
+      "country": "US",
+      "name": "Connecticut",
+      "system": "CTroads",
+      "officialUrl": "https://ctroads.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/connecticut",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/connecticut.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "DE": {
+      "code": "DE",
+      "country": "US",
+      "name": "Delaware",
+      "system": "DelDOT Interactive Maps",
+      "officialUrl": "https://deldot.gov/map/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/delaware",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/delaware.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "DC": {
+      "code": "DC",
+      "country": "US",
+      "name": "District of Columbia",
+      "system": "DDOT Traffic Advisories",
+      "officialUrl": "https://ddot.dc.gov/newsroom/advisories",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/district-columbia",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/district-of-columbia.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "FL": {
+      "code": "FL",
+      "country": "US",
+      "name": "Florida",
+      "system": "Florida 511",
+      "officialUrl": "https://fl511.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/florida",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/florida.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "GA": {
+      "code": "GA",
+      "country": "US",
+      "name": "Georgia",
+      "system": "Georgia 511",
+      "officialUrl": "https://511ga.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/georgia",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/georgia.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "HI": {
+      "code": "HI",
+      "country": "US",
+      "name": "Hawaii",
+      "system": "GoAkamai",
+      "officialUrl": "https://www.goakamai.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/hawaii",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/hawaii.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "ID": {
+      "code": "ID",
+      "country": "US",
+      "name": "Idaho",
+      "system": "Idaho 511",
+      "officialUrl": "https://511.idaho.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/idaho",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/idaho.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "IL": {
+      "code": "IL",
+      "country": "US",
+      "name": "Illinois",
+      "system": "Getting Around Illinois",
+      "officialUrl": "https://www.gettingaroundillinois.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/illinois",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "IL_CWZ_API_KEY",
+          "apiType": "cwz",
+          "url": "https://wzad-idot.illinois.gov/cwz/01.00",
+          "regUrl": "https://www.gettingaroundillinois.com/",
+          "note": "Free IDOT / Illinois Tollway CWZ API key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/illinois.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "IN": {
+      "code": "IN",
+      "country": "US",
+      "name": "Indiana",
+      "system": "Indiana 511",
+      "officialUrl": "https://511in.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/indiana",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/indiana.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "IA": {
+      "code": "IA",
+      "country": "US",
+      "name": "Iowa",
+      "system": "Iowa 511",
+      "officialUrl": "https://www.511ia.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/iowa",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/iowa.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "KS": {
+      "code": "KS",
+      "country": "US",
+      "name": "Kansas",
+      "system": "KanDrive",
+      "officialUrl": "https://www.kandrive.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/kansas",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/kansas.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "KY": {
+      "code": "KY",
+      "country": "US",
+      "name": "Kentucky",
+      "system": "GoKY",
+      "officialUrl": "https://goky.ky.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/kentucky",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/kentucky.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "LA": {
+      "code": "LA",
+      "country": "US",
+      "name": "Louisiana",
+      "system": "Louisiana 511",
+      "officialUrl": "https://www.511la.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/louisiana",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/louisiana.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "ME": {
+      "code": "ME",
+      "country": "US",
+      "name": "Maine",
+      "system": "New England 511",
+      "officialUrl": "https://newengland511.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/maine",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/maine.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MD": {
+      "code": "MD",
+      "country": "US",
+      "name": "Maryland",
+      "system": "Maryland CHART",
+      "officialUrl": "https://chart.maryland.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/maryland",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/maryland.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MA": {
+      "code": "MA",
+      "country": "US",
+      "name": "Massachusetts",
+      "system": "Mass511",
+      "officialUrl": "https://mass511.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/massachusetts",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "MASSDOT_API_KEY",
+          "apiType": "cwz",
+          "url": "https://api.massdot-swzm.com/api/v1/cwz/work-zone-feed",
+          "regUrl": "https://www.mass.gov/info-details/highway-data-for-developers",
+          "note": "Free MassDOT developer account (Connected Work Zone feed)"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Pioneer Valley inventory and OpenStreetMap",
+        "clearanceUrl": "https://services1.arcgis.com/ceiitspzDAHrdGO1/ArcGIS/rest/services/Pioneer_Valley_Low_Clearance_Bridges/FeatureServer/13",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MI": {
+      "code": "MI",
+      "country": "US",
+      "name": "Michigan",
+      "system": "Mi Drive",
+      "officialUrl": "https://mdotjboss.state.mi.us/MiDrive/map",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/michigan",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/michigan.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MN": {
+      "code": "MN",
+      "country": "US",
+      "name": "Minnesota",
+      "system": "Minnesota 511",
+      "officialUrl": "https://511mn.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/minnesota",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/minnesota.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MS": {
+      "code": "MS",
+      "country": "US",
+      "name": "Mississippi",
+      "system": "MDOT Traffic",
+      "officialUrl": "https://www.mdottraffic.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/mississippi",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/mississippi.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MO": {
+      "code": "MO",
+      "country": "US",
+      "name": "Missouri",
+      "system": "MoDOT Traveler Information Map",
+      "officialUrl": "https://traveler.modot.org/map/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/missouri",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/missouri.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MT": {
+      "code": "MT",
+      "country": "US",
+      "name": "Montana",
+      "system": "Montana 511",
+      "officialUrl": "https://www.511mt.net/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/montana",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/montana.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NE": {
+      "code": "NE",
+      "country": "US",
+      "name": "Nebraska",
+      "system": "Nebraska 511",
+      "officialUrl": "https://www.511.nebraska.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/nebraska",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/nebraska.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NV": {
+      "code": "NV",
+      "country": "US",
+      "name": "Nevada",
+      "system": "Nevada 511",
+      "officialUrl": "https://www.nvroads.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/nevada",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/nevada.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NH": {
+      "code": "NH",
+      "country": "US",
+      "name": "New Hampshire",
+      "system": "New England 511",
+      "officialUrl": "https://newengland511.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/new-hampshire",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/new-hampshire.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NJ": {
+      "code": "NJ",
+      "country": "US",
+      "name": "New Jersey",
+      "system": "511NJ",
+      "officialUrl": "https://www.511nj.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/new-jersey",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/new-jersey.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NM": {
+      "code": "NM",
+      "country": "US",
+      "name": "New Mexico",
+      "system": "NMRoads",
+      "officialUrl": "https://www.nmroads.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/new-mexico",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/new-mexico.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NY": {
+      "code": "NY",
+      "country": "US",
+      "name": "New York",
+      "system": "511NY",
+      "officialUrl": "https://511ny.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/new-york",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "NY511_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/wzdx",
+          "regUrl": "https://511ny.org/developers/help",
+          "note": "Free 511NY developer API key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "NYC DOT and OpenStreetMap",
+        "clearanceUrl": "https://data.cityofnewyork.us/Transportation/Citywide-Low-Bridges/rn6h-i66u",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "NC": {
+      "code": "NC",
+      "country": "US",
+      "name": "North Carolina",
+      "system": "DriveNC",
+      "officialUrl": "https://drivenc.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/north-carolina",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "DRIVENC_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://drivenc.gov/api/wzdx",
+          "regUrl": "https://drivenc.gov/",
+          "note": "Free NCDOT DriveNC WZDx API key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/north-carolina.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "ND": {
+      "code": "ND",
+      "country": "US",
+      "name": "North Dakota",
+      "system": "ND Roads",
+      "officialUrl": "https://travel.dot.nd.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/north-dakota",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/north-dakota.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "OH": {
+      "code": "OH",
+      "country": "US",
+      "name": "Ohio",
+      "system": "OHGO",
+      "officialUrl": "https://www.ohgo.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/ohio",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "OHGO_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://publicapi.ohgo.com/api/work-zones/wzdx/4.2",
+          "regUrl": "https://publicapi.ohgo.com/",
+          "note": "Free Ohio DOT OHGO developer key (work zones, incidents, cameras)"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/ohio.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "OK": {
+      "code": "OK",
+      "country": "US",
+      "name": "Oklahoma",
+      "system": "OK Traffic",
+      "officialUrl": "https://www.oktraffic.org/#/map?area=statewide",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/oklahoma",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/oklahoma.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "OR": {
+      "code": "OR",
+      "country": "US",
+      "name": "Oregon",
+      "system": "TripCheck",
+      "officialUrl": "https://www.tripcheck.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/oregon",
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents, closures & conditions",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "ODOT and OpenStreetMap",
+        "clearanceUrl": "https://gis.odot.state.or.us/arcgis1006/rest/services/transgis/catalog/MapServer/108",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "PA": {
+      "code": "PA",
+      "country": "US",
+      "name": "Pennsylvania",
+      "system": "511PA",
+      "officialUrl": "https://www.511pa.com/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/pennsylvania",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "PA_TURNPIKE_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://atms.paturnpike.com/api/WZDxWorkZoneFeed",
+          "regUrl": "https://www.511pa.com/",
+          "note": "Free PA Turnpike WZDx API key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/pennsylvania.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "PR": {
+      "code": "PR",
+      "country": "US",
+      "name": "Puerto Rico",
+      "system": "Puerto Rico Traveler Information",
+      "officialUrl": "https://its.act.pr.gov/es/Default.aspx",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/puerto-rico-and-us-virgin-islands",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "RI": {
+      "code": "RI",
+      "country": "US",
+      "name": "Rhode Island",
+      "system": "RIDOT Traveler Information",
+      "officialUrl": "https://www.dot.ri.gov/travel/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/rhode-island",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/rhode-island.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "SC": {
+      "code": "SC",
+      "country": "US",
+      "name": "South Carolina",
+      "system": "South Carolina 511",
+      "officialUrl": "https://www.511sc.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/south-carolina",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/south-carolina.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "SD": {
+      "code": "SD",
+      "country": "US",
+      "name": "South Dakota",
+      "system": "South Dakota 511",
+      "officialUrl": "https://www.sd511.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/south-dakota",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/south-dakota.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "TN": {
+      "code": "TN",
+      "country": "US",
+      "name": "Tennessee",
+      "system": "TDOT SmartWay",
+      "officialUrl": "https://smartway.tn.gov/traffic",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/tennessee",
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents, closures & conditions",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/tennessee.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "TX": {
+      "code": "TX",
+      "country": "US",
+      "name": "Texas",
+      "system": "DriveTexas",
+      "officialUrl": "https://drivetexas.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/texas",
+      "highestTier": 2,
+      "coverageStatus": "gis_overlay",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "DRIVETEXAS_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://api.drivetexas.org/api/conditions.wzdx.geojson",
+          "regUrl": "https://drivetexas.org/",
+          "note": "Free TxDOT DriveTexas API key (WZDx conditions & closures)"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/texas.html",
+        "tollCoverage": true,
+        "freightUrl": "https://www.txdot.gov/projects/planning/texas-freight-mobility-plan.html",
+        "freightLabel": "TxDOT Freight Mobility Network",
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": {
+        "tier": 2,
+        "title": "TxDOT Highway Freight Network",
+        "type": "arcgis_featureserver",
+        "url": "https://services.arcgis.com/KTcxiTD9dsQw4r7Z/arcgis/rest/services/TxDOT_Texas_Highway_Freight_Network/FeatureServer/0",
+        "layers": null,
+        "bounds": [
+          -106.65,
+          25.84,
+          -93.51,
+          36.5
+        ],
+        "extraServices": []
+      }
+    },
+    "UT": {
+      "code": "UT",
+      "country": "US",
+      "name": "Utah",
+      "system": "UDOT Traffic",
+      "officialUrl": "https://www.udottraffic.utah.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/utah",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/utah.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "VT": {
+      "code": "VT",
+      "country": "US",
+      "name": "Vermont",
+      "system": "New England 511",
+      "officialUrl": "https://newengland511.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/vermont",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/vermont.html",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "VA": {
+      "code": "VA",
+      "country": "US",
+      "name": "Virginia",
+      "system": "VDOT 511",
+      "officialUrl": "https://511.vdot.virginia.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/virginia",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "VDOT_API_KEY",
+          "apiType": "wzdx",
+          "url": "https://data.511-atis-ttrip-prod.iteriscloud.com/smarterRoads/workzone/workZoneJSON/current/workZone.json",
+          "regUrl": "https://www.virginiadot.org/travel/511.asp",
+          "note": "Free VDOT SmarterRoads developer token"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/virginia.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "WA": {
+      "code": "WA",
+      "country": "US",
+      "name": "Washington",
+      "system": "WSDOT Real-Time Travel Map",
+      "officialUrl": "https://wsdot.com/travel/real-time/roadconditions",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/washington",
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents, closures & conditions",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "WSDOT and OpenStreetMap",
+        "clearanceUrl": "https://data.wsdot.wa.gov/arcgis/rest/services/Shared/BridgeData/MapServer/1",
+        "tollCoverage": true,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "WV": {
+      "code": "WV",
+      "country": "US",
+      "name": "West Virginia",
+      "system": "West Virginia 511",
+      "officialUrl": "https://wv511.org/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/west-virginia",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Live traffic via official website",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/west-virginia.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "WI": {
+      "code": "WI",
+      "country": "US",
+      "name": "Wisconsin",
+      "system": "511 Wisconsin",
+      "officialUrl": "https://511wi.gov/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/wisconsin",
+      "highestTier": 1,
+      "coverageStatus": "work_zones_only",
+      "liveConditions": {
+        "tier": 1,
+        "status": "work_zones_only",
+        "label": "Live construction & work zones (WZDx)",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/wisconsin.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "WY": {
+      "code": "WY",
+      "country": "US",
+      "name": "Wyoming",
+      "system": "WYDOT Road Conditions Map",
+      "officialUrl": "https://map.wyoroad.info/",
+      "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/wyoming",
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Live traffic via official website",
+        "registration": {
+          "secret": "WYDOT_API_KEY",
+          "apiType": "cwz",
+          "url": "https://sdx-service.trihydro.com/api/wz/cwz-feed?postalAbbreviation=wy",
+          "regUrl": "https://www.wyoroad.info/",
+          "note": "Free WYDOT CWZ developer key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": true,
+        "clearanceCoverage": "Community-mapped height restrictions",
+        "clearanceUrl": "https://download.geofabrik.de/north-america/us/wyoming.html",
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-BC": {
+      "code": "CA-BC",
+      "country": "CA",
+      "name": "British Columbia",
+      "system": "DriveBC",
+      "officialUrl": "https://www.drivebc.ca/",
+      "fhwaUrl": null,
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents & closures",
+        "sourceUrl": "https://api.open511.gov.bc.ca/events?status=ACTIVE&limit=500",
+        "apiType": "open511",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-AB": {
+      "code": "CA-AB",
+      "country": "CA",
+      "name": "Alberta",
+      "system": "511 Alberta",
+      "officialUrl": "https://511.alberta.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": {
+          "secret": "AB511_API_KEY",
+          "apiType": "511_v2",
+          "url": "https://511.alberta.ca/api/v2/get/event",
+          "regUrl": "https://511.alberta.ca/developers/doc",
+          "note": "Free 511 Alberta developer key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-SK": {
+      "code": "CA-SK",
+      "country": "CA",
+      "name": "Saskatchewan",
+      "system": "Highway Hotline",
+      "officialUrl": "https://hotline.gov.sk.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-MB": {
+      "code": "CA-MB",
+      "country": "CA",
+      "name": "Manitoba",
+      "system": "Manitoba 511",
+      "officialUrl": "https://www.manitoba511.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-ON": {
+      "code": "CA-ON",
+      "country": "CA",
+      "name": "Ontario",
+      "system": "Ontario 511",
+      "officialUrl": "https://511on.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "requires_free_key",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": {
+          "secret": "ON511_API_KEY",
+          "apiType": "511_v2",
+          "url": "https://511on.ca/api/v2/get/event",
+          "regUrl": "https://511on.ca/developers/doc",
+          "note": "Free Ontario 511 developer key"
+        },
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-QC": {
+      "code": "CA-QC",
+      "country": "CA",
+      "name": "Québec",
+      "system": "Québec 511",
+      "officialUrl": "https://www.quebec511.info/",
+      "fhwaUrl": null,
+      "highestTier": 1,
+      "coverageStatus": "full_live",
+      "liveConditions": {
+        "tier": 1,
+        "status": "full_live",
+        "label": "Full live incidents & closures",
+        "sourceUrl": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=wfs&version=2.0.0&request=getfeature&typename=ms:evenements&outputformat=geojson&count=500",
+        "apiType": "wfs_geojson",
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "2–5 min"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-NB": {
+      "code": "CA-NB",
+      "country": "CA",
+      "name": "New Brunswick",
+      "system": "NB 511",
+      "officialUrl": "https://511.gnb.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-NS": {
+      "code": "CA-NS",
+      "country": "CA",
+      "name": "Nova Scotia",
+      "system": "Nova Scotia 511",
+      "officialUrl": "https://511.novascotia.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-PE": {
+      "code": "CA-PE",
+      "country": "CA",
+      "name": "Prince Edward Island",
+      "system": "PEI 511",
+      "officialUrl": "https://511.gov.pe.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-NL": {
+      "code": "CA-NL",
+      "country": "CA",
+      "name": "Newfoundland & Labrador",
+      "system": "NL 511",
+      "officialUrl": "https://511nl.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-YT": {
+      "code": "CA-YT",
+      "country": "CA",
+      "name": "Yukon",
+      "system": "Yukon 511",
+      "officialUrl": "https://511yukon.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-NT": {
+      "code": "CA-NT",
+      "country": "CA",
+      "name": "Northwest Territories",
+      "system": "NWT Highway Conditions",
+      "officialUrl": "https://www.inf.gov.nt.ca/en/highways",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "CA-NU": {
+      "code": "CA-NU",
+      "country": "CA",
+      "name": "Nunavut",
+      "system": "Nunavut Transportation",
+      "officialUrl": "https://gov.nu.ca/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-CAPUFE": {
+      "code": "MX-CAPUFE",
+      "country": "MX",
+      "name": "Mexico Toll Highways (Federal)",
+      "system": "CAPUFE",
+      "officialUrl": "https://www.gob.mx/capufe",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-SICT": {
+      "code": "MX-SICT",
+      "country": "MX",
+      "name": "Mexico Federal Highways",
+      "system": "SICT",
+      "officialUrl": "https://www.gob.mx/sct",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-GN": {
+      "code": "MX-GN",
+      "country": "MX",
+      "name": "Highway Patrol Alerts",
+      "system": "Guardia Nacional Carreteras",
+      "officialUrl": "https://x.com/GN_Carreteras",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-BCN": {
+      "code": "MX-BCN",
+      "country": "MX",
+      "name": "Baja California (La Rumorosa)",
+      "system": "FIARUM",
+      "officialUrl": "https://www.fiarum.gob.mx/",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-SON": {
+      "code": "MX-SON",
+      "country": "MX",
+      "name": "Sonora (Mex-15 Corridor)",
+      "system": "CAPUFE Noroeste",
+      "officialUrl": "https://www.gob.mx/capufe",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    },
+    "MX-NL": {
+      "code": "MX-NL",
+      "country": "MX",
+      "name": "Nuevo León & Northeast",
+      "system": "CAPUFE Noreste",
+      "officialUrl": "https://www.gob.mx/capufe",
+      "fhwaUrl": null,
+      "highestTier": 4,
+      "coverageStatus": "website_only",
+      "liveConditions": {
+        "tier": 4,
+        "status": "website_only",
+        "label": "Official DOT portal",
+        "sourceUrl": null,
+        "apiType": null,
+        "registration": null,
+        "embedAllowed": false,
+        "updateFrequency": "Official portal"
+      },
+      "commercialRestrictions": {
+        "lowClearances": false,
+        "clearanceCoverage": null,
+        "clearanceUrl": null,
+        "tollCoverage": false,
+        "freightUrl": null,
+        "freightLabel": null,
+        "regulationsUrl": null,
+        "regulationsLabel": null
+      },
+      "referenceMaps": null
+    }
+  }
+}
