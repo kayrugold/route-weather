@@ -83,6 +83,9 @@ const stateWorkFeeds = {
   MS:'https://api.mdottraffic.com/prod/v3/data/wzdx',
   ND:'https://travelfiles.dot.nd.gov/geojson_nc/wzdx_geojson.json',
   FL:'https://api.depot.fdot.gov/wzdx-latest',
+  OK:'https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD',
+  NJ:'https://smartworkzones.njit.edu/nj/wzdx',
+  SD:'https://sd.cdn.iteris-atis.com/wzdx/sd_wzdx_v1.geojson',
 };
 
 const stateIncidentFeeds = {

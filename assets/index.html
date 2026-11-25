@@ -2389,10 +2389,13 @@ const NORTH_AMERICA_ROAD_EXTRAS={
 };
 
 async function getStateRoadDirectory(){
-  stateRoadRequest ||= api('/api/state-road-maps?v=6').then(data=>({
-    ...data,
-    directory:{...data.directory,...NORTH_AMERICA_ROAD_EXTRAS}
-  }));
+  stateRoadRequest ||= api('/api/state-road-maps?v=6').then(data=>{
+    const dir={...data.directory,...NORTH_AMERICA_ROAD_EXTRAS};
+    if(dir.OK&&!dir.OK.overlay)dir.OK={...dir.OK,overlay:'Live Oklahoma DOT work zones'};
+    if(dir.NJ&&!dir.NJ.overlay)dir.NJ={...dir.NJ,overlay:'Live New Jersey work zones'};
+    if(dir.SD&&!dir.SD.overlay)dir.SD={...dir.SD,overlay:'Live South Dakota DOT work zones'};
+    return {...data,directory:dir};
+  });
   try{
     stateRoadData=await stateRoadRequest;
     return stateRoadData;
