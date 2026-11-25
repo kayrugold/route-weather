@@ -526,6 +526,9 @@ public final class MainActivity extends Activity implements SensorEventListener 
         @JavascriptInterface public String offlineFacilities(String kind, double west, double south, double east, double north, int offset) {
             return offlineEngine != null ? offlineEngine.facilitiesJson(kind, west, south, east, north, offset) : "{\"items\":[],\"total\":0,\"offset\":0}";
         }
+        @JavascriptInterface public String offlineNearestRoad(double lat, double lon) {
+            return offlineEngine != null ? offlineEngine.nearestRoadJson(lat, lon) : "{\"error\":\"Offline engine unavailable.\"}";
+        }
         @JavascriptInterface public String offlineRoute(String coords, String profile) {
             return offlineEngine != null ? offlineEngine.routeJson(coords, profile) : "{\"error\":\"Offline engine unavailable.\"}";
         }

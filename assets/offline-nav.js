@@ -130,6 +130,20 @@
     return new Response(raw, { status: 200, headers: { 'content-type': 'application/json' } });
   }
 
+  function nearestRoad(searchParams) {
+    const lat = Number(searchParams.get('lat'));
+    const lon = Number(searchParams.get('lon'));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      return Response.json({ error: 'Invalid coordinates.' }, { status: 400 });
+    }
+    const bridge = getBridge();
+    if (bridge && typeof bridge.offlineNearestRoad === 'function') {
+      const raw = bridge.offlineNearestRoad(lat, lon);
+      return new Response(raw, { status: 200, headers: { 'content-type': 'application/json' } });
+    }
+    return Response.json({ lat, lon, label: `Waypoint (${lat.toFixed(4)}, ${lon.toFixed(4)})`, hint: false });
+  }
+
   function downloadPackage(pkgSpec) {
     const bridge = getBridge();
     if (!bridge) throw Error('Offline map downloads require the Android app.');
@@ -172,6 +186,7 @@
     shouldUseOffline,
     route,
     search,
+    nearestRoad,
     downloadPackage,
     pauseDownload,
     deletePackage,

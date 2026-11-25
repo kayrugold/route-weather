@@ -51,12 +51,16 @@
         if(url.pathname==='/api/route'&&offline?.shouldUseOffline('route')){
           return Promise.resolve(offline.route(url.searchParams));
         }
+        if(url.pathname==='/api/nearest-road'&&offline?.shouldUseOffline('route')){
+          return Promise.resolve(offline.nearestRoad(url.searchParams));
+        }
         if(url.pathname==='/api/provider-status'&&offline?.shouldUseOffline('search')){
           return Promise.resolve(Response.json({studioTraffic:false,placesSearch:true,offlineReady:true}));
         }
         if(!serviceOrigin){
           if(url.pathname==='/api/search'&&offline?.getStatus().hasSearch)return Promise.resolve(offline.search(url.searchParams));
           if(url.pathname==='/api/route'&&offline?.getStatus().hasRouting)return Promise.resolve(offline.route(url.searchParams));
+          if(url.pathname==='/api/nearest-road'&&offline?.getStatus().hasRouting)return Promise.resolve(offline.nearestRoad(url.searchParams));
           return Promise.resolve(Response.json(
             {error:'This build needs the Route Weather service URL.'},{status:503}));
         }
@@ -65,6 +69,7 @@
             if(!response.ok&&response.status>=500&&offline&&offline.getMode()!=='online'){
               if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
               if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);
+              if(url.pathname==='/api/nearest-road'&&offline.getStatus().hasRouting)return offline.nearestRoad(url.searchParams);
               if(url.pathname==='/api/provider-status'&&offline.getStatus().hasSearch){
                 return Response.json({studioTraffic:false,placesSearch:true,offlineReady:true});
               }
@@ -75,6 +80,7 @@
             if(offline&&offline.getMode()!=='online'){
               if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
               if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);
+              if(url.pathname==='/api/nearest-road'&&offline.getStatus().hasRouting)return offline.nearestRoad(url.searchParams);
             }
             throw error;
           });

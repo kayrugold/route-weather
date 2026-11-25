@@ -193,6 +193,50 @@ public final class OfflineSearchStore implements Closeable {
         return result;
     }
 
+    /**
+     * Offline /api/nearest-road handler for map-tap waypoint placement.
+     * Finds the closest named street (or nearby town) in SQLite so "Add waypoint" always works offline.
+     */
+    public synchronized JSONObject nearestRoad(double lat, double lon) {
+        String bestLabel = null;
+        double bestDist = Double.POSITIVE_INFINITY;
+        double delta = 0.04; // ~4.4 km search box
+        for (SQLiteDatabase db : databases) {
+            try (Cursor cursor = db.rawQuery(
+                    "SELECT name, category, lat, lon FROM places "
+                            + "WHERE category IN ('street', 'place') AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? LIMIT 80",
+                    new String[]{String.valueOf(lat - delta), String.valueOf(lat + delta),
+                            String.valueOf(lon - delta), String.valueOf(lon + delta)})) {
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(0);
+                    String cat = cursor.getString(1);
+                    double cLat = cursor.getDouble(2);
+                    double cLon = cursor.getDouble(3);
+                    double d = haversineMeters(lat, lon, cLat, cLon);
+                    // Prefer named streets slightly over distant town centers
+                    double effective = "street".equals(cat) ? d : d + 400.0;
+                    if (effective < bestDist && name != null && !name.trim().isEmpty()) {
+                        bestDist = effective;
+                        bestLabel = "place".equals(cat) ? ("Near " + name.trim()) : name.trim();
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Nearest road query error", e);
+            }
+        }
+        if (bestLabel == null) {
+            bestLabel = String.format(Locale.US, "Waypoint (%.4f, %.4f)", lat, lon);
+        }
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("lat", lat);
+            obj.put("lon", lon);
+            obj.put("label", bestLabel);
+            obj.put("hint", false);
+        } catch (JSONException ignored) {}
+        return obj;
+    }
+
     private void queryNearbyCategory(SQLiteDatabase db, String category, double lat, double lon,
                                      double latDelta, double lonDelta, List<Candidate> out) {
         try (Cursor cursor = db.rawQuery(

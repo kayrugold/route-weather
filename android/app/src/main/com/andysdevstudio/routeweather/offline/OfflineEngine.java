@@ -97,6 +97,10 @@ public final class OfflineEngine implements Closeable {
         return searchStore.searchFacilities(kind, west, south, east, north, offset).toString();
     }
 
+    public String nearestRoadJson(double lat, double lon) {
+        return searchStore.nearestRoad(lat, lon).toString();
+    }
+
     public String routeJson(String coordsParam, String profile) {
         try {
             String[] pairs = coordsParam.split(";");
