@@ -2,11 +2,19 @@
 
 Machine-readable registry: [assets/dot-provider-registry.json](assets/dot-provider-registry.json)
 
+## Verified Alabama integration — 2026-11-25
+
+Alabama Show now uses the official public ALGO v4.0 TrafficEvents GeoJSON endpoint, tested without credentials. It displays active incidents, closures and roadwork, with the source update time and a separate retrieval time. Failed requests explicitly report unknown conditions. The adapter does not reuse the portal's credentials. Static traffic-count stations were removed from the traffic flow. The failing embedded Alabama viewer is removed. Show displays the live data directly on the Route Weather map; the official portal remains an optional external link.
+
+Endpoint: https://api.algotraffic.com/v4.0/TrafficEvents?includeGeometry=true
+
+The earlier registration table below describes proposed integrations, not verified automatic upgrades. Alabama does not require a key for the endpoint tested above. Other jurisdictions have not been revalidated in this change.
+
 ## Coverage Summary (71 Jurisdictions)
 
-- **Tier 1 — Full Live Incidents & Closures (Native In-Map):** 6 (CA, OR, WA, TN, BC, QC)
+- **Tier 1 — Full Live Incidents & Closures (Native In-Map):** 7 (AL, CA, OR, WA, TN, BC, QC)
 - **Tier 1 — Live Construction & Work Zones (Native WZDx In-Map):** 18 (AZ, DE, FL, IA, ID, IN, KS, KY, LA, MD, MN, MO, MS, ND, NJ, OK, SD, WI)
-- **Tier 2 — Official ArcGIS MapServer / Freight GIS Overlay:** 2 (AL, TX)
+- **Tier 2 — Official ArcGIS MapServer / Freight GIS Overlay:** 1 (TX)
 - **Tier 3 — Embedded In-App Official DOT Viewer:** Enabled for embed-permitted portals (e.g., Alabama ALGO Traffic) with automatic fallback to Tier 4 External Browser
 - **Free Registration Developer APIs Ready for Cloudflare Worker Secrets:** 13 (CO, TX, OH, VA, MA, IL, PA, WY, NC, NY, AL, AB, ON)
 
@@ -57,7 +65,7 @@ Drop any free developer key into Cloudflare Worker secrets (`wrangler secret put
 
 | Code | Jurisdiction | Highest Tier | Live Conditions | Commercial / GIS Layers | Official Portal |
 |---|---|---|---|---|---|
-| `AL` | Alabama | Tier 2 | Live traffic via official website | Low Clearances, GIS: ALDOT Highway & Construction Network, Alabama Code § 32-9-20 (Size & Weight) | [ALGO Traffic](https://algotraffic.com/) |
+| `AL` | Alabama | Tier 1 | Native ALGO incidents, closures and roadwork | Low Clearances, GIS: ALDOT Highway & Construction Network, Alabama Code § 32-9-20 (Size & Weight) | [ALGO Traffic](https://algotraffic.com/) |
 | `AK` | Alaska | Tier 4 | Live traffic via official website | Low Clearances, Tolls | [Alaska 511](https://511.alaska.gov/) |
 | `AZ` | Arizona | Tier 1 | Live construction & work zones (WZDx) | Low Clearances | [AZ511](https://www.az511.gov/) |
 | `AR` | Arkansas | Tier 4 | Live traffic via official website | Low Clearances | [IDrive Arkansas](https://www.idrivearkansas.com/) |

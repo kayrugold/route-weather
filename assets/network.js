@@ -43,7 +43,7 @@
         if(!serviceOrigin)return Promise.resolve(Response.json({error:'Shared reports are unavailable.'},{status:503}));
         return browserFetch(serviceOrigin+'/app-api/road-reports'+url.search,options);
       }
-      if(sharedEndpoint.test(url.pathname)){
+      if(sharedEndpoint.test(url.pathname)||(url.pathname==='/api/state-road-overlay'&&url.searchParams.get('state')==='AL')){
         const offline=window.routeWeatherOffline;
         if(url.pathname==='/api/search'&&offline?.shouldUseOffline('search')){
           return Promise.resolve(offline.search(url.searchParams));
@@ -84,6 +84,7 @@
             return response;
           })
           .catch(error=>{
+            if(options?.signal?.aborted)throw error;
             if(offline&&offline.getMode()!=='online'){
               if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
               if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);

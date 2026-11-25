@@ -903,7 +903,7 @@ function sampleRoute(route,stops,depart){const coords=route.geometry.coordinates
 const forecastCache=(()=>{try{return JSON.parse(localStorage.getItem('route-weather-nws-cache'))||{}}catch{return {}}})();
 async function fetchForecasts(points,revision){
   let failures=0,completed=0;
-  status('Loading National Weather Service forecasts…');
+  status('Route ready — weather loading in the background…');
   for(let i=0;i<points.length;i+=2){
     await Promise.all(points.slice(i,i+2).map(async p=>{
       const key=p.lat.toFixed(3)+','+p.lon.toFixed(3);
@@ -922,8 +922,8 @@ async function fetchForecasts(points,revision){
         failures++;
       }
       completed++;
-      if(trip?.points===points){renderRoute();renderPanel()}
-      status('NWS forecasts '+completed+' / '+points.length+'…');
+      if(trip?.points===points){renderForecastPoints();renderPanel()}
+      status('Route ready · Weather '+completed+' / '+points.length+'…');
     }));
     if(revision!==routeRevision)return;
   }
@@ -942,7 +942,7 @@ $('planner').onsubmit=e=>{e.preventDefault();return buildTrip()};
 async function buildTrip(routeEdit){
   document.activeElement?.blur();
   if(planning||destinationChoicePending)return;
-  const revision=routeRevision;
+  const revision=++routeRevision;
   planning=true;
   $('plan').disabled=true;
   $('plan').textContent='Calculating…';
@@ -1022,12 +1022,14 @@ async function buildTrip(routeEdit){
       setTimeout(()=>{if(revision===routeRevision){map.invalidateSize();if(!gpsFollowing)fitRoute()}},200);
     }
     save();
-    const fails=await fetchForecasts(points,revision);
-    if(revision!==routeRevision)return false;
-    save();
-    renderRoute();
     renderPanel();
-    status(fails===points.length?'Route drawn, but forecasts could not load: '+(points[0].forecastError||'service unavailable')+' Use Refresh to retry.':fails?'Route ready; '+fails+' forecast points unavailable. Refresh to retry.':'Route and forecast ready. Tap a point for hourly and daily forecasts.',!!fails);
+    void fetchForecasts(points,revision).then(fails=>{
+      if(revision!==routeRevision||trip?.points!==points)return;
+      save();
+      renderForecastPoints();
+      renderPanel();
+      status(fails===points.length?'Route ready; weather unavailable. Use Refresh to retry.':fails?'Route ready; '+fails+' forecast points unavailable.':'Route and forecast ready.',!!fails);
+    }).catch(error=>{if(revision===routeRevision)status('Route ready; weather update failed: '+error.message,true)});
     return true;
   }catch(e){
     if(revision!==routeRevision)return false;
@@ -1213,7 +1215,7 @@ function openStateRoadPopup(latlng,content){
   }
   if(waypointPopup)map.closePopup(waypointPopup);
   stateRoadPopup=L.popup({pane:'roadDetails',className:'state-road-popup',autoClose:false,closeOnClick:false,closeOnEscapeKey:false,
-    maxWidth:300,maxHeight:280,autoPanPaddingTopLeft:[12,64],autoPanPaddingBottomRight:[12,72]})
+    maxWidth:Math.min(300,map.getSize().x-64),maxHeight:280,autoPanPaddingTopLeft:[12,64],autoPanPaddingBottomRight:[12,72]})
     .setLatLng(latlng).setContent(content).addTo(map);
   L.DomEvent.off(stateRoadPopup.getElement(),'mousedown touchstart',L.DomEvent.stopPropagation);
 }
@@ -2271,6 +2273,7 @@ let activeStateRoad='CA',roadOverlayEnabled=false,roadOverlayRevision=0;
 const californiaRoadEntry={name:'California',system:'Caltrans QuickMap',url:'https://quickmap.dot.ca.gov/',overlay:'Chain controls, closures, cameras and more'};
 const stateRoadReports=new Map(),stateRoadLoads=new Map();
 const overlayCategories={
+  AL:['full','work','incident'],
   CA:['chain','hold','full','lane','cctv','cms','rwis','incident'],
   OR:['chain','full','winter','work','incident','cctv'],
   WA:['full','work','incident'],
@@ -2404,12 +2407,12 @@ const NORTH_AMERICA_ROAD_EXTRAS={
 
 const DOT_GIS_EXTRAS={
   AL:{
-    gisTitle:'ALDOT Construction & Traffic Stations',
+    gisTitle:'ALDOT road inventory (not live traffic)',
     gisType:'aldot_geojson',
     gisUrl:'https://aldotgis.dot.state.al.us/pubgis2/rest/services/Roads/EGISRoutes_WGS84/FeatureServer/4',
     gisSecondaryUrl:'https://aldotgis.dot.state.al.us/pubgis2/rest/services/EGISATDServices/TDMPublic/MapServer/0',
     gisBounds:[-88.47,30.14,-84.89,35.01],
-    embedAllowed:true,
+    embedAllowed:false,
     freightUrl:'https://www.dot.state.al.us/programs/FreightPlanning.html',
     freightLabel:'Alabama Freight Network',
     regulationsUrl:'https://alison.legislature.state.al.us/code-of-alabama?section=32-9-20',
@@ -2461,6 +2464,7 @@ function syncActiveOverlayBar(){
   bar.hidden=!bar.childElementCount;
 }
 function clearGisOverlay(){
+  ++gisRequestRevision;
   clearTimeout(gisMoveTimer);
   if(gisLayer&&map){map.removeLayer(gisLayer);gisLayer=null}
   activeGisCode=null;
@@ -2469,7 +2473,9 @@ function clearGisOverlay(){
   syncActiveOverlayBar();
   renderStateRoads();
 }
+let gisRequestRevision=0;
 async function refreshGisOverlay(){
+  const requestRevision=++gisRequestRevision,code=activeGisCode;
   if(!activeGisCode||!map)return;
   const cfg=DOT_GIS_EXTRAS[activeGisCode];
   if(!cfg)return;
@@ -2488,34 +2494,23 @@ async function refreshGisOverlay(){
     const geomParams={where:'1=1',f:'geojson',outFields:'*',outSR:'4326',resultRecordCount:'200',
       geometry:`${w},${s},${e},${n}`,geometryType:'esriGeometryEnvelope',inSR:'4326',spatialRel:'esriSpatialRelIntersects'};
     if(cfg.gisType==='aldot_geojson'){
-      const [cRes,tRes]=await Promise.allSettled([
-        fetch(cfg.gisUrl+'/query?'+new URLSearchParams(geomParams)).then(r=>r.json()),
-        fetch(cfg.gisSecondaryUrl+'/query?'+new URLSearchParams({...geomParams,resultRecordCount:'120'})).then(r=>r.json())
+      const [cRes]=await Promise.allSettled([
+        fetch(cfg.gisUrl+'/query?'+new URLSearchParams(geomParams)).then(r=>r.json())
       ]);
-      if(!activeGisCode)return;
+      if(activeGisCode!==code||requestRevision!==gisRequestRevision)return;
       if(cRes.status==='fulfilled'&&Array.isArray(cRes.value?.features)){
         L.geoJSON(cRes.value,{
           style:{color:'#ff8c2b',weight:4.5,opacity:0.95,dashArray:'8 5'},
           onEachFeature:(f,layer)=>{
             const p=f.properties||{};
-            layer.bindPopup(`<strong>ALDOT New Construction</strong><br>Route: ${esc(p.RouteType||'')} ${esc(p.RouteNumber||'')} ${esc(p.RouteDirection||'')}`,{className:'state-road-popup'});
+            layer.on('click',event=>openStateRoadPopup(event.latlng,`<strong>ALDOT road inventory</strong><br>Route: ${esc(p.RouteType||'')} ${esc(p.RouteNumber||'')} ${esc(p.RouteDirection||'')}<br>Inventory record, not a live closure. Use Alabama Show for current traffic.`));
           }
         }).addTo(group);
         count+=cRes.value.features.length;
       }
-      if(tRes.status==='fulfilled'&&Array.isArray(tRes.value?.features)){
-        L.geoJSON(tRes.value,{
-          pointToLayer:(_,ll)=>L.circleMarker(ll,{radius:6,color:'#fff',weight:1.5,fillColor:'#28b8ff',fillOpacity:0.9}),
-          onEachFeature:(f,layer)=>{
-            const p=f.properties||{};
-            layer.bindPopup(`<strong>ALDOT Traffic Monitor</strong><br>Route ID: ${esc(p.RouteID||'N/A')}<br><small>Static station — open ALGO Traffic for live cameras/incidents</small>`,{className:'state-road-popup'});
-          }
-        }).addTo(group);
-        count+=tRes.value.features.length;
-      }
     }else if(cfg.gisType==='arcgis_featureserver'){
       const gj=await (await fetch(cfg.gisUrl+'/query?'+new URLSearchParams(geomParams))).json();
-      if(!activeGisCode)return;
+      if(activeGisCode!==code||requestRevision!==gisRequestRevision)return;
       if(Array.isArray(gj?.features)){
         L.geoJSON(gj,{style:{color:'#f5a623',weight:3.5,opacity:0.9}}).addTo(group);
         count=gj.features.length;
@@ -2560,6 +2555,7 @@ $('closeDotEmbed')?.addEventListener('click',()=>{
 async function getStateRoadDirectory(){
   stateRoadRequest ||= api('/api/state-road-maps?v=6').then(data=>{
     const dir={...data.directory,...NORTH_AMERICA_ROAD_EXTRAS};
+    if(dir.AL)dir.AL={...dir.AL,overlay:'Live ALGO incidents, closures and roadwork'};
     if(dir.OK&&!dir.OK.overlay)dir.OK={...dir.OK,overlay:'Live Oklahoma DOT work zones'};
     if(dir.NJ&&!dir.NJ.overlay)dir.NJ={...dir.NJ,overlay:'Live New Jersey work zones'};
     if(dir.SD&&!dir.SD.overlay)dir.SD={...dir.SD,overlay:'Live South Dakota DOT work zones'};
@@ -2682,7 +2678,7 @@ function stateRoadSection(parent,title,entries){
       const gisBtn=document.createElement('button');
       const gisOn=activeGisCode===code;
       gisBtn.type='button';
-      gisBtn.textContent=gisOn?'Hide GIS':'GIS map';
+      gisBtn.textContent=gisOn?'Hide GIS':code==='AL'?'Road inventory':'GIS map';
       gisBtn.setAttribute('aria-pressed',String(gisOn));
       gisBtn.onclick=()=>{setStateRoadsOpen(false);toggleGisOverlay(code)};
       actions.append(gisBtn);
@@ -2799,12 +2795,15 @@ function renderStateRoads(){
   const query=$('stateRoadSearch').value.trim().toLowerCase();
   const entries=Object.entries(stateRoadData.directory)
     .filter(([code,entry])=>!query||code.toLowerCase().includes(query)||entry.name.toLowerCase().includes(query)||entry.system?.toLowerCase().includes(query)||(entry.country==='CA'&&'canada'.includes(query))||(entry.country==='MX'&&'mexico'.includes(query))||(!entry.country&&('usa'.includes(query)||'united states'.includes(query))))
-    .sort(([,a],[,b])=>a.name.localeCompare(b.name));
+    .sort(([ac,a],[bc,b])=>Number(bc.toLowerCase()===query)-Number(ac.toLowerCase()===query)||a.name.localeCompare(b.name));
   const matching=new Map(entries);
   list.replaceChildren();
-  const along=stateRoadCodes.filter(code=>matching.has(code)).map(code=>[code,matching.get(code)]);
+  const center=map?.getCenter();
+  const nearby=center?findRouteStates({geometry:{coordinates:[[center.lng,center.lat]]}},stateRoadData.boundaries).filter(code=>matching.has(code)):[];
+  if(nearby.length)stateRoadSection(list,'At map center',nearby.map(code=>[code,matching.get(code)]));
+  const along=stateRoadCodes.filter(code=>matching.has(code)&&!nearby.includes(code)).map(code=>[code,matching.get(code)]);
   if(along.length)stateRoadSection(list,'Along your route',along);
-  const rest=entries.filter(([code])=>!stateRoadCodes.includes(code));
+  const rest=entries.filter(([code])=>!stateRoadCodes.includes(code)&&!nearby.includes(code));
   const usEntries=rest.filter(([,e])=>!e.country||e.country==='US');
   const caEntries=rest.filter(([,e])=>e.country==='CA');
   const mxEntries=rest.filter(([,e])=>e.country==='MX');
@@ -3165,6 +3164,7 @@ function streetLabelCandidates(tiles,scale,origin,width,height,zoom,toScreen){
   streetGeometry(tiles,'transportation_name',scale,origin,(feature,geometry)=>{
     const {class:kind,subclass,name,name_en,ref,network}=feature.properties;
     if(feature.type===1&&ref&&(kind==='motorway_junction'||subclass==='junction')){
+      if(zoom<13)return;
       const worldPoint=geometry()[0]?.[0];
       const point=worldPoint&&toScreen(worldPoint);
       if(point){
@@ -3176,11 +3176,12 @@ function streetLabelCandidates(tiles,scale,origin,width,height,zoom,toScreen){
     if(feature.type!==2||!roadClasses.includes(kind)||(!name&&!name_en&&!ref))return;
     const rank=roadClasses.indexOf(kind);
     if(zoom<16&&rank>4)return;
+    if(zoom<12&&(!ref||rank>2))return;
     const shield=ref&&(rank<2||network==='us-interstate'||network==='us-highway'||network==='us-state');
     const text=shield?String(ref).split(/[;,]/)[0].trim():name_en||name||ref;
     const anchors=geometry().map(line=>streetAnchor(line.map(toScreen),width,height)).filter(Boolean);
     const anchor=anchors.sort((a,b)=>b.length-a.length)[0];
-    if(anchor)labels.push({...anchor,angle:shield?0:anchor.angle,text,priority:shield?1:rank+2,size:shield?16:rank<5?17:15,kind:shield?'shield':'road',network});
+    if(anchor)labels.push({...anchor,angle:shield?0:anchor.angle,text,priority:shield?0:rank+2,size:shield?16:rank<5?17:15,kind:shield?'shield':'road',network});
   });
   streetGeometry(tiles,'place',scale,origin,(feature,geometry)=>{
     if(feature.type!==1)return;
@@ -3306,14 +3307,14 @@ function bindStreetLabels(){
     const hasOfflinePmtiles=Boolean(window.routeWeatherOffline?.shouldUseOffline('tiles')
       ||(downloadedMapEnabled&&window.routeWeatherOffline?.getStatus().hasTiles));
     const usingDownload=hasOfflinePmtiles||(downloadedMapEnabled&&!!offlineRoute);
-    if(zoom<(hasOfflinePmtiles?0:usingDownload?7:14)){
+    if(zoom<(hasOfflinePmtiles?0:7)){
       clear();
       if(androidBaseMap&&!map.hasLayer(androidBaseMap))androidBaseMap.addTo(map);
       return;
     }
     try{
       const offlineMaxZ=hasOfflinePmtiles?(window.routeWeatherOffline?.getStatus().maxTileZoom||13):14;
-      const z=usingDownload?Math.max(0,Math.min(offlineMaxZ,Math.floor(zoom))):14,scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
+      const z=usingDownload?Math.max(0,Math.min(offlineMaxZ,Math.floor(zoom))):Math.min(14,Math.floor(zoom)),scale=map.getZoomScale(zoom,z),size=map.getSize(),pixelOrigin=map.getPixelOrigin();
       const corners=[[0,0],[size.x,0],[0,size.y],[size.x,size.y]].map(point=>map.containerPointToLayerPoint(point));
       const offset=corners[0],origin=pixelOrigin.add(offset), bearing=map.getBearing?.()||0;
       const bounds=L.bounds(corners.map(point=>pixelOrigin.add(point)));

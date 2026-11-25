@@ -15,21 +15,17 @@
       "system": "ALGO Traffic",
       "officialUrl": "https://algotraffic.com/",
       "fhwaUrl": "https://highways.fhwa.dot.gov/traffic-info/alabama",
-      "highestTier": 2,
-      "coverageStatus": "gis_overlay",
+      "highestTier": 1,
+      "coverageStatus": "live_incidents",
       "liveConditions": {
-        "tier": 3,
-        "status": "requires_free_key",
-        "label": "Live traffic via official website",
-        "registration": {
-          "secret": "ALGO_API_KEY",
-          "apiType": "rest",
-          "url": "https://algotraffic.com/",
-          "regUrl": "mailto:algodeveloper@dot.state.al.us",
-          "note": "Contact algodeveloper@dot.state.al.us for authorized ALGO Traffic feed access (23 CFR Part 511)"
-        },
-        "embedAllowed": true,
-        "updateFrequency": "Official portal"
+        "tier": 1,
+        "status": "public_feed",
+        "label": "Live ALGO incidents, closures and roadwork",
+        "url": "https://api.algotraffic.com/v4.0/TrafficEvents?includeGeometry=true",
+        "verifiedAt": "2026-11-25",
+        "updateFrequency": "Checked every 3 minutes; upstream cache 2 minutes",
+        "embedAllowed": false,
+        "nativeAndroidViewer": false
       },
       "commercialRestrictions": {
         "lowClearances": true,

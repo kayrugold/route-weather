@@ -78,6 +78,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     ));
 
     private final ExecutorService requests = Executors.newFixedThreadPool(6);
+    private final ExecutorService plannerRequests = Executors.newFixedThreadPool(2);
     private final float[] rotation = new float[9];
     private WebView web;
     private SensorManager sensors;
@@ -474,7 +475,10 @@ public final class MainActivity extends Activity implements SensorEventListener 
         @JavascriptInterface public void stopDirections() { runOnUiThread(() -> stopVoice()); }
         @JavascriptInterface public void fetch(int id, String spec, String accept, boolean wifiOnly) {
             if (id < 0 || spec.length() > 4096) return;
-            requests.execute(() -> fetchProvider(id, spec, accept, wifiOnly));
+            Uri target = Uri.parse(spec);
+            boolean planner = (BuildConfig.SERVICE_ORIGIN + "/app-api/route").equals(spec.split("\\?",2)[0])
+                || (BuildConfig.SERVICE_ORIGIN + "/app-api/search").equals(spec.split("\\?",2)[0]) && !"facilities".equals(target.getQueryParameter("mode"));
+            (planner ? plannerRequests : requests).execute(() -> fetchProvider(id, spec, accept, wifiOnly));
         }
         @JavascriptInterface public boolean wifi() { return wifiConnected(); }
         @JavascriptInterface public boolean hasInternet() { return hasInternetConnection(); }
@@ -621,7 +625,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
 
     private void sendChunk(int id, int status, String type, String base64, int offset) {
         if (web == null) return;
-        int end = Math.min(offset + 48000, base64.length());
+        int end = Math.min(offset + 192000, base64.length());
         boolean last = end == base64.length();
         web.evaluateJavascript("window.routeWeatherReply(" + id + "," + status + ","
             + JSONObject.quote(type) + "," + JSONObject.quote(base64.substring(offset, end))
@@ -662,6 +666,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
         for (int id : new java.util.ArrayList<>(locations.keySet())) stopLocation(id);
         sensors.unregisterListener(this);
         requests.shutdownNow();
+        plannerRequests.shutdownNow();
         if (offlineEngine != null) { offlineEngine.close(); offlineEngine = null; }
         if (web != null) { web.destroy(); web = null; }
         super.onDestroy();

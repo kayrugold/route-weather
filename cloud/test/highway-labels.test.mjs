@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+const html=readFileSync(new URL('../../assets/index.html',import.meta.url),'utf8');
+const a=html.indexOf('function streetLabelCandidates('),b=html.indexOf('function paintStreetLabels(',a);
+const c=vm.createContext({roadClasses:['motorway','trunk','primary','secondary','tertiary','minor'],streetGeometry:(tiles,name,scale,origin,callback)=>{if(name==='transportation_name')for(const f of tiles)callback(f,()=>[[{x:100,y:100},{x:200,y:100}]])},streetAnchor:line=>({...line[0],angle:0,length:100})});vm.runInContext(html.slice(a,b),c);
+const fixtures=[{type:1,properties:{class:'motorway_junction',ref:'131'}},{type:2,properties:{class:'motorway',network:'us-interstate',ref:'65'}}];
+test('regional view prioritizes highway numbers without exit clutter; exits remain at close zoom',()=>{const regional=c.streetLabelCandidates(fixtures,1,{},320,600,10,p=>p);assert.equal(regional.length,1);assert.equal(regional[0].text,'65');assert.equal(regional[0].kind,'shield');const close=c.streetLabelCandidates(fixtures,1,{},320,600,14,p=>p);assert.ok(close.some(x=>x.text==='Exit 131'));});
