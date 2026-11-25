@@ -7,11 +7,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -74,16 +77,34 @@ public final class OfflineEngine implements Closeable {
     public boolean hasSearch() { return searchStore.hasDatabases(); }
 
     public byte[] getVectorTile(int z, int x, int y) {
+        List<byte[]> matches = new ArrayList<>();
         byte[] best = null;
         for (PMTilesReader reader : tileReaders) {
             try {
                 byte[] tile = reader.getTile(z, x, y);
-                if (tile != null && (best == null || tile.length > best.length)) {
-                    best = tile;
+                if (tile != null && tile.length > 0) {
+                    if (best == null || tile.length > best.length) best = tile;
+                    if (z <= 7) matches.add(tile);
                 }
             } catch (IOException e) {
                 Log.w(TAG, "Error reading tile " + z + "/" + x + "/" + y + " from " + reader.file.getName(), e);
             }
+        }
+        // At continent/regional zoom (z <= 7), a single tile spans multiple regional archives.
+        // Pack all matching regional MVT payloads with a tiny "RWMT" header so all regions render seamlessly.
+        if (z <= 7 && matches.size() > 1) {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                DataOutputStream dos = new DataOutputStream(baos);
+                dos.writeBytes("RWMT");
+                dos.writeInt(matches.size());
+                for (byte[] m : matches) {
+                    dos.writeInt(m.length);
+                    dos.write(m);
+                }
+                dos.flush();
+                return baos.toByteArray();
+            } catch (IOException ignored) {}
         }
         return best;
     }

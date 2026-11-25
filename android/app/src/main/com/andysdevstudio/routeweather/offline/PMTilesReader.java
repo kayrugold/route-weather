@@ -112,8 +112,9 @@ public final class PMTilesReader implements Closeable {
 
     /**
      * Returns uncompressed MVT tile bytes for (z, x, y), or null if tile is not present.
+     * Synchronized because WebView invokes shouldInterceptRequest from multiple concurrent I/O threads.
      */
-    public byte[] getTile(int z, int x, int y) throws IOException {
+    public synchronized byte[] getTile(int z, int x, int y) throws IOException {
         if (!mightContainTile(z, x, y)) return null;
         long tileId = zxyToTileId(z, x, y);
         Entry[] dir = rootEntries;

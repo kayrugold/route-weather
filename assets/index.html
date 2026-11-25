@@ -789,23 +789,31 @@ function renderRouteChoicesBar(){
 }
 async function resolveOfflineAlternative(targetTrip,idx,revision){
   const alt=targetTrip?.alternatives?.[idx];
-  if(!alt||!alt.preview||alt.loading||!Array.isArray(alt.viaAnchor)||!targetTrip.endpoints?.[0]||!targetTrip.endpoints?.[1])return false;
+  if(!alt)return false;
+  if(!alt.preview)return true;
+  if(alt._promise)return alt._promise;
+  if(!Array.isArray(alt.viaAnchor)||!targetTrip.endpoints?.[0]||!targetTrip.endpoints?.[1])return false;
   alt.loading=true;
   if(trip===targetTrip)renderRouteChoicesBar();
-  try{
-    const s=targetTrip.endpoints[0],e=targetTrip.endpoints[1],v=alt.viaAnchor;
-    const coords=[[s.lon,s.lat],[v[0],v[1]],[e.lon,e.lat]].map(p=>p[0].toFixed(5)+','+p[1].toFixed(5)).join(';');
-    const res=await api('/api/route?'+new URLSearchParams({coords}));
-    const full=res.routes?.[0];
-    if(revision!==routeRevision||trip!==targetTrip||!full?.geometry?.coordinates?.length)return false;
-    targetTrip.alternatives[idx]={...full,summary:alt.summary,preview:false,loading:false,viaAnchor:alt.viaAnchor};
-    renderRoute();
-    return true;
-  }catch{
-    alt.loading=false;
-    if(trip===targetTrip)renderRouteChoicesBar();
-    return false;
-  }
+  const work=(async()=>{
+    try{
+      const s=targetTrip.endpoints[0],e=targetTrip.endpoints[1],v=alt.viaAnchor;
+      const coords=[[s.lon,s.lat],[v[0],v[1]],[e.lon,e.lat]].map(p=>p[0].toFixed(5)+','+p[1].toFixed(5)).join(';');
+      const res=await api('/api/route?'+new URLSearchParams({coords}));
+      const full=res.routes?.[0];
+      if(revision!==routeRevision||trip!==targetTrip||!full?.geometry?.coordinates?.length)return false;
+      targetTrip.alternatives[idx]={...full,summary:alt.summary,preview:false,loading:false,viaAnchor:alt.viaAnchor};
+      renderRoute();
+      return true;
+    }catch{
+      alt.loading=false;
+      alt._promise=null;
+      if(trip===targetTrip)renderRouteChoicesBar();
+      return false;
+    }
+  })();
+  alt._promise=work;
+  return work;
 }
 async function preloadOfflineAlternatives(targetTrip,revision){
   if(!targetTrip)return;
@@ -3237,7 +3245,22 @@ function getStreetTile(source,z,x,y){
     const tile=source.cache?source.cache.match(url):fetch(url,{signal:AbortSignal.timeout(10000)});
     const response=tile.then(async r=>{
       if(!r?.ok)throw Error('Map tile unavailable');
-      return new source.VectorTile(new source.Pbf(await r.arrayBuffer())).layers;
+      const bytes=new Uint8Array(await r.arrayBuffer());
+      if(bytes.length>8&&bytes[0]===0x52&&bytes[1]===0x57&&bytes[2]===0x4D&&bytes[3]===0x54){
+        const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+        const count=view.getInt32(4,false);
+        const list=[];
+        let off=8;
+        for(let i=0;i<count&&off+4<=bytes.length;i++){
+          const len=view.getInt32(off,false);off+=4;
+          if(len>0&&off+len<=bytes.length){
+            list.push(new source.VectorTile(new source.Pbf(bytes.subarray(off,off+len))).layers);
+          }
+          off+=len;
+        }
+        return list;
+      }
+      return new source.VectorTile(new source.Pbf(bytes)).layers;
     }).catch(error=>{if(streetTiles.get(url)===response)streetTiles.delete(url);throw error});
     streetTiles.set(url,response);
     if(streetTiles.size>160)streetTiles.delete(streetTiles.keys().next().value);
@@ -3246,12 +3269,15 @@ function getStreetTile(source,z,x,y){
 }
 function streetGeometry(tiles,name,scale,origin,visit){
   for(const tile of tiles){
-    const layer=tile.layers[name];
-    if(!layer)continue;
+    const layerSets=Array.isArray(tile.layers)?tile.layers:[tile.layers];
     const left=tile.x*256*scale-origin.x,top=tile.y*256*scale-origin.y;
-    for(let i=0;i<layer.length;i++){
-      const feature=layer.feature(i),factor=256*scale/feature.extent;
-      visit(feature,()=>feature.loadGeometry().map(line=>line.map(p=>({x:left+p.x*factor,y:top+p.y*factor}))));
+    for(const layerMap of layerSets){
+      const layer=layerMap?.[name];
+      if(!layer)continue;
+      for(let i=0;i<layer.length;i++){
+        const feature=layer.feature(i),factor=256*scale/feature.extent;
+        visit(feature,()=>feature.loadGeometry().map(line=>line.map(p=>({x:left+p.x*factor,y:top+p.y*factor}))));
+      }
     }
   }
 }
