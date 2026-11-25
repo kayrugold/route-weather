@@ -101,6 +101,47 @@ public final class OfflineEngine implements Closeable {
         return searchStore.nearestRoad(lat, lon).toString();
     }
 
+    public String corridorsJson(String coordsParam) {
+        try {
+            String[] pairs = coordsParam.split(";");
+            if (pairs.length != 2) return "[]";
+            String[] a = pairs[0].split(","), b = pairs[1].split(",");
+            double[] from = {Double.parseDouble(a[0].trim()), Double.parseDouble(a[1].trim())};
+            double[] to = {Double.parseDouble(b[0].trim()), Double.parseDouble(b[1].trim())};
+            List<InterstateCorridorPlanner.CorridorOption> opts =
+                    InterstateCorridorPlanner.planAlternativeCorridors(from, to, null, 3);
+            JSONArray arr = new JSONArray();
+            for (InterstateCorridorPlanner.CorridorOption opt : opts) {
+                JSONObject obj = new JSONObject();
+                obj.put("summary", opt.label);
+                obj.put("distance", Math.round(opt.estimatedMeters));
+                obj.put("duration", Math.round(opt.estimatedMeters / 26.8));
+                if (opt.waypoints.size() > 2) {
+                    double[] mid = opt.waypoints.get(opt.waypoints.size() / 2);
+                    JSONArray via = new JSONArray();
+                    via.put(mid[0]);
+                    via.put(mid[1]);
+                    obj.put("viaAnchor", via);
+                }
+                JSONArray coords = new JSONArray();
+                for (double[] pt : opt.waypoints) {
+                    JSONArray pair = new JSONArray();
+                    pair.put(pt[0]);
+                    pair.put(pt[1]);
+                    coords.put(pair);
+                }
+                JSONObject geom = new JSONObject();
+                geom.put("type", "LineString");
+                geom.put("coordinates", coords);
+                obj.put("geometry", geom);
+                arr.put(obj);
+            }
+            return arr.toString();
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
     public String routeJson(String coordsParam, String profile) {
         try {
             String[] pairs = coordsParam.split(";");
