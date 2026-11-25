@@ -12,9 +12,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import btools.router.FormatJson;
 import btools.router.OsmNodeNamed;
@@ -71,12 +76,30 @@ public final class OfflineRouter {
             throw new IllegalStateException("Routing profile missing: " + profileFile.getName());
         }
 
-        List<OsmNodeNamed> waypoints = new ArrayList<>(coords.size());
-        for (int i = 0; i < coords.size(); i++) {
-            double lon = coords.get(i)[0];
-            double lat = coords.get(i)[1];
+        long started = System.currentTimeMillis();
+        List<double[]> expandedCoords = InterstateCorridorPlanner.expandLongLegs(coords, segmentsDir);
+        JSONObject result;
+        if (expandedCoords.size() > coords.size()) {
+            Log.i(TAG, "Long-distance corridor planned: " + coords.size() + " -> " + expandedCoords.size() + " waypoints");
+            result = calculateMultiLegRoute(expandedCoords, coords, profileFile, truck, started);
+        } else {
+            JSONObject geoJson = runSingleBRouter(coords, profileFile, 96, 60_000L);
+            long elapsedMs = System.currentTimeMillis() - started;
+            result = convertGeoJsonToRouteWeather(geoJson, coords, truck, elapsedMs);
+        }
+        Log.i(TAG, "Offline route calculated (" + (truck ? "truck" : "car") + ") in "
+                + (System.currentTimeMillis() - started) + " ms");
+        return result;
+    }
+
+    private JSONObject runSingleBRouter(List<double[]> legCoords, File profileFile,
+                                        int memoryClass, long timeoutMs) throws Exception {
+        List<OsmNodeNamed> waypoints = new ArrayList<>(legCoords.size());
+        for (int i = 0; i < legCoords.size(); i++) {
+            double lon = legCoords.get(i)[0];
+            double lat = legCoords.get(i)[1];
             OsmNodeNamed wp = new OsmNodeNamed();
-            wp.name = i == 0 ? "from" : (i == coords.size() - 1 ? "to" : "via" + i);
+            wp.name = i == 0 ? "from" : (i == legCoords.size() - 1 ? "to" : "via" + i);
             wp.ilon = (int) Math.round((lon + 180.0) * 1_000_000.0);
             wp.ilat = (int) Math.round((lat + 90.0) * 1_000_000.0);
             waypoints.add(wp);
@@ -86,18 +109,16 @@ public final class OfflineRouter {
         rc.localFunction = profileFile.getAbsolutePath();
         rc.carMode = true;
         rc.considerTurnRestrictions = false;
-        rc.memoryclass = 96;
+        rc.memoryclass = memoryClass;
         rc.pass1coefficient = 1.5;
         rc.pass2coefficient = 0;
         rc.keyValues = new HashMap<>();
         rc.keyValues.put("turnInstructionMode", "3");
 
-        long started = System.currentTimeMillis();
         RoutingEngine engine = new RoutingEngine(null, null, segmentsDir, waypoints, rc);
         engine.airDistanceCostFactor = 1.25;
         engine.quite = true;
-        engine.doRun(60_000L);
-        long elapsedMs = System.currentTimeMillis() - started;
+        engine.doRun(timeoutMs);
 
         String err = engine.getErrorMessage();
         OsmTrack track = engine.getFoundTrack();
@@ -106,11 +127,113 @@ public final class OfflineRouter {
                     ? "Offline routing failed: " + err
                     : "No offline road route found. Check that map packages cover the entire trip.");
         }
+        return new JSONObject(new FormatJson(rc).format(track));
+    }
 
-        String geoJsonStr = new FormatJson(rc).format(track);
-        JSONObject result = convertGeoJsonToRouteWeather(new JSONObject(geoJsonStr), coords, truck, elapsedMs);
-        Log.i(TAG, "Offline route calculated (" + (truck ? "truck" : "car") + ") in " + elapsedMs + " ms");
-        return result;
+    private JSONObject calculateMultiLegRoute(List<double[]> expandedCoords, List<double[]> requestedCoords,
+                                              File profileFile, boolean truck, long started) throws Exception {
+        int legCount = expandedCoords.size() - 1;
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        List<Future<JSONObject>> futures = new ArrayList<>(legCount);
+        try {
+            for (int i = 0; i < legCount; i++) {
+                final double[] a = expandedCoords.get(i);
+                final double[] b = expandedCoords.get(i + 1);
+                futures.add(pool.submit(() -> {
+                    try {
+                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 48, 35_000L);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Sub-leg failed: " + e.getMessage());
+                        return null;
+                    }
+                }));
+            }
+
+            List<JSONObject> legGeoJsons = new ArrayList<>(legCount);
+            for (int i = 0; i < legCount; i++) {
+                legGeoJsons.add(futures.get(i).get());
+            }
+
+            // Self-healing fallback: if a sub-leg failed, bridge across the skipped hub
+            List<JSONObject> stitchedLegs = new ArrayList<>();
+            int i = 0;
+            while (i < legCount) {
+                JSONObject cur = legGeoJsons.get(i);
+                if (cur != null) {
+                    stitchedLegs.add(cur);
+                    i++;
+                } else {
+                    int endIdx = Math.min(legCount, i + 2);
+                    JSONObject bridged = runSingleBRouter(
+                            Arrays.asList(expandedCoords.get(i), expandedCoords.get(endIdx)),
+                            profileFile, 64, 45_000L);
+                    stitchedLegs.add(bridged);
+                    i = endIdx;
+                }
+            }
+
+            long elapsedMs = System.currentTimeMillis() - started;
+            return mergeGeoJsonsToRouteWeather(stitchedLegs, requestedCoords, truck, elapsedMs);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    static JSONObject mergeGeoJsonsToRouteWeather(List<JSONObject> geoJsons, List<double[]> requestedCoords,
+                                                  boolean truck, long elapsedMs) throws JSONException {
+        JSONArray combinedCoords = new JSONArray();
+        JSONArray combinedVoiceHints = new JSONArray();
+        double totalDistance = 0.0;
+        double totalDuration = 0.0;
+
+        for (int g = 0; g < geoJsons.size(); g++) {
+            JSONObject feature = geoJsons.get(g).getJSONArray("features").getJSONObject(0);
+            JSONObject props = feature.getJSONObject("properties");
+            JSONArray rawCoords = feature.getJSONObject("geometry").getJSONArray("coordinates");
+            JSONArray voiceHints = props.optJSONArray("voicehints");
+
+            totalDistance += props.optDouble("track-length", 0.0);
+            totalDuration += props.optDouble("total-time", 0.0);
+
+            int baseOffset = combinedCoords.length();
+            int startIdx = (g > 0 && rawCoords.length() > 1) ? 1 : 0;
+            for (int i = startIdx; i < rawCoords.length(); i++) {
+                combinedCoords.put(rawCoords.getJSONArray(i));
+            }
+            if (voiceHints != null) {
+                for (int i = 0; i < voiceHints.length(); i++) {
+                    JSONArray vh = voiceHints.getJSONArray(i);
+                    int localIdx = vh.optInt(0, 0);
+                    int mappedIdx = baseOffset + Math.max(0, localIdx - startIdx);
+                    JSONArray shifted = new JSONArray();
+                    shifted.put(mappedIdx);
+                    for (int k = 1; k < vh.length(); k++) shifted.put(vh.get(k));
+                    combinedVoiceHints.put(shifted);
+                }
+            }
+        }
+
+        JSONObject mergedProps = new JSONObject();
+        mergedProps.put("track-length", totalDistance);
+        mergedProps.put("total-time", totalDuration);
+        mergedProps.put("voicehints", combinedVoiceHints);
+
+        JSONObject mergedGeom = new JSONObject();
+        mergedGeom.put("type", "LineString");
+        mergedGeom.put("coordinates", combinedCoords);
+
+        JSONObject mergedFeature = new JSONObject();
+        mergedFeature.put("type", "Feature");
+        mergedFeature.put("properties", mergedProps);
+        mergedFeature.put("geometry", mergedGeom);
+
+        JSONArray features = new JSONArray();
+        features.put(mergedFeature);
+        JSONObject mergedGeoJson = new JSONObject();
+        mergedGeoJson.put("type", "FeatureCollection");
+        mergedGeoJson.put("features", features);
+
+        return convertGeoJsonToRouteWeather(mergedGeoJson, requestedCoords, truck, elapsedMs);
     }
 
     static JSONObject convertGeoJsonToRouteWeather(JSONObject geoJson, List<double[]> requestedCoords,
@@ -144,9 +267,12 @@ public final class OfflineRouter {
         }
         double geomTotal = cumulativeMeters.length > 0 ? cumulativeMeters[cumulativeMeters.length - 1] : 0.0;
         if (totalDistance <= 0 && geomTotal > 0) totalDistance = geomTotal;
-        if (totalDuration <= 0 && totalDistance > 0) {
-            // Fallback estimate (~55 mph car, ~50 mph truck)
-            totalDuration = totalDistance / (truck ? 22.3 : 24.6);
+        // OsmPathModel uses bicycle-speed defaults (~28 mph); normalize highway/car/truck travel time
+        if (totalDistance > 0 && (totalDuration <= 0 || (totalDistance > 10_000 && (totalDistance / totalDuration) < 16.0))) {
+            double avgSpeedMs = totalDistance > 80_000
+                    ? (truck ? 23.7 : 26.8)  // ~53 mph truck, ~60 mph car on long highway routes
+                    : (truck ? 18.3 : 20.1); // ~41 mph truck, ~45 mph car on shorter regional routes
+            totalDuration = totalDistance / avgSpeedMs;
         }
 
         // Parse per-segment durations for Route Weather's weather sampling annotation
