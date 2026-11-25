@@ -60,41 +60,60 @@ public final class OfflineSearchStore implements Closeable {
             Collections.sort(all, Comparator.comparingDouble(c -> c.distanceMeters));
         } else {
             String trimmed = rawQuery == null ? "" : rawQuery.trim();
-            // Strip trailing 5-digit US ZIP code if present (e.g. "Anderson, CA 96007")
-            String noZip = trimmed.replaceAll("\\b\\d{5}(?:-\\d{4})?\\b", " ").trim();
-            // Check if query starts with a street house number (e.g. "2500 Balls Ferry Rd, Anderson, CA")
+            // Strip trailing 5-digit US ZIP code and country suffix if present (e.g. "Anderson, CA 96007, USA")
+            String noZip = trimmed.replaceAll("\\b\\d{5}(?:-\\d{4})?\\b", " ")
+                    .replaceAll("(?i),?\\s*\\b(usa|united states|canada|mexico)\\b\\s*$", "")
+                    .replaceAll("\\s+", " ").trim();
+
+            // Extract trailing state/province filter (e.g. "Anderson, CA" -> place="Anderson", state=CA)
+            ParsedQuery parsed = parseStateFilter(noZip);
+            String queryCore = parsed.queryWithoutState;
+            NorthAmericaRegions.Region requestedRegion = parsed.region;
+
+            // Check if query starts with a street house number (e.g. "2500 Balls Ferry Rd, Anderson")
             String houseNumber = null;
-            String withoutHouse = noZip;
-            java.util.regex.Matcher hm = java.util.regex.Pattern.compile("^(\\d+[A-Za-z]?)\\s+(.+)$").matcher(noZip);
+            String withoutHouse = queryCore;
+            java.util.regex.Matcher hm = java.util.regex.Pattern.compile("^(\\d+[A-Za-z]?)\\s+(.+)$").matcher(queryCore);
             if (hm.matches()) {
                 houseNumber = hm.group(1);
                 withoutHouse = hm.group(2).trim();
             }
 
-            // 1. Try full normalized query first
-            runFtsPass(noZip, mode, nearLat, nearLon, all);
+            // 1. Try queryCore (with state stripped so bare OSM towns like "Elizabethton" match FTS4)
+            runFtsPass(queryCore, requestedRegion, mode, nearLat, nearLon, all);
 
             // 2. If user entered a house number and got no exact hits, search the street + city
             if (all.isEmpty() && houseNumber != null && !withoutHouse.isEmpty()) {
-                runFtsPass(withoutHouse, mode, nearLat, nearLon, all);
+                runFtsPass(withoutHouse, requestedRegion, mode, nearLat, nearLon, all);
                 if (!all.isEmpty()) {
                     for (int i = 0; i < all.size(); i++) {
                         Candidate c = all.get(i);
                         if ("street".equals(c.category)) {
                             all.set(i, new Candidate(houseNumber + " " + c.name, "Street (approx. " + houseNumber + ")",
-                                    "address", c.lat, c.lon, c.rank + 10, c.distanceMeters, c.score + 20.0));
+                                    "address", c.lat, c.lon, c.rank + 10, c.distanceMeters, c.score + 20.0, c.inRequestedState));
                         }
                     }
                 }
             }
 
-            // 3. If still empty and comma-separated (e.g. "Some St, Anderson, CA"), try the street alone or city/state
+            // 3. If still empty and comma-separated (e.g. "Some St, Anderson"), try street alone or city alone
             if (all.isEmpty() && withoutHouse.contains(",")) {
                 String[] parts = withoutHouse.split(",", 2);
                 String firstPart = parts[0].trim();
                 String restPart = parts[1].trim();
-                if (firstPart.length() >= 3) runFtsPass(firstPart, mode, nearLat, nearLon, all);
-                if (all.isEmpty() && restPart.length() >= 2) runFtsPass(restPart, mode, nearLat, nearLon, all);
+                if (firstPart.length() >= 3) runFtsPass(firstPart, requestedRegion, mode, nearLat, nearLon, all);
+                if (all.isEmpty() && restPart.length() >= 2) runFtsPass(restPart, requestedRegion, mode, nearLat, nearLon, all);
+            }
+
+            // 4. When user explicitly specified a state/province, filter out other states if any in-state match exists
+            if (requestedRegion != null) {
+                List<Candidate> inState = new ArrayList<>();
+                for (Candidate c : all) {
+                    if (c.inRequestedState) inState.add(c);
+                }
+                if (!inState.isEmpty()) {
+                    all = inState;
+                }
             }
 
             Collections.sort(all, (a, b) -> {
@@ -187,7 +206,7 @@ public final class OfflineSearchStore implements Closeable {
                 double dist = haversineMeters(lat, lon, cLat, cLon);
                 if (dist <= 65000.0) {
                     out.add(new Candidate(cursor.getString(0), cursor.getString(1), cursor.getString(2),
-                            cLat, cLon, cursor.getInt(5), dist, 1000.0 - dist / 100.0));
+                            cLat, cLon, cursor.getInt(5), dist, 1000.0 - dist / 100.0, true));
                 }
             }
         } catch (Exception e) {
@@ -195,7 +214,8 @@ public final class OfflineSearchStore implements Closeable {
         }
     }
 
-    private void queryFts(SQLiteDatabase db, String ftsQuery, String normQuery, String mode,
+    private void queryFts(SQLiteDatabase db, String ftsQuery, String normQuery,
+                          NorthAmericaRegions.Region requestedRegion, String mode,
                           Double nearLat, Double nearLon, List<Candidate> out) {
         // Subquery caps FTS4 scan at 150 rows before joining/sorting for <30ms latency
         String sql = "SELECT p.name, p.subtitle, p.category, p.lat, p.lon, p.rank "
@@ -212,27 +232,96 @@ public final class OfflineSearchStore implements Closeable {
                 int rank = cursor.getInt(5);
                 double dist = (nearLat != null && nearLon != null)
                         ? haversineMeters(nearLat, nearLon, cLat, cLon) : Double.NaN;
-                String normName = name.toLowerCase(Locale.US).replaceAll("[,\\s]+", " ").trim();
+
+                boolean inRequestedState = requestedRegion != null
+                        && (NorthAmericaRegions.isPointInRegion(cLat, cLon, requestedRegion)
+                        || nameEndsWithState(name, requestedRegion));
+
+                String displayName = name;
+                if ("place".equals(category) && !name.contains(",")) {
+                    String stateCode = inRequestedState
+                            ? requestedRegion.code
+                            : NorthAmericaRegions.inferStateCode(cLat, cLon);
+                    if (!stateCode.isEmpty()) {
+                        displayName = name + ", " + stateCode;
+                    }
+                }
+
+                String normBare = name.toLowerCase(Locale.US).replaceAll("[,\\s]+", " ").trim();
                 double score = rank;
-                if (normName.equals(normQuery)) score += 200.0;
-                else if (normName.startsWith(normQuery)) score += 80.0;
-                if ("place".equals(category)) score += 30.0;
+                if (normBare.equals(normQuery)) {
+                    score += "place".equals(category) ? 450.0 : 220.0;
+                } else if (normBare.startsWith(normQuery)) {
+                    score += "place".equals(category) ? 120.0 : 60.0;
+                }
+                if ("place".equals(category)) score += 40.0;
+                if (inRequestedState) score += 500.0;
                 if ("places".equals(mode) && Double.isFinite(dist)) {
                     score += Math.max(0.0, 25.0 - dist / 5000.0);
                 }
-                out.add(new Candidate(name, subtitle, category, cLat, cLon, rank, dist, score));
+                out.add(new Candidate(displayName, subtitle, category, cLat, cLon, rank, dist, score, inRequestedState));
             }
         } catch (Exception e) {
             Log.w(TAG, "FTS4 query failed for: " + ftsQuery, e);
         }
     }
 
-    private void runFtsPass(String queryText, String mode, Double nearLat, Double nearLon, List<Candidate> out) {
+    private void runFtsPass(String queryText, NorthAmericaRegions.Region requestedRegion, String mode,
+                            Double nearLat, Double nearLon, List<Candidate> out) {
         String ftsQuery = buildFtsQuery(queryText);
         if (ftsQuery.isEmpty()) return;
         String normQuery = expandAbbreviations(queryText);
         for (SQLiteDatabase db : databases) {
-            queryFts(db, ftsQuery, normQuery, mode, nearLat, nearLon, out);
+            queryFts(db, ftsQuery, normQuery, requestedRegion, mode, nearLat, nearLon, out);
+        }
+    }
+
+    private static boolean nameEndsWithState(String name, NorthAmericaRegions.Region r) {
+        if (name == null || r == null) return false;
+        String low = name.toLowerCase(Locale.US);
+        String code = r.code.toLowerCase(Locale.US);
+        return low.endsWith(", " + code) || low.endsWith(" " + code)
+                || low.endsWith(", " + r.name) || low.contains(", " + code + " ");
+    }
+
+    private static ParsedQuery parseStateFilter(String input) {
+        if (input == null || input.isEmpty()) return new ParsedQuery("", null);
+        // 1. Comma-separated trailing state/province (e.g. "Anderson, CA" or "Elizabethton, Tennessee")
+        int lastComma = input.lastIndexOf(',');
+        if (lastComma > 0) {
+            String tail = input.substring(lastComma + 1).trim();
+            NorthAmericaRegions.Region r = NorthAmericaRegions.findByToken(tail);
+            if (r != null) {
+                String head = input.substring(0, lastComma).trim();
+                if (!head.isEmpty()) return new ParsedQuery(head, r);
+            }
+        }
+        // 2. Space-separated trailing 2-letter state/province code (e.g. "Anderson CA", "Elizabethton TN")
+        String[] parts = input.split("\\s+");
+        if (parts.length >= 2) {
+            String last = parts[parts.length - 1];
+            if (last.length() == 2) {
+                NorthAmericaRegions.Region r = NorthAmericaRegions.findByToken(last);
+                if (r != null) {
+                    StringBuilder head = new StringBuilder();
+                    for (int i = 0; i < parts.length - 1; i++) {
+                        if (i > 0) head.append(' ');
+                        head.append(parts[i]);
+                    }
+                    String trimmedHead = head.toString().replaceAll(",$", "").trim();
+                    if (!trimmedHead.isEmpty()) return new ParsedQuery(trimmedHead, r);
+                }
+            }
+        }
+        return new ParsedQuery(input, null);
+    }
+
+    private static final class ParsedQuery {
+        final String queryWithoutState;
+        final NorthAmericaRegions.Region region;
+        ParsedQuery(String queryWithoutState, NorthAmericaRegions.Region region) {
+            this.queryWithoutState = queryWithoutState;
+            this.region = region;
         }
     }
 
@@ -323,9 +412,10 @@ public final class OfflineSearchStore implements Closeable {
         final int rank;
         final double distanceMeters;
         final double score;
+        final boolean inRequestedState;
 
         Candidate(String name, String subtitle, String category, double lat, double lon,
-                  int rank, double distanceMeters, double score) {
+                  int rank, double distanceMeters, double score, boolean inRequestedState) {
             this.name = name;
             this.subtitle = subtitle;
             this.category = category;
@@ -334,6 +424,7 @@ public final class OfflineSearchStore implements Closeable {
             this.rank = rank;
             this.distanceMeters = distanceMeters;
             this.score = score;
+            this.inRequestedState = inRequestedState;
         }
     }
 }
