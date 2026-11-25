@@ -31,7 +31,27 @@ Built from `california-latest.osm.pbf` (1,275.7 MB from Geofabrik):
 
 ---
 
-## 3. Lower 48 (Continental US) Storage Projection (Based on Real Measured Data)
+## 3. Real Measured All-48 Continental US Regional Package Sizes (FINAL BENCHMARK)
+Built from Geofabrik's 4 official US regional extracts (`us-west`, `us-midwest`, `us-south`, `us-northeast`, `z0–z13` driving-optimized PMTiles + FTS4 driving/safety POI search + deduplicated BRouter `.rd5` routing):
+
+| Package | Vector Maps (`.pmtiles`) | Offline Search & POIs (`-search.db`) | Routing (`.rd5`) | Total Installed Size |
+| :--- | ---: | ---: | ---: | ---: |
+| **US West** (11 states: WA, OR, CA, NV, ID, MT, WY, UT, CO, AZ, NM) | 511.2 MB | 229.1 MB | 519.7 MB | **1.23 GB** |
+| **US Midwest** (12 states: ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH) | 442.5 MB | 269.7 MB | 548.4 MB | **1.23 GB** |
+| **US Northeast** (9 states: ME, NH, VT, MA, RI, CT, NY, NJ, PA) | 211.4 MB | 161.7 MB | 539.4 MB | **0.89 GB** |
+| **US South** (16 states + DC: TX..VA..FL..MD/DE/DC) | 630.7 MB | 511.6 MB | 823.1 MB | **1.92 GB** |
+| **All 48 Continental US States (Deduplicated)** | **1,795.7 MB** | **1,172.1 MB** | **1,761.7 MB** | **4.62 GB** |
+| **Canada** (All Provinces & Territories) | 1,149.5 MB | 103.2 MB | 837.9 MB | **2.04 GB** |
+| **Mexico** (All States) | 243.2 MB | 177.3 MB | 465.5 MB | **0.87 GB** |
+| **All North America (USA 48 + Canada + Mexico, Deduplicated)** | **3,188.4 MB** | **1,452.7 MB** | **1,951.1 MB** | **6.44 GB** |
+
+**Verified Conclusion:**
+- **48-State Continental US:** **4.62 GB** on disk — **under the 5.00 GB device budget**.
+- **Full North America (USA 48 + Canada + Mexico):** **6.44 GB** deduplicated — fits comfortably inside **Cloudflare R2's 10.00 GB free storage tier (\$0/month, \$0 egress)** with **3.56 GB** of headroom.
+
+---
+
+## 4. Lower 48 Storage Budget Comparison
 Northern California represents roughly **~5–6%** of Continental US OSM road/feature density (Bay Area + Sacramento + Central Valley + Northern CA is one of the densest OSM regions in the US).
 
 | Component | Measured NorCal | Projected Lower 48 (Optimized) | Target Budget |

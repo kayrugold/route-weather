@@ -26,6 +26,8 @@ $regionTable = @{
   "us-west"      = @("us-west-latest.osm.pbf",      "US West (WA, OR, CA, NV, ID, MT, WY, UT, CO, AZ, NM)",          -124.8, 31.3, -102.0, 49.1)
   "us-midwest"   = @("us-midwest-latest.osm.pbf",   "US Midwest (ND, SD, NE, KS, MN, IA, MO, WI, IL, MI, IN, OH)",   -104.1, 35.9,  -80.5, 49.4)
   "us-south"     = @("us-south-latest.osm.pbf",     "US South (TX, OK, AR, LA, MS, AL, TN, KY, GA, FL, SC, NC, VA, WV, MD, DE, DC)", -106.7, 24.5, -75.0, 39.7)
+  "canada"       = @("canada-latest.osm.pbf",       "Canada (All Provinces & Territories)",                           -141.0, 41.7,  -52.6, 70.0)
+  "mexico"       = @("mexico-latest.osm.pbf",       "Mexico (All States)",                                            -118.4, 14.5,  -86.7, 32.7)
 }
 
 function Get-Rd5TilesForBbox([double]$minLon, [double]$minLat, [double]$maxLon, [double]$maxLat) {
