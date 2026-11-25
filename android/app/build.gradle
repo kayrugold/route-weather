@@ -2,7 +2,7 @@ plugins {
     id 'com.android.application' version '8.9.1'
 }
 
-def serviceOrigin = providers.gradleProperty('routeWeatherServiceOrigin').orElse('').get()
+def serviceOrigin = providers.gradleProperty('routeWeatherServiceOrigin').orElse('https://route-weather.andy-596.workers.dev').get()
 if (serviceOrigin && !(serviceOrigin ==~ /https:\/\/[a-zA-Z0-9.-]+/)) {
     throw new GradleException('routeWeatherServiceOrigin must be an HTTPS origin with no path or trailing slash.')
 }
@@ -18,8 +18,8 @@ android {
         applicationId 'com.andysdevstudio.routeweather'
         minSdk 26
         targetSdk 36
-        versionCode 32
-        versionName '0.32'
+        versionCode 33
+        versionName '0.33'
         buildConfigField 'String', 'SERVICE_ORIGIN', '"' + serviceOrigin + '"'
     }
 

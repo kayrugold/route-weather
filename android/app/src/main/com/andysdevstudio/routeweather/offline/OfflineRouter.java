@@ -133,6 +133,30 @@ public final class OfflineRouter {
 
     private JSONObject runSingleBRouter(List<double[]> legCoords, File profileFile,
                                         int memoryClass, long timeoutMs) throws Exception {
+        try {
+            return executeBRouterOnce(legCoords, profileFile, memoryClass, timeoutMs);
+        } catch (IllegalStateException e) {
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase(java.util.Locale.US) : "";
+            // If an OSM city-center node sits on a pedestrian plaza / park island (e.g. Capitol Square in Richmond, VA),
+            // nudge the target ~450m in cardinal directions to snap onto a real driveable road.
+            if (legCoords.size() >= 2 && (msg.contains("island") || msg.contains("not mapped"))) {
+                double[][] offsets = {{0.0045, 0}, {-0.0045, 0}, {0, 0.0045}, {0, -0.0045}};
+                int last = legCoords.size() - 1;
+                double[] origEnd = legCoords.get(last);
+                for (double[] off : offsets) {
+                    List<double[]> nudged = new ArrayList<>(legCoords);
+                    nudged.set(last, new double[]{origEnd[0] + off[0], origEnd[1] + off[1]});
+                    try {
+                        return executeBRouterOnce(nudged, profileFile, memoryClass, Math.min(timeoutMs, 25_000L));
+                    } catch (Exception ignored) {}
+                }
+            }
+            throw e;
+        }
+    }
+
+    private JSONObject executeBRouterOnce(List<double[]> legCoords, File profileFile,
+                                          int memoryClass, long timeoutMs) throws Exception {
         List<OsmNodeNamed> waypoints = new ArrayList<>(legCoords.size());
         for (int i = 0; i < legCoords.size(); i++) {
             double lon = legCoords.get(i)[0];
