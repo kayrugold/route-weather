@@ -31,6 +31,12 @@
 #stateRoadPanel .panel-head {margin:0 0 8px;align-items:center}
 #stateRoadPanel h2 {font-size:17px;margin:0}
 #stateRoadPanel h3 {font-size:14px;margin:12px 0 4px}
+.country-road-group {margin-top:10px;border:1px solid #354650;border-radius:8px;background:#10171b;overflow:hidden}
+.country-road-group > summary {cursor:pointer;padding:9px 10px;font-weight:700;font-size:14px;color:#e7f1f6;background:#1b262d;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.country-road-group > summary::-webkit-details-marker {display:none}
+.country-road-group > summary::after {content:'▾';font-size:12px;opacity:.8}
+.country-road-group[open] > summary::after {content:'▴'}
+.country-road-body {padding:2px 10px 8px}
 #stateRoadPanel input {min-height:42px;margin-bottom:6px}
 #stateRoadPanel[hidden],#wildfireStatus[hidden] {display:none}
 .state-road-row {display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid #40515a}
@@ -2331,9 +2337,13 @@ function refreshActiveRoads(force=false,notify=false){
 
 function fitRoadStateIfOffscreen(code){
   const parts=stateRoadData?.boundaries[code];
-  if(!parts?.length)return;
   const bounds=L.latLngBounds([]);
-  for(const [outline] of parts)for(const [lon,lat] of outline)bounds.extend([lat,lon]);
+  if(parts?.length){
+    for(const [outline] of parts)for(const [lon,lat] of outline)bounds.extend([lat,lon]);
+  }else if(stateRoadData?.directory[code]?.bounds){
+    const [w,s,e,n]=stateRoadData.directory[code].bounds;
+    bounds.extend([s,w]);bounds.extend([n,e]);
+  }
   if(bounds.isValid()&&!map.getBounds().intersects(bounds))map.fitBounds(bounds,{padding:[28,28],maxZoom:9});
 }
 
@@ -2356,8 +2366,33 @@ function setRoadOverlay(code,enabled,fit=false){
   if(enabled)refreshActiveRoads(false,true);
 }
 
+const NORTH_AMERICA_ROAD_EXTRAS={
+  'CA-BC':{country:'CA',name:'British Columbia',system:'DriveBC',url:'https://www.drivebc.ca/',overlay:'Live DriveBC incidents & closures',bounds:[-139.1,48.3,-114.0,60.0]},
+  'CA-AB':{country:'CA',name:'Alberta',system:'511 Alberta',url:'https://511.alberta.ca/',overlayNote:'Official 511 map'},
+  'CA-SK':{country:'CA',name:'Saskatchewan',system:'Highway Hotline',url:'https://hotline.gov.sk.ca/',overlayNote:'Official 511 map'},
+  'CA-MB':{country:'CA',name:'Manitoba',system:'Manitoba 511',url:'https://www.manitoba511.ca/',overlayNote:'Official 511 map'},
+  'CA-ON':{country:'CA',name:'Ontario',system:'Ontario 511',url:'https://511on.ca/',overlayNote:'Official 511 map'},
+  'CA-QC':{country:'CA',name:'Québec',system:'Québec 511',url:'https://www.quebec511.info/',overlay:'Live Québec 511 incidents & work zones',bounds:[-79.8,45.0,-57.1,62.6]},
+  'CA-NB':{country:'CA',name:'New Brunswick',system:'NB 511',url:'https://511.gnb.ca/',overlayNote:'Official 511 map'},
+  'CA-NS':{country:'CA',name:'Nova Scotia',system:'Nova Scotia 511',url:'https://511.novascotia.ca/',overlayNote:'Official 511 map'},
+  'CA-PE':{country:'CA',name:'Prince Edward Island',system:'PEI 511',url:'https://511.gov.pe.ca/',overlayNote:'Official 511 map'},
+  'CA-NL':{country:'CA',name:'Newfoundland & Labrador',system:'NL 511',url:'https://511nl.ca/',overlayNote:'Official 511 map'},
+  'CA-YT':{country:'CA',name:'Yukon',system:'Yukon 511',url:'https://511yukon.ca/',overlayNote:'Official 511 map'},
+  'CA-NT':{country:'CA',name:'Northwest Territories',system:'NWT Highway Conditions',url:'https://www.inf.gov.nt.ca/en/highways',overlayNote:'Official DOT portal'},
+  'CA-NU':{country:'CA',name:'Nunavut',system:'Nunavut Transportation',url:'https://gov.nu.ca/',overlayNote:'Official portal'},
+  'MX-CAPUFE':{country:'MX',name:'Mexico Toll Highways (Federal)',system:'CAPUFE',url:'https://www.gob.mx/capufe',overlayNote:'Official toll highway alerts'},
+  'MX-SICT':{country:'MX',name:'Mexico Federal Highways',system:'SICT',url:'https://www.gob.mx/sct',overlayNote:'Official federal DOT'},
+  'MX-GN':{country:'MX',name:'Highway Patrol Alerts',system:'Guardia Nacional Carreteras',url:'https://x.com/GN_Carreteras',overlayNote:'Live patrol incident feed'},
+  'MX-BCN':{country:'MX',name:'Baja California (La Rumorosa)',system:'FIARUM',url:'https://www.fiarum.gob.mx/',overlayNote:'Official toll road status'},
+  'MX-SON':{country:'MX',name:'Sonora (Mex-15 Corridor)',system:'CAPUFE Noroeste',url:'https://www.gob.mx/capufe',overlayNote:'Official corridor alerts'},
+  'MX-NL':{country:'MX',name:'Nuevo León & Northeast',system:'CAPUFE Noreste',url:'https://www.gob.mx/capufe',overlayNote:'Official corridor alerts'}
+};
+
 async function getStateRoadDirectory(){
-  stateRoadRequest ||= api('/api/state-road-maps?v=6');
+  stateRoadRequest ||= api('/api/state-road-maps?v=6').then(data=>({
+    ...data,
+    directory:{...data.directory,...NORTH_AMERICA_ROAD_EXTRAS}
+  }));
   try{
     stateRoadData=await stateRoadRequest;
     return stateRoadData;
@@ -2520,6 +2555,30 @@ function stateRoadSection(parent,title,entries){
   }
 }
 
+function detectActiveMapCountry(){
+  const c=map?.getCenter?.();
+  if(!c)return 'US';
+  if(c.lat>=49.0||(c.lat>=45.0&&c.lng>-83.5&&c.lng<-52.0))return 'CA';
+  if(c.lat<=25.8||(c.lat<=32.5&&c.lng<-114.5)||(c.lat<=31.3&&c.lng<-105.0))return 'MX';
+  return 'US';
+}
+
+function renderCountryRoadGroup(parent,label,entries,openByDefault){
+  if(!entries.length)return;
+  const details=document.createElement('details');
+  details.className='country-road-group';
+  if(openByDefault)details.open=true;
+  const summary=document.createElement('summary');
+  summary.textContent=label+' ('+entries.length+')';
+  const body=document.createElement('div');
+  body.className='country-road-body';
+  stateRoadSection(body,'',entries);
+  // Remove empty h3 created when title is empty
+  if(body.firstChild?.tagName==='H3'&&!body.firstChild.textContent)body.firstChild.remove();
+  details.append(summary,body);
+  parent.append(details);
+}
+
 function renderStateRoads(){
   if(!stateRoadData||$('stateRoadPanel').hidden)return;
   const route=trip?.route;
@@ -2530,13 +2589,21 @@ function renderStateRoads(){
   const list=$('stateRoadList');
   const query=$('stateRoadSearch').value.trim().toLowerCase();
   const entries=Object.entries(stateRoadData.directory)
-    .filter(([code,entry])=>!query||code.toLowerCase()===query||entry.name.toLowerCase().includes(query)||entry.system?.toLowerCase().includes(query))
+    .filter(([code,entry])=>!query||code.toLowerCase().includes(query)||entry.name.toLowerCase().includes(query)||entry.system?.toLowerCase().includes(query)||(entry.country==='CA'&&'canada'.includes(query))||(entry.country==='MX'&&'mexico'.includes(query))||(!entry.country&&('usa'.includes(query)||'united states'.includes(query))))
     .sort(([,a],[,b])=>a.name.localeCompare(b.name));
   const matching=new Map(entries);
   list.replaceChildren();
-  stateRoadSection(list,'Along your route',stateRoadCodes.filter(code=>matching.has(code)).map(code=>[code,matching.get(code)]));
-  stateRoadSection(list,stateRoadCodes.length?'Other states and territories':'States and territories',entries.filter(([code])=>!stateRoadCodes.includes(code)));
-  if(!entries.length)list.textContent='No matching state.';
+  const along=stateRoadCodes.filter(code=>matching.has(code)).map(code=>[code,matching.get(code)]);
+  if(along.length)stateRoadSection(list,'Along your route',along);
+  const rest=entries.filter(([code])=>!stateRoadCodes.includes(code));
+  const usEntries=rest.filter(([,e])=>!e.country||e.country==='US');
+  const caEntries=rest.filter(([,e])=>e.country==='CA');
+  const mxEntries=rest.filter(([,e])=>e.country==='MX');
+  const activeCountry=detectActiveMapCountry();
+  renderCountryRoadGroup(list,'United States',usEntries,Boolean(query)||activeCountry==='US');
+  renderCountryRoadGroup(list,'Canada',caEntries,Boolean(query)||activeCountry==='CA');
+  renderCountryRoadGroup(list,'Mexico',mxEntries,Boolean(query)||activeCountry==='MX');
+  if(!entries.length)list.textContent='No matching state, province, or corridor.';
 }
 
 async function showStateRoads(){
