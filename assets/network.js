@@ -65,13 +65,20 @@
             {error:'This build needs the Route Weather service URL.'},{status:503}));
         }
         return window.routeProviderFetch(serviceOrigin+'/app-api'+url.pathname.slice(4)+url.search,options)
-          .then(response=>{
+          .then(async response=>{
             if(!response.ok&&response.status>=500&&offline&&offline.getMode()!=='online'){
               if(url.pathname==='/api/search'&&offline.getStatus().hasSearch)return offline.search(url.searchParams);
               if(url.pathname==='/api/route'&&offline.getStatus().hasRouting)return offline.route(url.searchParams);
               if(url.pathname==='/api/nearest-road'&&offline.getStatus().hasRouting)return offline.nearestRoad(url.searchParams);
               if(url.pathname==='/api/provider-status'&&offline.getStatus().hasSearch){
                 return Response.json({studioTraffic:false,placesSearch:true,offlineReady:true});
+              }
+            }
+            // Online TomTom facilities search is US-only; supplement Canada/Mexico from installed offline DBs
+            if(response.ok&&url.pathname==='/api/search'&&url.searchParams.get('mode')==='facilities'&&offline&&offline.getMode()!=='online'&&offline.getStatus().hasSearch){
+              const data=await response.clone().json().catch(()=>null);
+              if(data&&Array.isArray(data.items)&&data.items.length===0){
+                return offline.search(url.searchParams);
               }
             }
             return response;

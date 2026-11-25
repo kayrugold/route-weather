@@ -162,7 +162,8 @@ public final class OfflineSearchStore implements Closeable {
         }
         JSONArray items = new JSONArray();
         int total = 0;
-        for (SQLiteDatabase db : databases) {
+        for (int dbIdx = 0; dbIdx < databases.size(); dbIdx++) {
+            SQLiteDatabase db = databases.get(dbIdx);
             try (Cursor cursor = db.rawQuery(
                     "SELECT id, name, brand, subtitle, lat, lon FROM places "
                             + "WHERE category = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ? "
@@ -171,7 +172,7 @@ public final class OfflineSearchStore implements Closeable {
                             String.valueOf(west), String.valueOf(east), String.valueOf(Math.max(0, offset))})) {
                 while (cursor.moveToNext()) {
                     JSONObject obj = new JSONObject();
-                    obj.put("id", "offline-" + cursor.getLong(0));
+                    obj.put("id", "offline-" + dbIdx + "-" + cursor.getLong(0));
                     obj.put("name", cursor.getString(1));
                     obj.put("brand", cursor.isNull(2) ? "" : cursor.getString(2));
                     obj.put("address", cursor.isNull(3) ? "" : cursor.getString(3));

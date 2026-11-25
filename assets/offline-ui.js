@@ -210,7 +210,7 @@
   const POI_LAYERS = [
     { id: 'layerRestAreas', kind: 'rest-areas', label: 'Rest areas', badge: 'R', color: '#2ea043' },
     { id: 'layerHospitals', kind: 'hospitals',  label: 'Hospitals',  badge: 'H', color: '#e5484d' },
-    { id: 'layerPolice',    kind: 'police',     label: 'Police & CHP', badge: 'P', color: '#2f81f7' },
+    { id: 'layerPolice',    kind: 'police',     label: 'Police / Patrol', badge: 'P', color: '#2f81f7' },
     { id: 'layerRepair',    kind: 'repair',     label: 'Auto & truck repair', badge: '🔧', color: '#d29922' },
   ];
 
