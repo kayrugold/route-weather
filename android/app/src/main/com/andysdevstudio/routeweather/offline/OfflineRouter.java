@@ -141,7 +141,7 @@ public final class OfflineRouter {
                 final double[] b = expandedCoords.get(i + 1);
                 futures.add(pool.submit(() -> {
                     try {
-                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 48, 35_000L);
+                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 64, 45_000L);
                     } catch (Exception e) {
                         Log.w(TAG, "Sub-leg failed: " + e.getMessage());
                         return null;
@@ -154,21 +154,23 @@ public final class OfflineRouter {
                 legGeoJsons.add(futures.get(i).get());
             }
 
-            // Self-healing fallback: if a sub-leg failed, bridge across the skipped hub
+            // Self-healing fallback: if a sub-leg timed out, bisect it at the midpoint (cuts search area by 4x)
             List<JSONObject> stitchedLegs = new ArrayList<>();
-            int i = 0;
-            while (i < legCount) {
+            for (int i = 0; i < legCount; i++) {
                 JSONObject cur = legGeoJsons.get(i);
                 if (cur != null) {
                     stitchedLegs.add(cur);
-                    i++;
                 } else {
-                    int endIdx = Math.min(legCount, i + 2);
-                    JSONObject bridged = runSingleBRouter(
-                            Arrays.asList(expandedCoords.get(i), expandedCoords.get(endIdx)),
-                            profileFile, 64, 45_000L);
-                    stitchedLegs.add(bridged);
-                    i = endIdx;
+                    double[] a = expandedCoords.get(i);
+                    double[] b = expandedCoords.get(i + 1);
+                    double[] mid = new double[]{(a[0] + b[0]) / 2.0, (a[1] + b[1]) / 2.0};
+                    try {
+                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, mid), profileFile, 64, 40_000L));
+                        stitchedLegs.add(runSingleBRouter(Arrays.asList(mid, b), profileFile, 64, 40_000L));
+                    } catch (Exception bisectErr) {
+                        // Last resort: retry direct leg with higher memory & 60s timeout
+                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, b), profileFile, 96, 60_000L));
+                    }
                 }
             }
 

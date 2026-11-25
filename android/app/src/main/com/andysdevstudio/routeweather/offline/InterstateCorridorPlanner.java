@@ -16,9 +16,9 @@ import java.util.PriorityQueue;
  * can route coast-to-coast across the US, Canada, and Mexico in seconds instead of timing out.
  */
 final class InterstateCorridorPlanner {
-    private static final double MIN_LEG_METERS = 350.0 * 1609.344;      // 350 miles
-    private static final double END_TRIM_METERS = 85.0 * 1609.344;      // don't force hubs within 85 mi of ends
-    private static final double MIN_HUB_SPACING_METERS = 135.0 * 1609.344; // keep hubs >= 135 mi apart
+    private static final double MIN_LEG_METERS = 300.0 * 1609.344;      // 300 miles
+    private static final double END_TRIM_METERS = 70.0 * 1609.344;      // don't force hubs within 70 mi of ends
+    private static final double MIN_HUB_SPACING_METERS = 75.0 * 1609.344; // keep hubs >= 75 mi apart (never skip key junctions)
     private static final double MAX_ATTACH_METERS = 420.0 * 1609.344;   // max distance from endpoint to nearest hub
 
     static final class Hub {
@@ -44,10 +44,12 @@ final class InterstateCorridorPlanner {
         addHub("RDD", -122.3917, 40.5865); // Redding, CA (I-5)
         addHub("SAC", -121.4944, 38.5816); // Sacramento, CA (I-5/I-80)
         addHub("SFO", -122.2711, 37.8044); // Oakland/Bay Area, CA (I-80/I-580)
+        addHub("FAT", -119.7871, 36.7378); // Fresno, CA (CA-99)
         addHub("BFL", -119.0187, 35.3733); // Bakersfield, CA (CA-99/I-5)
         addHub("LAX", -118.2437, 34.0522); // Los Angeles, CA (I-5/I-10)
         addHub("SAN", -117.1611, 32.7157); // San Diego, CA (I-5/I-8)
         addHub("DAG", -117.0228, 34.8958); // Barstow, CA (I-15/I-40)
+        addHub("IGM", -114.0530, 35.1894); // Kingman, AZ (I-40)
         addHub("RNO", -119.8138, 39.5296); // Reno, NV (I-80)
         addHub("EKO", -115.7631, 40.8324); // Elko, NV (I-80)
         addHub("LAS", -115.1398, 36.1699); // Las Vegas, NV (I-15)
@@ -81,6 +83,7 @@ final class InterstateCorridorPlanner {
         addHub("ICT", -97.3301, 37.6872);  // Wichita, KS (I-35)
         addHub("AMA", -101.8313, 35.2220); // Amarillo, TX (I-40)
         addHub("OKC", -97.5164, 35.4676);  // Oklahoma City, OK (I-40/I-35)
+        addHub("FSM", -94.3985, 35.3859);  // Fort Smith, AR (I-40)
         addHub("DAL", -96.7970, 32.7767);  // Dallas, TX (I-35/I-20/I-30)
         addHub("FTW", -97.3308, 32.7555);  // Fort Worth, TX (I-20/I-35W)
         addHub("MAF", -102.0779, 31.9973); // Midland, TX (I-20)
@@ -174,9 +177,9 @@ final class InterstateCorridorPlanner {
         // --- US Interstate Edges ---
         // I-5 & West Coast
         connect("YVR", "SEA"); connect("SEA", "PDX"); connect("PDX", "MFR"); connect("MFR", "RDD");
-        connect("RDD", "SAC"); connect("SAC", "SFO"); connect("SAC", "BFL"); connect("SFO", "BFL");
-        connect("BFL", "LAX"); connect("LAX", "SAN"); connect("SAN", "TIJ"); connect("LAX", "DAG");
-        connect("SAN", "DAG"); connect("RDD", "RNO"); // CA-44/US-395
+        connect("RDD", "SAC"); connect("SAC", "SFO"); connect("SAC", "FAT"); connect("SFO", "FAT");
+        connect("FAT", "BFL"); connect("BFL", "LAX"); connect("LAX", "SAN"); connect("SAN", "TIJ"); connect("LAX", "DAG");
+        connect("BFL", "DAG"); connect("SAN", "DAG"); connect("RDD", "RNO"); // CA-44/US-395
         // I-80
         connect("SFO", "SAC"); connect("SAC", "RNO"); connect("RNO", "EKO"); connect("EKO", "SLC");
         connect("SLC", "RWL"); connect("RWL", "CYS"); connect("CYS", "LBF"); connect("LBF", "OMA");
@@ -199,8 +202,8 @@ final class InterstateCorridorPlanner {
         connect("SLN", "MCI"); connect("MCI", "STL"); connect("STL", "IND"); connect("IND", "CMH");
         connect("CMH", "PIT"); connect("PIT", "DCA"); connect("CMH", "CLE");
         // I-40 / I-44
-        connect("DAG", "FLG"); connect("FLG", "PHX"); connect("FLG", "ABQ"); connect("ABQ", "AMA");
-        connect("AMA", "OKC"); connect("OKC", "SGF"); connect("SGF", "STL"); connect("OKC", "LIT");
+        connect("DAG", "IGM"); connect("IGM", "FLG"); connect("IGM", "LAS"); connect("FLG", "PHX"); connect("FLG", "ABQ"); connect("ABQ", "AMA");
+        connect("AMA", "OKC"); connect("OKC", "SGF"); connect("SGF", "STL"); connect("OKC", "FSM"); connect("FSM", "LIT");
         connect("LIT", "MEM"); connect("MEM", "BNA"); connect("BNA", "TYS"); connect("TYS", "CLT");
         connect("TYS", "RDU"); connect("CLT", "RDU");
         // I-10 / I-20 / I-30
