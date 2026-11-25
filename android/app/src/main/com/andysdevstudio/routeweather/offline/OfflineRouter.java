@@ -133,7 +133,7 @@ public final class OfflineRouter {
     private JSONObject calculateMultiLegRoute(List<double[]> expandedCoords, List<double[]> requestedCoords,
                                               File profileFile, boolean truck, long started) throws Exception {
         int legCount = expandedCoords.size() - 1;
-        ExecutorService pool = Executors.newFixedThreadPool(2);
+        ExecutorService pool = Executors.newFixedThreadPool(Math.min(4, Math.max(2, legCount)));
         List<Future<JSONObject>> futures = new ArrayList<>(legCount);
         try {
             for (int i = 0; i < legCount; i++) {
@@ -141,7 +141,7 @@ public final class OfflineRouter {
                 final double[] b = expandedCoords.get(i + 1);
                 futures.add(pool.submit(() -> {
                     try {
-                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 64, 45_000L);
+                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 48, 45_000L);
                     } catch (Exception e) {
                         Log.w(TAG, "Sub-leg failed: " + e.getMessage());
                         return null;

@@ -356,6 +356,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri uri = request.getUrl();
                 if (isLocal(uri)) return false;
+                if (!request.isForMainFrame() && "https".equals(uri.getScheme())) return false;
                 if (request.isForMainFrame() && "https".equals(uri.getScheme())) {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
                     catch (android.content.ActivityNotFoundException ignored) {}
