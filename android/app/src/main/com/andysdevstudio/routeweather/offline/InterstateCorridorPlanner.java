@@ -295,7 +295,125 @@ final class InterstateCorridorPlanner {
         return out;
     }
 
+    static final class CorridorOption {
+        final List<double[]> waypoints;
+        final List<String> hubIds;
+        final double estimatedMeters;
+        final String label;
+
+        CorridorOption(List<double[]> waypoints, List<String> hubIds, double estimatedMeters, String label) {
+            this.waypoints = waypoints;
+            this.hubIds = hubIds;
+            this.estimatedMeters = estimatedMeters;
+            this.label = label;
+        }
+    }
+
+    /**
+     * Plans up to maxOptions (typically 3) distinct Interstate/highway corridors between from and to
+     * using penalty-based k-shortest paths on the North America hub graph (< 1 ms).
+     */
+    static List<CorridorOption> planAlternativeCorridors(double[] from, double[] to, File segmentsDir, int maxOptions) {
+        double direct = OfflineSearchStore.haversineMeters(from[1], from[0], to[1], to[0]);
+        if (direct <= MIN_LEG_METERS) return Collections.emptyList();
+
+        List<CorridorOption> options = new ArrayList<>();
+        double[] nodePenalty = new double[HUBS.size()];
+        Arrays.fill(nodePenalty, 1.0);
+        double bestDist = Double.POSITIVE_INFINITY;
+
+        for (int attempt = 0; attempt < maxOptions; attempt++) {
+            List<Hub> raw = runDijkstra(from, to, direct, segmentsDir, nodePenalty);
+            if (raw.isEmpty()) break;
+
+            List<double[]> wps = new ArrayList<>();
+            List<String> ids = new ArrayList<>();
+            wps.add(from);
+            double[] lastKept = from;
+            for (Hub h : raw) {
+                double dFromStart = OfflineSearchStore.haversineMeters(from[1], from[0], h.lat, h.lon);
+                double dToEnd = OfflineSearchStore.haversineMeters(h.lat, h.lon, to[1], to[0]);
+                if (dFromStart < END_TRIM_METERS || dToEnd < END_TRIM_METERS) continue;
+                double dFromLast = OfflineSearchStore.haversineMeters(lastKept[1], lastKept[0], h.lat, h.lon);
+                if (dFromLast < MIN_HUB_SPACING_METERS) continue;
+                double[] pt = new double[]{h.lon, h.lat};
+                wps.add(pt);
+                ids.add(h.id);
+                lastKept = pt;
+            }
+            wps.add(to);
+
+            double estMeters = 0.0;
+            for (int i = 0; i < wps.size() - 1; i++) {
+                estMeters += OfflineSearchStore.haversineMeters(wps.get(i)[1], wps.get(i)[0], wps.get(i + 1)[1], wps.get(i + 1)[0]);
+            }
+            // Highway distance is typically ~1.12x hub-to-hub straight line
+            estMeters *= 1.12;
+            if (attempt == 0) bestDist = estMeters;
+            else if (estMeters > bestDist * 1.24) break;
+
+            // Ensure genuinely distinct from previous options
+            boolean duplicate = false;
+            for (CorridorOption prev : options) {
+                int shared = 0;
+                for (String id : ids) if (prev.hubIds.contains(id)) shared++;
+                if (ids.isEmpty() || shared >= Math.max(1, ids.size() - 1)) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (!duplicate) {
+                String label = buildCorridorLabel(ids);
+                options.add(new CorridorOption(wps, ids, estMeters, label));
+            }
+
+            // Penalize middle hubs of this corridor to discover genuinely distinct alternatives
+            int startPen = Math.min(1, raw.size());
+            int endPen = Math.max(startPen, raw.size() - 1);
+            for (int i = startPen; i < endPen; i++) {
+                Integer idx = INDEX.get(raw.get(i).id);
+                if (idx != null) nodePenalty[idx] *= 2.4;
+            }
+        }
+        return options;
+    }
+
+    private static String buildCorridorLabel(List<String> ids) {
+        if (ids.isEmpty()) return "Direct highway";
+        if (ids.size() == 1) return "Via " + ids.get(0);
+        int mid1 = ids.size() / 3;
+        int mid2 = (ids.size() * 2) / 3;
+        if (mid1 == mid2) return "Via " + ids.get(mid1);
+        return "Via " + ids.get(mid1) + " · " + ids.get(mid2);
+    }
+
     private static List<double[]> planCorridor(double[] from, double[] to, double directMeters, File segmentsDir) {
+        double[] unitPenalty = new double[HUBS.size()];
+        Arrays.fill(unitPenalty, 1.0);
+        List<Hub> raw = runDijkstra(from, to, directMeters, segmentsDir, unitPenalty);
+        if (raw.isEmpty()) return Collections.emptyList();
+
+        // Trim hubs too close to start or end, and thin hubs closer than MIN_HUB_SPACING_METERS
+        List<double[]> selected = new ArrayList<>();
+        double[] lastKept = from;
+        for (int i = 0; i < raw.size(); i++) {
+            Hub h = raw.get(i);
+            double dFromStart = OfflineSearchStore.haversineMeters(from[1], from[0], h.lat, h.lon);
+            double dToEnd = OfflineSearchStore.haversineMeters(h.lat, h.lon, to[1], to[0]);
+            if (dFromStart < END_TRIM_METERS || dToEnd < END_TRIM_METERS) continue;
+
+            double dFromLast = OfflineSearchStore.haversineMeters(lastKept[1], lastKept[0], h.lat, h.lon);
+            if (dFromLast < MIN_HUB_SPACING_METERS) continue;
+
+            double[] pt = new double[]{h.lon, h.lat};
+            selected.add(pt);
+            lastKept = pt;
+        }
+        return selected;
+    }
+
+    private static List<Hub> runDijkstra(double[] from, double[] to, double directMeters,
+                                         File segmentsDir, double[] nodePenalty) {
         int n = HUBS.size();
         boolean[] available = new boolean[n];
         for (int i = 0; i < n; i++) {
@@ -332,7 +450,7 @@ final class InterstateCorridorPlanner {
             if (u == srcNode) {
                 for (int[] e : srcEdges) {
                     int v = e[0];
-                    double nd = d + e[1] * 1.15;
+                    double nd = d + e[1] * 1.15 * nodePenalty[v];
                     if (nd < dist[v]) {
                         dist[v] = nd;
                         prev[v] = u;
@@ -352,7 +470,7 @@ final class InterstateCorridorPlanner {
                 for (int[] e : ADJ.get(u)) {
                     int v = e[0];
                     if (!available[v]) continue;
-                    double nd = d + e[1];
+                    double nd = d + e[1] * nodePenalty[v];
                     if (nd < dist[v]) {
                         dist[v] = nd;
                         prev[v] = u;
@@ -362,7 +480,7 @@ final class InterstateCorridorPlanner {
             }
         }
 
-        if (prev[dstNode] == -1 || dist[dstNode] > directMeters * 1.75) {
+        if (prev[dstNode] == -1) {
             return Collections.emptyList();
         }
 
@@ -371,24 +489,7 @@ final class InterstateCorridorPlanner {
             raw.add(HUBS.get(cur));
         }
         Collections.reverse(raw);
-
-        // Trim hubs too close to start or end, and thin hubs closer than MIN_HUB_SPACING_METERS
-        List<double[]> selected = new ArrayList<>();
-        double[] lastKept = from;
-        for (int i = 0; i < raw.size(); i++) {
-            Hub h = raw.get(i);
-            double dFromStart = OfflineSearchStore.haversineMeters(from[1], from[0], h.lat, h.lon);
-            double dToEnd = OfflineSearchStore.haversineMeters(h.lat, h.lon, to[1], to[0]);
-            if (dFromStart < END_TRIM_METERS || dToEnd < END_TRIM_METERS) continue;
-
-            double dFromLast = OfflineSearchStore.haversineMeters(lastKept[1], lastKept[0], h.lat, h.lon);
-            if (dFromLast < MIN_HUB_SPACING_METERS) continue;
-
-            double[] pt = new double[]{h.lon, h.lat};
-            selected.add(pt);
-            lastKept = pt;
-        }
-        return selected;
+        return raw;
     }
 
     private static List<int[]> nearestHubs(double lon, double lat, boolean[] available, int k) {

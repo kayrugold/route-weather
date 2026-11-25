@@ -87,6 +87,45 @@ public final class OfflineRouter {
             long elapsedMs = System.currentTimeMillis() - started;
             result = convertGeoJsonToRouteWeather(geoJson, coords, truck, elapsedMs);
         }
+        // Attach up to 2 alternative Interstate corridor choices for long A->B trips
+        if (coords.size() == 2) {
+            List<InterstateCorridorPlanner.CorridorOption> alts =
+                    InterstateCorridorPlanner.planAlternativeCorridors(coords.get(0), coords.get(1), segmentsDir, 3);
+            if (!alts.isEmpty()) {
+                JSONArray routes = result.optJSONArray("routes");
+                if (routes != null && routes.length() > 0) {
+                    routes.getJSONObject(0).put("summary", alts.get(0).label);
+                    for (int k = 1; k < alts.size(); k++) {
+                        InterstateCorridorPlanner.CorridorOption opt = alts.get(k);
+                        JSONArray altCoords = new JSONArray();
+                        for (double[] pt : opt.waypoints) {
+                            JSONArray pair = new JSONArray();
+                            pair.put(pt[0]);
+                            pair.put(pt[1]);
+                            altCoords.put(pair);
+                        }
+                        JSONObject altGeom = new JSONObject();
+                        altGeom.put("type", "LineString");
+                        altGeom.put("coordinates", altCoords);
+                        JSONObject altRoute = new JSONObject();
+                        altRoute.put("preview", true);
+                        altRoute.put("summary", opt.label);
+                        altRoute.put("distance", Math.round(opt.estimatedMeters));
+                        altRoute.put("duration", Math.round(opt.estimatedMeters / (truck ? 23.7 : 26.8)));
+                        altRoute.put("geometry", altGeom);
+                        // Pick middle hub as anchor via-point if user taps this alternative
+                        if (opt.waypoints.size() > 2) {
+                            double[] midHub = opt.waypoints.get(opt.waypoints.size() / 2);
+                            JSONArray viaPt = new JSONArray();
+                            viaPt.put(midHub[0]);
+                            viaPt.put(midHub[1]);
+                            altRoute.put("viaAnchor", viaPt);
+                        }
+                        routes.put(altRoute);
+                    }
+                }
+            }
+        }
         Log.i(TAG, "Offline route calculated (" + (truck ? "truck" : "car") + ") in "
                 + (System.currentTimeMillis() - started) + " ms");
         return result;
@@ -110,7 +149,7 @@ public final class OfflineRouter {
         rc.carMode = true;
         rc.considerTurnRestrictions = false;
         rc.memoryclass = memoryClass;
-        rc.pass1coefficient = 1.5;
+        rc.pass1coefficient = 2.2;
         rc.pass2coefficient = 0;
         rc.keyValues = new HashMap<>();
         rc.keyValues.put("turnInstructionMode", "3");

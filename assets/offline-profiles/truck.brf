@@ -7,7 +7,7 @@
 
 assign validForCars        = true
 assign turnInstructionMode = 3
-assign pass1coefficient    = 1.5
+assign pass1coefficient    = 2.2
 assign pass2coefficient    = 0
 assign downhillcost        = 0
 assign uphillcost          = 0
