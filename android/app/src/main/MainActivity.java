@@ -50,6 +50,7 @@ import android.widget.FrameLayout;
 import org.json.JSONObject;
 
 import com.andysdevstudio.routeweather.audio.AtlasAudioManager;
+import com.andysdevstudio.routeweather.audio.AtlasVoiceController;
 import com.andysdevstudio.routeweather.offline.OfflineEngine;
 import com.andysdevstudio.routeweather.offline.OfflinePackageManager;
 
@@ -73,6 +74,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private static final String ORIGIN = "https://appassets.androidplatform.net";
     private static final int LOCATION_REQUEST = 12;
     private static final int DESTINATION_SPEECH_REQUEST = 13;
+    private static final int AUDIO_PERMISSION_REQUEST = 14;
     private static final int RESPONSE_LIMIT = 12 * 1024 * 1024;
     private static final Set<String> PROVIDERS = new HashSet<>(Arrays.asList(
         "api.weather.gov",
@@ -115,6 +117,10 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private final Handler locationHandler = new Handler(Looper.getMainLooper());
     private final Map<Integer, LocationRequest> locations = new HashMap<>();
     private AtlasAudioManager audioManager;
+    private AtlasVoiceController voiceController;
+    private boolean pendingListenAfterGrant;
+    private boolean pendingHandsFreeAfterGrant;
+    private String pendingExternalDestination;
     private OfflineEngine offlineEngine;
 
     private void notifyVoice(String event) {
@@ -229,6 +235,10 @@ public final class MainActivity extends Activity implements SensorEventListener 
         audioManager = new AtlasAudioManager(this, new AtlasAudioManager.Callbacks() {
             @Override public boolean isResumed() { return resumed && web != null; }
             @Override public void onSpeechEvent(String event, int priority, String key) {
+                if (voiceController != null) {
+                    if ("start".equals(event)) voiceController.setSuspendedForTts(true);
+                    else if ("done".equals(event) || "error".equals(event)) voiceController.setSuspendedForTts(false);
+                }
                 runOnUiThread(() -> notifyVoice(event));
             }
             @Override public void onDuckMedia(boolean duck) {
@@ -240,6 +250,40 @@ public final class MainActivity extends Activity implements SensorEventListener 
                 });
             }
         });
+        voiceController = new AtlasVoiceController(this, new AtlasVoiceController.Callbacks() {
+            @Override public boolean isResumed() { return resumed && web != null; }
+            @Override public boolean hasRecordPermission() { return hasAudioPermission(); }
+            @Override public void onStateChanged(String state, boolean handsFree) {
+                runOnUiThread(() -> {
+                    if (web != null) {
+                        web.evaluateJavascript("window.atlasVoiceState?.(" + JSONObject.quote(state) + "," + handsFree + ")", null);
+                    }
+                });
+            }
+            @Override public void onTranscript(String transcript, boolean requireWakeWord) {
+                runOnUiThread(() -> {
+                    if (web != null) {
+                        web.evaluateJavascript("window.atlasVoiceTranscript?.(" + JSONObject.quote(transcript) + "," + requireWakeWord + ")", null);
+                    }
+                });
+            }
+            @Override public void onMediaAction(String action) {
+                runOnUiThread(() -> {
+                    if (web != null) {
+                        web.evaluateJavascript("window.atlasExternalCommand?.(" + JSONObject.quote(action) + ",'')", null);
+                    } else if (ytEnabled && ytWeb != null) {
+                        if ("media_pause".equals(action)) runYtAction("pause");
+                        else if ("media_play".equals(action)) runYtAction("toggle");
+                        else if ("media_next".equals(action)) runYtAction("next");
+                        else if ("media_prev".equals(action)) runYtAction("prev");
+                    }
+                });
+            }
+            @Override public void onDuckForListening(boolean duck) {
+                runOnUiThread(() -> duckYtMedia(duck));
+            }
+        });
+        captureNavigationIntent(getIntent(), false);
         offlineEngine = new OfflineEngine(this, new OfflinePackageManager.Listener() {
             @Override public void onProgress(String packageId, String state, long downloadedBytes, long totalBytes, String message) {
                 runOnUiThread(() -> {
@@ -466,6 +510,12 @@ public final class MainActivity extends Activity implements SensorEventListener 
             if (web == null || raw == null || "null".equals(raw)) return;
             try {
                 String unquoted = new org.json.JSONTokener(raw).nextValue().toString();
+                if (voiceController != null) {
+                    try {
+                        JSONObject st = new JSONObject(unquoted);
+                        voiceController.updateMediaPlaybackState(st.optBoolean("playing", false));
+                    } catch (Exception ignored) {}
+                }
                 web.evaluateJavascript("window.routeWeatherYtState?.(" + unquoted + ")", null);
             } catch (Exception ignored) {}
         });
@@ -529,8 +579,58 @@ public final class MainActivity extends Activity implements SensorEventListener 
             || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    private boolean hasAudioPermission() {
+        return checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void captureNavigationIntent(Intent intent, boolean dispatchNow) {
+        if (intent == null || !Intent.ACTION_VIEW.equals(intent.getAction())) return;
+        Uri data = intent.getData();
+        if (data == null) return;
+        String scheme = data.getScheme();
+        String query = null;
+        if ("google.navigation".equals(scheme) || "geo".equals(scheme)) {
+            query = data.getQueryParameter("q");
+            if (query == null || query.trim().isEmpty()) {
+                String ssp = data.getSchemeSpecificPart();
+                if (ssp != null) {
+                    int qIdx = ssp.indexOf("q=");
+                    if (qIdx >= 0) query = Uri.decode(ssp.substring(qIdx + 2).split("&")[0]);
+                    else if (!ssp.startsWith("0,0")) query = ssp.split("\\?")[0];
+                }
+            }
+        }
+        if (query == null || query.trim().isEmpty()) return;
+        String dest = query.trim();
+        if (dispatchNow && web != null) {
+            web.evaluateJavascript("window.atlasExternalCommand?.('destination'," + JSONObject.quote(dest) + ")", null);
+        } else {
+            pendingExternalDestination = dest;
+        }
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        captureNavigationIntent(intent, true);
+    }
+
     @Override public void onRequestPermissionsResult(int code, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(code, permissions, results);
+        if (code == AUDIO_PERMISSION_REQUEST) {
+            boolean granted = hasAudioPermission();
+            boolean listen = pendingListenAfterGrant;
+            boolean hf = pendingHandsFreeAfterGrant;
+            pendingListenAfterGrant = false;
+            pendingHandsFreeAfterGrant = false;
+            if (granted && voiceController != null) {
+                if (hf) voiceController.setHandsFree(true);
+                if (listen) voiceController.listenOnce(true);
+            } else if (web != null) {
+                web.evaluateJavascript("window.atlasVoiceState?.('denied',false)", null);
+            }
+            return;
+        }
         if (code == LOCATION_REQUEST && locationCallback != null) {
             locationCallback.invoke(ORIGIN, hasLocation(), false);
             locationCallback = null;
@@ -613,6 +713,36 @@ public final class MainActivity extends Activity implements SensorEventListener 
             runOnUiThread(() -> {
                 if (audioManager != null) audioManager.stopFromPriority(minPriority);
             });
+        }
+        @JavascriptInterface public void routerListenOnce(boolean withTone) {
+            runOnUiThread(() -> {
+                if (voiceController == null) return;
+                if (!hasAudioPermission()) {
+                    pendingListenAfterGrant = true;
+                    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_REQUEST);
+                    return;
+                }
+                voiceController.listenOnce(withTone);
+            });
+        }
+        @JavascriptInterface public void routerSetHandsFree(boolean enabled) {
+            runOnUiThread(() -> {
+                if (voiceController == null) return;
+                if (enabled && !hasAudioPermission()) {
+                    pendingHandsFreeAfterGrant = true;
+                    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_REQUEST);
+                    return;
+                }
+                voiceController.setHandsFree(enabled);
+            });
+        }
+        @JavascriptInterface public void routerPlayTone(String kind) {
+            if (voiceController != null) voiceController.playTone(kind);
+        }
+        @JavascriptInterface public String routerConsumeExternalDestination() {
+            String dest = pendingExternalDestination;
+            pendingExternalDestination = null;
+            return dest == null ? "" : dest;
         }
         @JavascriptInterface public void fetch(int id, String spec, String accept, boolean wifiOnly) {
             if (id < 0 || spec.length() > 4096) return;
@@ -841,9 +971,13 @@ public final class MainActivity extends Activity implements SensorEventListener 
     }
 
     @Override public void onAccuracyChanged(Sensor sensor, int accuracy) {}
-    @Override protected void onResume() { super.onResume(); resumed = true; web.onResume(); updateCompassRegistration(); }
-    @Override protected void onPause() { resumed = false; stopVoice(); updateCompassRegistration(); web.onPause(); super.onPause(); }
+    @Override protected void onResume() { super.onResume(); resumed = true; web.onResume(); updateCompassRegistration(); if (voiceController != null) voiceController.onResume(); }
+    @Override protected void onPause() { resumed = false; stopVoice(); if (voiceController != null) voiceController.onPause(); updateCompassRegistration(); web.onPause(); super.onPause(); }
     @Override protected void onDestroy() {
+        if (voiceController != null) {
+            voiceController.shutdown();
+            voiceController = null;
+        }
         if (audioManager != null) {
             audioManager.shutdown();
             audioManager = null;
