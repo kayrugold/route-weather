@@ -251,6 +251,7 @@
     let savedView = null;
     let renderedKey = '';
     let popupOpen = false;
+    let lastRouteSig = '';
 
     const bannerEl = document.getElementById('wxAlertBanner');
     const titleEl = document.getElementById('wxAlertTitle');
@@ -311,7 +312,7 @@
           (exp ? `<br><small>Until ${exp}</small>` : '') +
           (safeArea ? `<br><small>${safeArea}</small>` : '') +
           (safeInstr ? `<p style="margin:6px 0 0;font-size:12px">${safeInstr}</p>` : ''),
-          { maxWidth: 280, autoPanPadding: [24, 60] }
+          { maxWidth: 280, autoPanPadding: [24, 60], className: 'wx-alert-popup' }
         );
         poly.on('popupopen', () => { popupOpen = true; });
         poly.on('popupclose', () => { popupOpen = false; });
@@ -361,9 +362,21 @@
         updateUi();
         return;
       }
+      const routeCoords = getRouteCoords?.();
+      const routeSig = Array.isArray(routeCoords) && routeCoords.length
+        ? `${routeCoords.length}:${routeCoords[0]?.[0]?.toFixed(2)},${routeCoords[0]?.[1]?.toFixed(2)}:${routeCoords[routeCoords.length - 1]?.[0]?.toFixed(2)},${routeCoords[routeCoords.length - 1]?.[1]?.toFixed(2)}`
+        : '';
+      if (routeSig && routeSig !== lastRouteSig) {
+        lastRouteSig = routeSig;
+        // New route planned: allow route-corridor alerts to re-announce & show banner cleanly
+        spokenIds.clear();
+        dismissedIds.clear();
+      } else if (!routeSig) {
+        lastRouteSig = '';
+      }
       activeImpacts = evaluateImpacts(alerts, {
         gps: getGps?.(),
-        routeCoords: getRouteCoords?.(),
+        routeCoords,
       });
       updateUi();
       if (allowSpeech && activeImpacts.length) {
