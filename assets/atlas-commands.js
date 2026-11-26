@@ -50,7 +50,7 @@
     const normNum = normalizeNumbers(lower);
 
     // 1. Trip planning & destination
-    let m = body.match(/^(?:set\s+)?(?:destination|navigate\s+to|route\s+to|drive\s+to|go\s+to|take\s+me\s+to|head\s+to|directions\s+to)\s+(.+)$/i);
+    let m = body.match(/^(?:(?:set\s+)?destination(?:\s+to)?|navigate(?:\s+me)?\s+to|route(?:\s+me)?\s+to|drive(?:\s+me)?\s+to|go\s+to|take\s+me\s+to|head\s+to|directions\s+to)\s+(.+)$/i);
     if (m && m[1].trim()) {
       const dest = cleanPhrase(m[1]);
       return { action: 'destination', value: dest, label: 'Destination: ' + dest };

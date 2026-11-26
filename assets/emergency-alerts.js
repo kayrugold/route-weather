@@ -249,6 +249,8 @@
     let inFlight = false;
     let viewingAlertId = null;
     let savedView = null;
+    let renderedKey = '';
+    let popupOpen = false;
 
     const bannerEl = document.getElementById('wxAlertBanner');
     const titleEl = document.getElementById('wxAlertTitle');
@@ -264,18 +266,26 @@
       layerToggle.setAttribute('aria-pressed', String(enabled));
     }
 
-    function renderPolygons() {
+    function renderPolygons(force = false) {
       if (!layerGroup || !map) return;
-      layerGroup.clearLayers();
       if (!enabled || !alerts.length) {
+        renderedKey = '';
+        popupOpen = false;
+        layerGroup.clearLayers();
         if (map.hasLayer(layerGroup)) map.removeLayer(layerGroup);
         return;
       }
-      if (!map.hasLayer(layerGroup)) layerGroup.addTo(map);
+      // Never wipe and rebuild polygons while the driver is reading an open alert popup
+      if (popupOpen && !force) return;
       const b = map.getBounds();
       const visible = selectVisibleAlerts(alerts, {
         west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth(),
       });
+      const nextKey = visible.map(a => a.id).join('|');
+      if (!force && nextKey === renderedKey && map.hasLayer(layerGroup)) return;
+      renderedKey = nextKey;
+      layerGroup.clearLayers();
+      if (!map.hasLayer(layerGroup)) layerGroup.addTo(map);
       for (const alert of visible) {
         const isExtreme = alert.level === 'extreme';
         const color = isExtreme ? '#ff6b6b' : '#f2ce75';
@@ -300,8 +310,11 @@
           `<strong style="color:${color}">${safeEvent}</strong>` +
           (exp ? `<br><small>Until ${exp}</small>` : '') +
           (safeArea ? `<br><small>${safeArea}</small>` : '') +
-          (safeInstr ? `<p style="margin:6px 0 0;font-size:12px">${safeInstr}</p>` : '')
+          (safeInstr ? `<p style="margin:6px 0 0;font-size:12px">${safeInstr}</p>` : ''),
+          { maxWidth: 280, autoPanPadding: [24, 60] }
         );
+        poly.on('popupopen', () => { popupOpen = true; });
+        poly.on('popupclose', () => { popupOpen = false; });
         poly.addTo(layerGroup);
       }
     }

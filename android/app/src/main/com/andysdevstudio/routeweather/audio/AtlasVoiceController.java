@@ -56,6 +56,8 @@ public final class AtlasVoiceController {
     private boolean recognizerActive;
     private boolean suspendedForTts;
     private int activeSessionId = 0;
+    private int consecutiveErrors = 0;
+    private final Runnable watchdogTask;
 
     public AtlasVoiceController(Context context, Callbacks callbacks) {
         this.context = context.getApplicationContext();
@@ -66,6 +68,16 @@ public final class AtlasVoiceController {
                 beginRecognition(false);
             } else if (handsFreeEnabled) {
                 beginRecognition(true);
+            }
+        };
+        this.watchdogTask = new Runnable() {
+            @Override public void run() {
+                if (!AtlasVoiceController.this.callbacks.isResumed() || !handsFreeEnabled) return;
+                if (!recognizerActive && !directListening && !suspendedForTts && AtlasVoiceController.this.callbacks.hasRecordPermission()) {
+                    Log.i(TAG, "Watchdog reviving silent Router standby");
+                    beginRecognition(true);
+                }
+                mainHandler.postDelayed(this, 8000L);
             }
         };
         initToneGenerator();
@@ -185,6 +197,7 @@ public final class AtlasVoiceController {
         mainHandler.post(() -> {
             handsFreeEnabled = enabled;
             mainHandler.removeCallbacks(restartTask);
+            mainHandler.removeCallbacks(watchdogTask);
             activeSessionId++;
             if (!enabled) {
                 directListening = false;
@@ -200,6 +213,7 @@ public final class AtlasVoiceController {
             if (!suspendedForTts && !directListening) {
                 beginRecognition(true);
             }
+            mainHandler.postDelayed(watchdogTask, 8000L);
             callbacks.onStateChanged("standby", true);
         });
     }
@@ -225,6 +239,7 @@ public final class AtlasVoiceController {
     public void onPause() {
         mainHandler.post(() -> {
             mainHandler.removeCallbacks(restartTask);
+            mainHandler.removeCallbacks(watchdogTask);
             activeSessionId++;
             directListening = false;
             stopRecognizer();
@@ -236,6 +251,8 @@ public final class AtlasVoiceController {
         mainHandler.post(() -> {
             if (handsFreeEnabled && !suspendedForTts && callbacks.hasRecordPermission()) {
                 mainHandler.postDelayed(restartTask, STANDBY_RESTART_MS);
+                mainHandler.removeCallbacks(watchdogTask);
+                mainHandler.postDelayed(watchdogTask, 8000L);
                 callbacks.onStateChanged("standby", true);
             }
         });
@@ -244,6 +261,7 @@ public final class AtlasVoiceController {
     public void shutdown() {
         mainHandler.post(() -> {
             mainHandler.removeCallbacks(restartTask);
+            mainHandler.removeCallbacks(watchdogTask);
             activeSessionId++;
             handsFreeEnabled = false;
             directListening = false;
@@ -300,20 +318,31 @@ public final class AtlasVoiceController {
             }
             @Override public void onError(int error) {
                 recognizerActive = false;
-                // Ignore cancellation callbacks from intentionally aborted sessions
-                if (error == SpeechRecognizer.ERROR_CLIENT) return;
                 boolean wasDirect = directListening;
                 directListening = false;
                 if (wasDirect) {
                     callbacks.onDuckForListening(false);
-                    if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                    if (error != SpeechRecognizer.ERROR_CLIENT
+                        && error != SpeechRecognizer.ERROR_NO_MATCH
+                        && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
                         playTone("error");
                     }
+                }
+                if (error == SpeechRecognizer.ERROR_RECOGNIZER_BUSY || error == SpeechRecognizer.ERROR_SERVER_DISCONNECTED) {
+                    consecutiveErrors++;
+                    if (consecutiveErrors >= 2 && recognizer != null) {
+                        try { recognizer.destroy(); } catch (Exception ignored) {}
+                        recognizer = null;
+                        consecutiveErrors = 0;
+                    }
+                } else {
+                    consecutiveErrors = 0;
                 }
                 callbacks.onStateChanged(handsFreeEnabled ? "standby" : "idle", handsFreeEnabled);
                 if (handsFreeEnabled && callbacks.isResumed() && !suspendedForTts) {
                     long delay = (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)
                         ? STANDBY_RESTART_MS : ERROR_BACKOFF_MS;
+                    mainHandler.removeCallbacks(restartTask);
                     mainHandler.postDelayed(restartTask, delay);
                 }
             }

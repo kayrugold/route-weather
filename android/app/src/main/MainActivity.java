@@ -238,7 +238,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
             @Override public void onSpeechEvent(String event, int priority, String key) {
                 if (voiceController != null) {
                     if ("start".equals(event)) voiceController.setSuspendedForTts(true);
-                    else if ("done".equals(event) || "error".equals(event)) voiceController.setSuspendedForTts(false);
+                    else if ("done".equals(event) || "error".equals(event) || "idle".equals(event)) voiceController.setSuspendedForTts(false);
                 }
                 runOnUiThread(() -> notifyVoice(event));
             }

@@ -281,6 +281,7 @@ public final class AtlasAudioManager {
             mediaDucked = false;
             callbacks.onDuckMedia(false);
         }
+        callbacks.onSpeechEvent("idle", PRIORITY_NAVIGATION, "");
         if (focusRequest != null) {
             AudioFocusRequest prev = focusRequest;
             focusRequest = null;
