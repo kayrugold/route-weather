@@ -45,15 +45,24 @@ test('parseCommand handles wake-word prefixed and direct commands', () => {
 
   const dismiss = api.parseCommand('dismiss alert');
   assert.equal(dismiss.action, 'alert_dismiss');
+
+  // Natural synonyms & fuzzy wake-word variants
+  assert.equal(api.parseCommand('exit entertainment').action, 'media_hide');
+  assert.equal(api.parseCommand('turn off entertainment').action, 'media_hide');
+  assert.equal(api.parseCommand('bring up entertainment').action, 'media_show');
+  assert.equal(api.parseCommand('Router open entertainment', { requireWakeWord: true }).action, 'media_show');
+  assert.equal(api.parseCommand('Route her open entertainment', { requireWakeWord: true }).action, 'media_show');
+  assert.equal(api.parseCommand('Outer exit entertainment', { requireWakeWord: true }).action, 'media_hide');
 });
 
-test('createDispatcher executes registered handlers and triggers wake callback', () => {
+test('createDispatcher executes registered handlers, multi-hypothesis lists, and wake callback', () => {
   const calls = [];
   const dispatcher = api.createDispatcher({
     wake: () => calls.push('wake'),
     plan_trip: () => calls.push('plan_trip'),
     destination: v => calls.push('dest:' + v),
     media_pause: () => calls.push('pause'),
+    media_show: () => calls.push('show'),
   });
 
   const r1 = dispatcher.handleTranscript('Router', { requireWakeWord: true });
@@ -65,8 +74,11 @@ test('createDispatcher executes registered handlers and triggers wake callback',
   const r3 = dispatcher.handleTranscript('destination Red Bluff CA', { requireWakeWord: false });
   assert.equal(r3.ok, true);
 
-  const r4 = dispatcher.handleTranscript('Router, stop YouTube', { requireWakeWord: true });
+  const r4 = dispatcher.handleTranscript(['garbled text', 'Router open entertainment'], { requireWakeWord: true });
   assert.equal(r4.ok, true);
 
-  assert.deepEqual(calls, ['wake', 'plan_trip', 'dest:Red Bluff CA', 'pause']);
+  const r5 = dispatcher.handleTranscript('Router, stop YouTube', { requireWakeWord: true });
+  assert.equal(r5.ok, true);
+
+  assert.deepEqual(calls, ['wake', 'plan_trip', 'dest:Red Bluff CA', 'show', 'pause']);
 });

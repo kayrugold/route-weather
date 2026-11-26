@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="shortcut_entertainment">Entertainment</string>
+    <string name="shortcut_plan_trip">Plan Trip</string>
+    <string name="shortcut_radar">Weather Radar</string>
+</resources>

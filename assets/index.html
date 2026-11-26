@@ -4801,6 +4801,8 @@ function bindAtlasRouter(){
     media_prev:()=>window.AndroidRoute?.ytControl?.('prev'),
     media_show:()=>setEntertainmentBar(true),
     media_hide:()=>setEntertainmentBar(false),
+    media_expand:()=>{if(!entertainmentEnabled)setEntertainmentBar(true);setEntertainmentExpanded(true)},
+    media_collapse:()=>setEntertainmentExpanded(false),
     voice_off:()=>setVoiceOn(false),
     voice_on:()=>setVoiceOn(true),
     radar_toggle:()=>$('radar')?.click(),
@@ -4808,6 +4810,7 @@ function bindAtlasRouter(){
     traffic_toggle:()=>$('showTraffic')?.click(),
     truck_stops:()=>$('findTruckStops')?.click(),
     scales:()=>$('showScales')?.click(),
+    rest_areas:()=>$('layerRestAreas')?.click(),
     alert_dismiss:()=>$('wxAlertDismissBtn')?.click(),
     alert_show:()=>{
       if(!$('wxAlertBanner')?.hidden)$('wxAlertViewBtn')?.click();
@@ -4831,10 +4834,11 @@ function bindAtlasRouter(){
     if(typeof hf==='boolean')routerHandsFree=hf;
     syncRouterUi(state);
   };
-  window.atlasVoiceTranscript=(transcript,requireWake)=>{
-    const res=atlasRouterDispatcher.handleTranscript(transcript,{requireWakeWord:Boolean(requireWake)});
+  window.atlasVoiceTranscript=(transcriptOrList,requireWake)=>{
+    const res=atlasRouterDispatcher.handleTranscript(transcriptOrList,{requireWakeWord:Boolean(requireWake)});
     if(!res.matched){
-      if(!requireWake){playRouterTone('error');showRouterToast('Heard: '+transcript,true)}
+      const shown=Array.isArray(transcriptOrList)?(transcriptOrList[0]||''):String(transcriptOrList||'');
+      if(!requireWake&&shown){playRouterTone('error');showRouterToast('Heard: '+shown,true)}
       return;
     }
     if(res.wakeOnly)return;
@@ -4842,24 +4846,37 @@ function bindAtlasRouter(){
     else{playRouterTone('error');showRouterToast(res.message||'Command failed',true)}
   };
   window.atlasExternalCommand=(action,value)=>{
+    if(action==='feature'&&value){
+      const parsed=window.atlasCommands.parseCommand('open '+value,{requireWakeWord:false})
+        ||window.atlasCommands.parseCommand(value,{requireWakeWord:false});
+      if(parsed){
+        const r=atlasRouterDispatcher.dispatch(parsed);
+        if(r.ok){playRouterTone('ok');showRouterToast('✓ '+r.label)}
+      }
+      return;
+    }
     const res=atlasRouterDispatcher.dispatch({action,value,label:value?action+': '+value:action});
     if(res.ok){playRouterTone('ok');showRouterToast('✓ '+res.label)}
   };
   const mic=$('routerMicBtn');
   if(mic){
     mic.onclick=()=>{
-      if(window.isRouteWeatherAndroid&&AndroidRoute.routerListenOnce){
+      if(window.isRouteWeatherAndroid&&AndroidRoute.routerToggleListen){
+        AndroidRoute.routerToggleListen(true);
+      }else if(window.isRouteWeatherAndroid&&AndroidRoute.routerListenOnce){
         AndroidRoute.routerListenOnce(true);
       }else{
-        const typed=prompt('Router command (e.g. "destination Stockton CA", "weather radar", "pause YouTube"):');
+        const typed=prompt('Router command (e.g. "destination Stockton CA", "exit entertainment", "weather radar"):');
         if(typed)window.atlasVoiceTranscript(typed,false);
       }
     };
   }
   syncRouterUi(routerHandsFree?'standby':'idle');
   if(routerHandsFree&&window.isRouteWeatherAndroid)AndroidRoute.routerSetHandsFree?.(true);
-  const extDest=window.isRouteWeatherAndroid?AndroidRoute.routerConsumeExternalDestination?.():'';
-  if(extDest)window.atlasExternalCommand('destination',extDest);
+  const extRaw=window.isRouteWeatherAndroid?AndroidRoute.routerConsumeExternalCommand?.():'';
+  if(extRaw){
+    try{const ext=JSON.parse(extRaw);if(ext?.action)window.atlasExternalCommand(ext.action,ext.value||'')}catch{}
+  }
 }
 if(map){bindWildfireLayers();bindClearanceLayer();bindTollRoads();bindDrivingMap();bindTrafficLayer();bindVoiceDirections();bindEmergencyAlerts();bindAtlasRouter();void startGpsLocation('center',true)}
 </script><script src="/truck-facilities.js"></script><script src="/route-terrain.js"></script><script src="/road-awareness.js"></script></body></html>

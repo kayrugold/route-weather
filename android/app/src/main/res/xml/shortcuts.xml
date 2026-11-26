@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- App Actions Built-In Intent: "Hey Google, open <feature> in Route Weather" -->
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.andysdevstudio.routeweather"
+            android:targetClass="com.andysdevstudio.routeweather.MainActivity">
+            <parameter
+                android:name="feature"
+                android:key="atlas_feature"/>
+        </intent>
+    </capability>
+
+    <!-- App Actions Built-In Intent: "Hey Google, navigate to <dest> using Route Weather" -->
+    <capability android:name="actions.intent.GET_DIRECTIONS">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.andysdevstudio.routeweather"
+            android:targetClass="com.andysdevstudio.routeweather.MainActivity">
+            <parameter
+                android:name="destination.name"
+                android:key="atlas_destination"/>
+        </intent>
+    </capability>
+
+    <shortcut
+        android:shortcutId="open_entertainment"
+        android:enabled="true"
+        android:icon="@drawable/road_diamond"
+        android:shortcutShortLabel="@string/shortcut_entertainment">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.andysdevstudio.routeweather"
+            android:targetClass="com.andysdevstudio.routeweather.MainActivity">
+            <extra android:name="atlas_action" android:value="media_show"/>
+        </intent>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="entertainment"/>
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="plan_trip"
+        android:enabled="true"
+        android:icon="@drawable/road_diamond"
+        android:shortcutShortLabel="@string/shortcut_plan_trip">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.andysdevstudio.routeweather"
+            android:targetClass="com.andysdevstudio.routeweather.MainActivity">
+            <extra android:name="atlas_action" android:value="plan_trip"/>
+        </intent>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="trip planner"/>
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="weather_radar"
+        android:enabled="true"
+        android:icon="@drawable/road_diamond"
+        android:shortcutShortLabel="@string/shortcut_radar">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.andysdevstudio.routeweather"
+            android:targetClass="com.andysdevstudio.routeweather.MainActivity">
+            <extra android:name="atlas_action" android:value="radar_toggle"/>
+        </intent>
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding android:key="feature" android:value="weather radar"/>
+        </capability-binding>
+    </shortcut>
+</shortcuts>

@@ -6,6 +6,7 @@ import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,23 +15,28 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 
+import org.json.JSONArray;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
 /**
  * Hands-free "Router" voice command controller, confirmation tone generator,
  * and Android MediaSession bridge (for Gemini & Bluetooth steering-wheel controls).
+ *
+ * Uses Android 12+ on-device SpeechRecognizer (AiAiSpeechRecognitionService) when
+ * available so continuous standby listening is completely SILENT (zero start/stop dings).
  */
 public final class AtlasVoiceController {
     private static final String TAG = "AtlasVoiceController";
-    private static final long RESTART_DELAY_MS = 650L;
+    private static final long STANDBY_RESTART_MS = 450L;
     private static final long ERROR_BACKOFF_MS = 1800L;
 
     public interface Callbacks {
         boolean isResumed();
         boolean hasRecordPermission();
         void onStateChanged(String state, boolean handsFree);
-        void onTranscript(String transcript, boolean requireWakeWord);
+        void onTranscripts(String candidatesJson, boolean requireWakeWord);
         void onMediaAction(String action);
         void onDuckForListening(boolean duck);
     }
@@ -38,8 +44,10 @@ public final class AtlasVoiceController {
     private final Context context;
     private final Callbacks callbacks;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable restartTask;
 
     private SpeechRecognizer recognizer;
+    private boolean usingOnDeviceRecognizer;
     private ToneGenerator toneGenerator;
     private MediaSession mediaSession;
 
@@ -47,8 +55,7 @@ public final class AtlasVoiceController {
     private boolean directListening;
     private boolean recognizerActive;
     private boolean suspendedForTts;
-
-    private final Runnable restartTask;
+    private int activeSessionId = 0;
 
     public AtlasVoiceController(Context context, Callbacks callbacks) {
         this.context = context.getApplicationContext();
@@ -67,7 +74,7 @@ public final class AtlasVoiceController {
 
     private void initToneGenerator() {
         try {
-            toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 75);
+            toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 70);
         } catch (Exception e) {
             Log.w(TAG, "ToneGenerator unavailable", e);
         }
@@ -112,34 +119,73 @@ public final class AtlasVoiceController {
         mainHandler.post(() -> {
             try {
                 if ("listen".equals(kind)) {
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 110);
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 95);
                 } else if ("ok".equals(kind)) {
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 130);
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 115);
                 } else if ("error".equals(kind)) {
-                    toneGenerator.startTone(ToneGenerator.TONE_PROP_NACK, 180);
+                    toneGenerator.startTone(ToneGenerator.TONE_PROP_NACK, 160);
                 }
             } catch (Exception ignored) {}
         });
     }
 
-    /** Trigger a single direct command capture (e.g., mic tap or after wake-word "Router"). */
+    /**
+     * Toggle a single direct command capture.
+     * If already actively listening for a direct command, tapping again cleanly cancels it
+     * without playing overlapping dings.
+     */
+    public void toggleDirectListen(boolean withTone) {
+        mainHandler.post(() -> {
+            if (!callbacks.isResumed() || !callbacks.hasRecordPermission()) return;
+            if (directListening) {
+                cancelDirectListen();
+                return;
+            }
+            startDirectListenOnMain(withTone);
+        });
+    }
+
+    /** Force-start direct command capture (e.g. after wake word "Router" detected). */
     public void listenOnce(boolean withTone) {
         mainHandler.post(() -> {
             if (!callbacks.isResumed() || !callbacks.hasRecordPermission()) return;
-            mainHandler.removeCallbacks(restartTask);
-            directListening = true;
-            if (withTone) playTone("listen");
-            callbacks.onDuckForListening(true);
-            callbacks.onStateChanged("listening", handsFreeEnabled);
-            // Slight delay so the listen ding doesn't bleed into speech capture
-            mainHandler.postDelayed(() -> beginRecognition(false), withTone ? 160L : 0L);
+            startDirectListenOnMain(withTone);
         });
+    }
+
+    private void cancelDirectListen() {
+        mainHandler.removeCallbacks(restartTask);
+        activeSessionId++;
+        directListening = false;
+        stopRecognizer();
+        callbacks.onDuckForListening(false);
+        callbacks.onStateChanged(handsFreeEnabled ? "standby" : "idle", handsFreeEnabled);
+        if (handsFreeEnabled && callbacks.isResumed() && !suspendedForTts) {
+            mainHandler.postDelayed(restartTask, STANDBY_RESTART_MS);
+        }
+    }
+
+    private void startDirectListenOnMain(boolean withTone) {
+        mainHandler.removeCallbacks(restartTask);
+        activeSessionId++;
+        stopRecognizer();
+        directListening = true;
+        if (withTone) playTone("listen");
+        callbacks.onDuckForListening(true);
+        callbacks.onStateChanged("listening", handsFreeEnabled);
+        final int targetSession = activeSessionId;
+        mainHandler.postDelayed(() -> {
+            if (activeSessionId == targetSession && directListening && callbacks.isResumed()) {
+                beginRecognition(false);
+            }
+        }, withTone ? 170L : 0L);
     }
 
     public void setHandsFree(boolean enabled) {
         mainHandler.post(() -> {
             handsFreeEnabled = enabled;
             mainHandler.removeCallbacks(restartTask);
+            activeSessionId++;
             if (!enabled) {
                 directListening = false;
                 stopRecognizer();
@@ -168,9 +214,10 @@ public final class AtlasVoiceController {
             suspendedForTts = suspended;
             if (suspended) {
                 mainHandler.removeCallbacks(restartTask);
+                activeSessionId++;
                 if (recognizerActive) stopRecognizer();
             } else if (callbacks.isResumed() && handsFreeEnabled && !directListening) {
-                mainHandler.postDelayed(restartTask, RESTART_DELAY_MS);
+                mainHandler.postDelayed(restartTask, STANDBY_RESTART_MS);
             }
         });
     }
@@ -178,6 +225,7 @@ public final class AtlasVoiceController {
     public void onPause() {
         mainHandler.post(() -> {
             mainHandler.removeCallbacks(restartTask);
+            activeSessionId++;
             directListening = false;
             stopRecognizer();
             callbacks.onDuckForListening(false);
@@ -187,7 +235,7 @@ public final class AtlasVoiceController {
     public void onResume() {
         mainHandler.post(() -> {
             if (handsFreeEnabled && !suspendedForTts && callbacks.hasRecordPermission()) {
-                mainHandler.postDelayed(restartTask, RESTART_DELAY_MS);
+                mainHandler.postDelayed(restartTask, STANDBY_RESTART_MS);
                 callbacks.onStateChanged("standby", true);
             }
         });
@@ -196,6 +244,7 @@ public final class AtlasVoiceController {
     public void shutdown() {
         mainHandler.post(() -> {
             mainHandler.removeCallbacks(restartTask);
+            activeSessionId++;
             handsFreeEnabled = false;
             directListening = false;
             stopRecognizer();
@@ -219,11 +268,25 @@ public final class AtlasVoiceController {
 
     private void ensureRecognizer() {
         if (recognizer != null) return;
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            Log.w(TAG, "SpeechRecognizer unavailable on this device");
-            return;
+        // Prefer Android 12+ on-device recognizer (AiAi) — runs offline and produces ZERO system dings!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
+            try {
+                recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(context);
+                usingOnDeviceRecognizer = true;
+                Log.i(TAG, "Using silent on-device SpeechRecognizer");
+            } catch (Exception e) {
+                Log.w(TAG, "On-device SpeechRecognizer failed, falling back", e);
+            }
         }
-        recognizer = SpeechRecognizer.createSpeechRecognizer(context);
+        if (recognizer == null) {
+            if (!SpeechRecognizer.isRecognitionAvailable(context)) {
+                Log.w(TAG, "SpeechRecognizer unavailable on this device");
+                return;
+            }
+            recognizer = SpeechRecognizer.createSpeechRecognizer(context);
+            usingOnDeviceRecognizer = false;
+            Log.i(TAG, "Using standard SpeechRecognizer");
+        }
         recognizer.setRecognitionListener(new RecognitionListener() {
             @Override public void onReadyForSpeech(Bundle params) {
                 recognizerActive = true;
@@ -237,18 +300,20 @@ public final class AtlasVoiceController {
             }
             @Override public void onError(int error) {
                 recognizerActive = false;
+                // Ignore cancellation callbacks from intentionally aborted sessions
+                if (error == SpeechRecognizer.ERROR_CLIENT) return;
                 boolean wasDirect = directListening;
                 directListening = false;
                 if (wasDirect) {
                     callbacks.onDuckForListening(false);
-                    if (error != SpeechRecognizer.ERROR_CLIENT && error != SpeechRecognizer.ERROR_NO_MATCH) {
+                    if (error != SpeechRecognizer.ERROR_NO_MATCH && error != SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
                         playTone("error");
                     }
                 }
                 callbacks.onStateChanged(handsFreeEnabled ? "standby" : "idle", handsFreeEnabled);
                 if (handsFreeEnabled && callbacks.isResumed() && !suspendedForTts) {
                     long delay = (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)
-                        ? RESTART_DELAY_MS : ERROR_BACKOFF_MS;
+                        ? STANDBY_RESTART_MS : ERROR_BACKOFF_MS;
                     mainHandler.postDelayed(restartTask, delay);
                 }
             }
@@ -259,13 +324,19 @@ public final class AtlasVoiceController {
                 callbacks.onDuckForListening(false);
                 ArrayList<String> matches = results != null
                     ? results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) : null;
-                String best = (matches != null && !matches.isEmpty()) ? matches.get(0) : "";
-                if (!best.trim().isEmpty()) {
-                    callbacks.onTranscript(best.trim(), requireWake);
+                if (matches != null && !matches.isEmpty()) {
+                    JSONArray arr = new JSONArray();
+                    for (String m : matches) {
+                        if (m != null && !m.trim().isEmpty()) arr.put(m.trim());
+                    }
+                    if (arr.length() > 0) {
+                        Log.i(TAG, "Recognized (wakeReq=" + requireWake + "): " + arr.toString());
+                        callbacks.onTranscripts(arr.toString(), requireWake);
+                    }
                 }
                 callbacks.onStateChanged(handsFreeEnabled ? "standby" : "idle", handsFreeEnabled);
                 if (handsFreeEnabled && callbacks.isResumed() && !suspendedForTts && !directListening) {
-                    mainHandler.postDelayed(restartTask, RESTART_DELAY_MS);
+                    mainHandler.postDelayed(restartTask, STANDBY_RESTART_MS);
                 }
             }
             @Override public void onPartialResults(Bundle partialResults) {}
@@ -289,11 +360,15 @@ public final class AtlasVoiceController {
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toLanguageTag());
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+        if (!usingOnDeviceRecognizer) {
+            intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+        }
         if (wakeMode) {
-            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L);
-            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1000L);
+            // Longer silence window in standby so it doesn't churn restarts every few seconds
+            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 15000L);
+            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2200L);
+            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1800L);
         }
         try {
             recognizerActive = true;
