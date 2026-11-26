@@ -59,13 +59,24 @@
         const metersPerSecond = Number.isFinite(speed) && speed >= 0 ? speed : 12;
         const near = step.endpoint ? 25 : clamp(metersPerSecond * 5, 35, 150);
         if (remaining <= near && (!step.endpoint || offRouteMeters <= 25)) {
+          const stepKey = 'step-' + index + '-' + Math.round(step.offset) + ':near';
           index++;
           advance = false;
-          return {resumed, text: step.endpoint || remaining <= 25 ? step.text : approach(remaining) + step.text};
+          return {
+            resumed,
+            key: stepKey,
+            interrupt: true,
+            text: step.endpoint || remaining <= 25 ? step.text : approach(remaining) + step.text,
+          };
         }
         if (!step.endpoint && !advance && remaining <= clamp(metersPerSecond * 22, 150, 750)) {
           advance = true;
-          return {resumed, text: approach(remaining) + step.text};
+          return {
+            resumed,
+            key: 'step-' + index + '-' + Math.round(step.offset) + ':advance',
+            interrupt: false,
+            text: approach(remaining) + step.text,
+          };
         }
         return {resumed};
       },

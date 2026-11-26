@@ -49,6 +49,7 @@ import android.widget.FrameLayout;
 
 import org.json.JSONObject;
 
+import com.andysdevstudio.routeweather.audio.AtlasAudioManager;
 import com.andysdevstudio.routeweather.offline.OfflineEngine;
 import com.andysdevstudio.routeweather.offline.OfflinePackageManager;
 
@@ -113,122 +114,28 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private boolean askingForLocation;
     private final Handler locationHandler = new Handler(Looper.getMainLooper());
     private final Map<Integer, LocationRequest> locations = new HashMap<>();
-    private TextToSpeech voiceEngine;
-    private boolean voiceReady;
-    private String pendingVoice;
-    private String activeUtterance;
-    private long utteranceSequence;
-    private AudioFocusRequest voiceFocus;
-    private final List<String> fallbackVoiceEngines = new ArrayList<>();
+    private AtlasAudioManager audioManager;
     private OfflineEngine offlineEngine;
 
     private void notifyVoice(String event) {
         if (web != null) web.evaluateJavascript("window.routeWeatherSpeechEvent?.(" + JSONObject.quote(event) + ")", null);
     }
 
-    private void releaseVoiceFocus() {
-        if (voiceFocus != null) {
-            AudioFocusRequest previous = voiceFocus;
-            voiceFocus = null;
-            getSystemService(AudioManager.class).abandonAudioFocusRequest(previous);
-        }
+    private void duckYtMedia(boolean duck) {
+        if (!ytEnabled || ytWeb == null) return;
+        String js = duck
+            ? "(function(){var v=document.querySelector('video');if(v&&!v.paused){if(window.__rwSavedVol==null)window.__rwSavedVol=v.volume;v.volume=Math.min(v.volume,0.22);}})()"
+            : "(function(){var v=document.querySelector('video');if(v&&window.__rwSavedVol!=null){v.volume=window.__rwSavedVol;window.__rwSavedVol=null;}})()";
+        ytWeb.evaluateJavascript(js, null);
     }
 
     private void stopVoice() {
-        pendingVoice = null;
-        activeUtterance = null;
-        if (voiceReady) voiceEngine.stop();
-        releaseVoiceFocus();
-    }
-
-    private void finishVoice(String id, String event) {
-        runOnUiThread(() -> {
-            if (!id.equals(activeUtterance)) return;
-            activeUtterance = null;
-            releaseVoiceFocus();
-            notifyVoice(event);
-        });
-    }
-
-    private void voiceUnavailable(String detail) {
-        Log.w("RouteWeatherVoice", detail);
-        if (voiceEngine != null) voiceEngine.shutdown();
-        voiceEngine = null;
-        if (!fallbackVoiceEngines.isEmpty() && pendingVoice != null) {
-            startVoice(fallbackVoiceEngines.remove(0));
-        } else {
-            pendingVoice = null;
-            notifyVoice("error");
-        }
-    }
-
-    private void startVoice(String engineName) {
-        TextToSpeech.OnInitListener listener = result -> new Handler(Looper.getMainLooper()).post(() -> {
-            if (voiceEngine == null || web == null) return;
-            if (engineName == null) {
-                fallbackVoiceEngines.clear();
-                for (TextToSpeech.EngineInfo engine : voiceEngine.getEngines()) {
-                    if (!engine.name.equals(voiceEngine.getDefaultEngine())) fallbackVoiceEngines.add(engine.name);
-                }
-            }
-            if (result != TextToSpeech.SUCCESS) {
-                voiceUnavailable("Could not initialize speech engine");
-                return;
-            }
-            voiceEngine.setLanguage(Locale.US);
-            Voice localEnglish = null;
-            Set<Voice> voices = voiceEngine.getVoices();
-            if (voices != null) for (Voice voice : voices) {
-                if (!voice.isNetworkConnectionRequired() && "en".equals(voice.getLocale().getLanguage())
-                    && (voice.getFeatures() == null || !voice.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED))
-                    && (localEnglish == null || Locale.US.equals(voice.getLocale()))) localEnglish = voice;
-            }
-            if (localEnglish == null || voiceEngine.setVoice(localEnglish) != TextToSpeech.SUCCESS) {
-                voiceUnavailable("No usable offline English voice in this engine");
-                return;
-            }
-            voiceReady = true;
-            voiceEngine.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-                @Override public void onStart(String id) {
-                    runOnUiThread(() -> { if (id.equals(activeUtterance)) notifyVoice("start"); });
-                }
-                @Override public void onDone(String id) { finishVoice(id, "done"); }
-                @Override public void onError(String id) {
-                    Log.w("RouteWeatherVoice", "Speech engine could not play utterance");
-                    finishVoice(id, "error");
-                }
-            });
-            String prompt = pendingVoice;
-            pendingVoice = null;
-            if (prompt != null) speakVoice(prompt);
-        });
-        voiceEngine = engineName == null ? new TextToSpeech(this, listener) : new TextToSpeech(this, listener, engineName);
+        if (audioManager != null) audioManager.stopAll();
     }
 
     private void speakVoice(String prompt) {
-        if (!resumed || web == null || prompt == null || prompt.trim().isEmpty() || prompt.length() > 600) return;
-        if (!voiceReady) {
-            pendingVoice = prompt;
-            if (voiceEngine == null) startVoice(null);
-            return;
-        }
-        stopVoice();
-        AudioAttributes attributes = new AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
-        voiceEngine.setAudioAttributes(attributes);
-        voiceFocus = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
-            .setAudioAttributes(attributes)
-            .setOnAudioFocusChangeListener(change -> { if (change < 0) stopVoice(); }).build();
-        if (getSystemService(AudioManager.class).requestAudioFocus(voiceFocus) != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-            Log.w("RouteWeatherVoice", "Audio focus was unavailable");
-            releaseVoiceFocus();
-            return;
-        }
-        activeUtterance = "route-direction-" + (++utteranceSequence);
-        if (voiceEngine.speak(prompt, TextToSpeech.QUEUE_FLUSH, null, activeUtterance) != TextToSpeech.SUCCESS) {
-            stopVoice();
-            notifyVoice("error");
+        if (audioManager != null) {
+            audioManager.speak(prompt, AtlasAudioManager.PRIORITY_NAVIGATION, "", false, false);
         }
     }
 
@@ -319,6 +226,20 @@ public final class MainActivity extends Activity implements SensorEventListener 
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
+        audioManager = new AtlasAudioManager(this, new AtlasAudioManager.Callbacks() {
+            @Override public boolean isResumed() { return resumed && web != null; }
+            @Override public void onSpeechEvent(String event, int priority, String key) {
+                runOnUiThread(() -> notifyVoice(event));
+            }
+            @Override public void onDuckMedia(boolean duck) {
+                runOnUiThread(() -> duckYtMedia(duck));
+            }
+            @Override public void onPauseMedia() {
+                runOnUiThread(() -> {
+                    if (ytEnabled && ytWeb != null) runYtAction("pause");
+                });
+            }
+        });
         offlineEngine = new OfflineEngine(this, new OfflinePackageManager.Listener() {
             @Override public void onProgress(String packageId, String state, long downloadedBytes, long totalBytes, String message) {
                 runOnUiThread(() -> {
@@ -680,7 +601,19 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private final class Bridge {
         @JavascriptInterface public void recognizeDestination() { runOnUiThread(MainActivity.this::requestDestinationSpeech); }
         @JavascriptInterface public void speakDirections(String text) { runOnUiThread(() -> speakVoice(text)); }
-        @JavascriptInterface public void stopDirections() { runOnUiThread(() -> stopVoice()); }
+        @JavascriptInterface public void stopDirections() { runOnUiThread(() -> {
+            if (audioManager != null) audioManager.stopFromPriority(AtlasAudioManager.PRIORITY_NAVIGATION);
+        }); }
+        @JavascriptInterface public void speakAudio(String text, int priority, String dedupeKey, boolean interrupt, boolean pauseMedia) {
+            runOnUiThread(() -> {
+                if (audioManager != null) audioManager.speak(text, priority, dedupeKey, interrupt, pauseMedia);
+            });
+        }
+        @JavascriptInterface public void stopAudio(int minPriority) {
+            runOnUiThread(() -> {
+                if (audioManager != null) audioManager.stopFromPriority(minPriority);
+            });
+        }
         @JavascriptInterface public void fetch(int id, String spec, String accept, boolean wifiOnly) {
             if (id < 0 || spec.length() > 4096) return;
             Uri target = Uri.parse(spec);
@@ -911,10 +844,9 @@ public final class MainActivity extends Activity implements SensorEventListener 
     @Override protected void onResume() { super.onResume(); resumed = true; web.onResume(); updateCompassRegistration(); }
     @Override protected void onPause() { resumed = false; stopVoice(); updateCompassRegistration(); web.onPause(); super.onPause(); }
     @Override protected void onDestroy() {
-        stopVoice();
-        if (voiceEngine != null) {
-            voiceEngine.shutdown();
-            voiceEngine = null;
+        if (audioManager != null) {
+            audioManager.shutdown();
+            audioManager = null;
         }
         for (int id : new java.util.ArrayList<>(locations.keySet())) stopLocation(id);
         sensors.unregisterListener(this);
