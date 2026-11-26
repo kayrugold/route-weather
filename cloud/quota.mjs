@@ -1,6 +1,7 @@
 // These are conservative preview limits. Verify the studio account before raising them.
 const limits = {
   search: {total: 10000, demo: 1000},
+  places: {total: 2400, demo: 200},
   routing: {total: 5000, demo: 500},
   reverse: {total: 2000, demo: 200},
   traffic: {total: 10000, demo: 1000},

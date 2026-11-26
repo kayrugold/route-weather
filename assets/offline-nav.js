@@ -97,10 +97,16 @@
     if (typeof bridge.offlineRouteAsync === 'function') {
       return new Promise(resolve => {
         const id = ++nextRouteReq;
-        pendingRoutes.set(id, resolve);
+        const timer = setTimeout(() => {
+          if (pendingRoutes.delete(id)) {
+            resolve(Response.json({ error: 'Offline route timed out. Try again or add a waypoint closer to an interstate.' }, { status: 504 }));
+          }
+        }, 120000);
+        pendingRoutes.set(id, resp => { clearTimeout(timer); resolve(resp); });
         try {
           bridge.offlineRouteAsync(id, coords, profile);
         } catch {
+          clearTimeout(timer);
           pendingRoutes.delete(id);
           resolve(Response.json({ error: 'Offline router failed to start.' }, { status: 500 }));
         }

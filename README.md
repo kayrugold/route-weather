@@ -2,6 +2,8 @@
 
 Route Weather by Andy's Dev Studio plans drives around weather and road conditions. The Android app and browser demo use the same map, planner and forecast interface.
 
+The current working version is **0.32** (Android version code 32). It includes US truck-stop and weigh-station map layers with persistent detail popups, distinct truck-stop brand icons, a scrollable Layers menu below the toolbar, an always-visible driving display, and the road-diamond app icon. Voice sits beside Radar, and the main menu has one full-width Plan Trip button. The location button cycles through route overview, centering at the current zoom, and Follow Me. Location starts when the app opens; the blue dot remains visible in overview mode. Map controls stack on the left in both orientations. Facility locations come from TomTom; coverage varies and live opening status is unavailable. The v0.21 archive below is the previous published release.
+
 [Try the browser demo](https://route-weather.andy-596.workers.dev/) · [Andy's Dev Studio](https://andysdevstudio.pages.dev/) · [Privacy policy](https://route-weather.andy-596.workers.dev/route-weather-privacy.html)
 
 ## Source and license

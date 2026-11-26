@@ -52,7 +52,7 @@ export function normalizeRoute(source) {
       }];
     });
     offset += distance;
-    return {distance, duration, steps, annotation: {duration: segmentTimes.map(x => length ? x / length * duration : 0)}};
+    return {distance, duration, steps, annotation: {duration: segmentTimes.map(x => length ? Math.round(x / length * duration * 1000)/1000 : 0)}};
   });
   if (geometry.length < 2) return null;
   return {code: 'Ok', waypoints, routes: [{
@@ -66,11 +66,41 @@ export function normalizeRoute(source) {
 function upstreamRequest(path, params) {
   const upstream = new URL('https://api.tomtom.com');
   if (path === '/search') {
+    const mode = params.get('mode');
+    if (mode === 'facilities') {
+      const kind = params.get('kind');
+      if (!['truck-stops', 'weigh-stations'].includes(kind)) throw Error('Invalid facility type.');
+      const parts = (params.get('bbox') || '').split(',');
+      if (parts.length !== 4) throw Error('Invalid map bounds.');
+      const [west, south, east, north] = parts.map((part, i) => coordinate(part, i % 2 ? 90 : 180));
+      const offset = Number(params.get('offset') || 0);
+      if (west >= east || south >= north || !Number.isInteger(offset) || offset < 0 || offset > 900 || offset % 100) {
+        throw Error('Invalid map bounds or page.');
+      }
+      upstream.pathname = '/search/2/categorySearch/.json';
+      upstream.search = new URLSearchParams({countrySet: 'US', limit: '100', ofs: String(offset),
+        categorySet: kind === 'truck-stops' ? '7358' : '7359',
+        topLeft: north + ',' + west, btmRight: south + ',' + east});
+      return ['places', upstream];
+    }
+    if (mode === 'truck-stops') {
+      upstream.pathname = '/search/2/nearbySearch/.json';
+      upstream.search = new URLSearchParams({
+        countrySet: 'US', limit: '10', categoryset: '7358', radius: '50000',
+        lat: coordinate(params.get('lat'), 90), lon: coordinate(params.get('lon'), 180),
+      });
+      return ['places', upstream];
+    }
     const query = (params.get('q') || '').trim();
-    if (query.length < 2 || query.length > 250) throw Error('Enter a valid address or town.');
-    upstream.pathname = '/search/2/geocode/' + encodeURIComponent(query) + '.json';
+    if (query.length < 2 || query.length > 250) throw Error('Enter a valid address, town, or business.');
+    const business = mode === 'places';
+    upstream.pathname = '/search/2/' + (business ? 'search/' : 'geocode/') + encodeURIComponent(query) + '.json';
     upstream.search = new URLSearchParams({countrySet: 'US', limit: '5', typeahead: 'false'});
-    return ['search', upstream];
+    if (business && (params.has('lat') || params.has('lon'))) {
+      upstream.searchParams.set('lat', coordinate(params.get('lat'), 90));
+      upstream.searchParams.set('lon', coordinate(params.get('lon'), 180));
+    }
+    return [business ? 'places' : 'search', upstream];
   }
   if (path === '/route') {
     const input = (params.get('coords') || '').split(';');
@@ -113,7 +143,7 @@ export function isTomTomEndpoint(path) {
 export async function handleTomTom(request, path, env, client, fetchUpstream = globalThis.fetch.bind(globalThis)) {
   if (request.method !== 'GET') return error('Method not allowed.', 405);
   const traffic = env.STUDIO_TRAFFIC === 'on';
-  if (path === '/provider-status') return json({studioTraffic: Boolean(traffic && env.TOMTOM_API_KEY)});
+  if (path === '/provider-status') return json({studioTraffic: Boolean(traffic && env.TOMTOM_API_KEY), placesSearch: Boolean(env.TOMTOM_API_KEY && env.QUOTA)});
   let operation;
   try { operation = upstreamRequest(path, new URL(request.url).searchParams); }
   catch (e) { return error(e.message, 400); }
@@ -169,11 +199,22 @@ export async function handleTomTom(request, path, env, client, fetchUpstream = g
     }
     phase = 'TomTom response';
     const data = await response.json();
-    if (bucket === 'search') {
+    if (bucket === 'places' && new URL(request.url).searchParams.get('mode') === 'facilities') {
+      const items = (data.results || []).flatMap(item => {
+        if (!Number.isFinite(item.position?.lat) || !Number.isFinite(item.position?.lon)) return [];
+        return [{id: item.id, lat: item.position.lat, lon: item.position.lon,
+          name: item.poi?.name || 'Unnamed facility', brand: item.poi?.brands?.map(brand => brand.name).join(' ') || '',
+          address: item.address?.freeformAddress || ''}];
+      });
+      return json({items, total: data.summary?.totalResults ?? items.length,
+        offset: data.summary?.offset ?? Number(upstream.searchParams.get('ofs'))});
+    }
+    if (bucket === 'search' || bucket === 'places') {
       return json(data.results.flatMap(item => {
-        const label = item.address?.freeformAddress;
+        const address = item.address?.freeformAddress;
+        const label = item.poi?.name ? [item.poi.name, address].filter(Boolean).join(', ') : address;
         if (!label || !Number.isFinite(item.position?.lat) || !Number.isFinite(item.position?.lon)) return [];
-        return [{lat: item.position.lat, lon: item.position.lon, display_name: label, type: item.type}];
+        return [{lat: item.position.lat, lon: item.position.lon, display_name: label, type: item.type, ...(Number.isFinite(item.dist) ? {distance: item.dist} : {})}];
       }));
     }
     if (bucket === 'reverse') {

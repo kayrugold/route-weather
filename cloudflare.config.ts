@@ -11,10 +11,15 @@ export default defineConfig({
       ASSETS: bindings.assets(),
       TOMTOM_API_KEY: bindings.secret(),
       QUOTA: bindings.durableObject({worker: 'route-weather', exportName: 'TripQuota'}),
+      ROAD_REPORTS: bindings.durableObject({worker: 'route-weather', exportName: 'RoadReports'}),
       CLIENT_RATE: bindings.rateLimit({namespace: '10201', simple: {limit: 60, period: 60}}),
+      REPORT_WRITE_RATE: bindings.rateLimit({namespace: '10202', simple: {limit: 10, period: 60}}),
       STUDIO_TRAFFIC: bindings.text('on'),
     },
-    exports: {TripQuota: exports.durableObject({storage: 'sqlite'})},
+    exports: {
+      TripQuota: exports.durableObject({storage: 'sqlite'}),
+      RoadReports: exports.durableObject({storage: 'sqlite'}),
+    },
     observability: {
       enabled: true,
       redactQueryString: true,

@@ -1,0 +1,65 @@
+#
+# Route Weather Fast Highway Corridor Profile (Offline BRouter)
+# Used ONLY for intermediate hub-to-hub legs on long-distance (>300 mi) routes.
+# Prunes residential/service/unclassified/tertiary streets so BRouter routes
+# 250-mile interstate legs in ~0.5-1.5s instead of 10-15s.
+#
+---context:global
+
+assign validForCars        = true
+assign turnInstructionMode = 3
+assign pass1coefficient    = 3.2
+assign pass2coefficient    = 0
+assign downhillcost        = 0
+assign uphillcost          = 0
+
+---context:way
+
+assign badoneway = if reversedirection=yes then ( if oneway= then junction=roundabout else oneway=yes|true|1 ) else oneway=-1
+
+assign caraccess =
+  if badoneway then 0
+  else if or motor_vehicle=no|private access=no|private then 0
+  else if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then 1
+  else 0
+
+assign initialcost =
+  if not caraccess then 1000000
+  else 0
+
+assign costfactor =
+  if not caraccess then 10000
+  else if highway=motorway|motorway_link then 1.0
+  else if highway=trunk|trunk_link then 1.15
+  else if highway=primary|primary_link then 1.5
+  else if highway=secondary|secondary_link then 2.6
+  else 10000
+
+assign priorityclassifier =
+  if      ( highway=motorway                  ) then  30
+  else if ( highway=motorway_link             ) then  29
+  else if ( highway=trunk                     ) then  28
+  else if ( highway=trunk_link                ) then  27
+  else if ( highway=primary                   ) then  26
+  else if ( highway=primary_link              ) then  25
+  else if ( highway=secondary                 ) then  24
+  else if ( highway=secondary_link            ) then  23
+  else 0
+
+assign isgoodoneway = if reversedirection=yes then oneway=-1
+                      else if oneway= then junction=roundabout else oneway=yes|true|1
+assign isroundabout = junction=roundabout
+assign islinktype   = highway=motorway_link|trunk_link|primary_link|secondary_link
+assign isgoodforcars = greater priorityclassifier 5
+
+assign classifiermask add          badoneway
+                      add multiply isgoodoneway   2
+                      add multiply isroundabout   4
+                      add multiply islinktype     8
+                          multiply isgoodforcars 16
+
+---context:node
+
+assign initialcost =
+  if barrier=gate|bollard|lift_gate|cycle_barrier then 1000000
+  else 0

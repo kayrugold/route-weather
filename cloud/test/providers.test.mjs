@@ -84,7 +84,7 @@ test('disabled browser traffic and unconfigured app requests fail before upstrea
   const env = {STUDIO_TRAFFIC: 'off'};
   assert.equal((await worker.fetch(request('/api/traffic/12/1/1'), env)).status, 404);
   assert.equal((await worker.fetch(request('/app-api/route?coords=-122.3,40.4;-122.3,40.5'), env)).status, 503);
-  assert.deepEqual(await (await worker.fetch(request('/api/provider-status'), env)).json(), {studioTraffic: false});
+  assert.deepEqual(await (await worker.fetch(request('/api/provider-status'), env)).json(), {studioTraffic: false, placesSearch: false});
 });
 
 test('both clients can request a traffic tile with the server key', async () => {
@@ -121,4 +121,34 @@ test('traffic distinguishes a temporary throttle from a monthly cap', async () =
   assert.equal((await monthly.json()).monthlyLimit, true);
   const tomtom = await handleTomTom(req, path, {...env, QUOTA: quota(204)}, 'demo', upstream);
   assert.equal((await tomtom.json()).retryAfterSeconds, 7);
+});
+
+test('place and truck-stop searches use their own quota, preserve names and validate location', async () => {
+  const QUOTA = {getByName: () => ({fetch: async (_, init) => {
+    assert.deepEqual(JSON.parse(init.body), {bucket: 'places', client: 'app'});
+    return new Response(null, {status: 204});
+  }})};
+  const env = {QUOTA, TOMTOM_API_KEY: 'fixture-key'};
+  const respond = async url => {
+    const endpoint = new URL(url);
+    assert.equal(endpoint.searchParams.get('lat'), '40.45');
+    assert.equal(endpoint.searchParams.get('lon'), '-122.3');
+    if (endpoint.pathname === '/search/2/nearbySearch/.json') {
+      assert.equal(endpoint.searchParams.get('categoryset'), '7358');
+      assert.equal(endpoint.searchParams.get('radius'), '50000');
+    } else {
+      assert.equal(endpoint.pathname, '/search/2/search/Walmart%20Anderson%20CA.json');
+      assert.equal(endpoint.searchParams.has('radius'), false);
+    }
+    return Response.json({results: [{type: 'POI', poi: {name: 'Sample stop'}, dist: 2100,
+      address: {freeformAddress: 'Anderson, CA'}, position: {lat: 40.45, lon: -122.3}}]});
+  };
+  for (const params of ['q=Walmart%20Anderson%20CA&mode=places', 'q=truck%20stop&mode=truck-stops']) {
+    const result = await handleTomTom(request('/api/search?' + params + '&lat=40.45&lon=-122.3'), '/search', env, 'app', respond);
+    assert.deepEqual(await result.json(), [
+      {type: 'POI', display_name: 'Sample stop, Anderson, CA', distance: 2100, lat: 40.45, lon: -122.3},
+    ]);
+  }
+  const invalid = await handleTomTom(request('/api/search?q=truck+stop&mode=truck-stops'), '/search', env, 'app', respond);
+  assert.equal(invalid.status, 400);
 });

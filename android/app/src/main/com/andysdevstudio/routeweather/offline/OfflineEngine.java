@@ -138,11 +138,22 @@ public final class OfflineEngine implements Closeable {
                 obj.put("distance", Math.round(opt.estimatedMeters));
                 obj.put("duration", Math.round(opt.estimatedMeters / 26.8));
                 if (opt.waypoints.size() > 2) {
-                    double[] mid = opt.waypoints.get(opt.waypoints.size() / 2);
+                    int n = opt.waypoints.size();
+                    double[] mid = opt.waypoints.get(n / 2);
                     JSONArray via = new JSONArray();
                     via.put(mid[0]);
                     via.put(mid[1]);
                     obj.put("viaAnchor", via);
+                    JSONArray anchors = new JSONArray();
+                    if (n >= 5) {
+                        double[] h1 = opt.waypoints.get(n / 3);
+                        double[] h2 = opt.waypoints.get((2 * n) / 3);
+                        anchors.put(new JSONArray().put(h1[0]).put(h1[1]));
+                        anchors.put(new JSONArray().put(h2[0]).put(h2[1]));
+                    } else {
+                        anchors.put(new JSONArray().put(mid[0]).put(mid[1]));
+                    }
+                    obj.put("viaAnchors", anchors);
                 }
                 JSONArray coords = new JSONArray();
                 for (double[] pt : opt.waypoints) {

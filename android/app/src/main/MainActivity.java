@@ -28,10 +28,16 @@ import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Surface;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
@@ -39,6 +45,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 
 import org.json.JSONObject;
 
@@ -81,6 +88,20 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private final ExecutorService plannerRequests = Executors.newFixedThreadPool(2);
     private final float[] rotation = new float[9];
     private WebView web;
+    private FrameLayout rootLayout;
+    private FrameLayout ytContainer;
+    private WebView ytWeb;
+    private boolean ytEnabled;
+    private boolean ytExpanded;
+    private boolean ytBrowseMode;
+    private int ytBottomCssPx = 132;
+    private final Runnable ytSyncTask = new Runnable() {
+        @Override public void run() {
+            if (!ytEnabled || ytWeb == null) return;
+            syncYtState();
+            locationHandler.postDelayed(this, 2000L);
+        }
+    };
     private SensorManager sensors;
     private Sensor compass;
     private boolean compassEnabled;
@@ -378,9 +399,11 @@ public final class MainActivity extends Activity implements SensorEventListener 
                 }
             }
         });
-        setContentView(web);
+        rootLayout = new FrameLayout(this);
+        rootLayout.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(rootLayout);
         if (android.os.Build.VERSION.SDK_INT >= 35) {
-            web.setOnApplyWindowInsetsListener((view, insets) -> {
+            rootLayout.setOnApplyWindowInsetsListener((view, insets) -> {
                 android.graphics.Insets safe = insets.getInsets(android.view.WindowInsets.Type.systemBars()
                     | android.view.WindowInsets.Type.displayCutout() | android.view.WindowInsets.Type.ime());
                 view.setPadding(safe.left, safe.top, safe.right, safe.bottom);
@@ -388,6 +411,191 @@ public final class MainActivity extends Activity implements SensorEventListener 
             });
         }
         web.loadUrl(ORIGIN + "/index.html");
+    }
+
+    private void ensureYtWebView() {
+        if (ytWeb != null || rootLayout == null) return;
+        ytContainer = new FrameLayout(this);
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.parseColor("#0e1318"));
+        bg.setCornerRadius(14f * getResources().getDisplayMetrics().density);
+        bg.setStroke((int) Math.max(1f, getResources().getDisplayMetrics().density), Color.parseColor("#4d7594"));
+        ytContainer.setBackground(bg);
+        ytContainer.setClipToOutline(true);
+        ytContainer.setElevation(16f * getResources().getDisplayMetrics().density);
+
+        ytWeb = new WebView(this);
+        ytWeb.getSettings().setJavaScriptEnabled(true);
+        ytWeb.getSettings().setDomStorageEnabled(true);
+        ytWeb.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        ytWeb.getSettings().setDatabaseEnabled(true);
+        ytWeb.getSettings().setUseWideViewPort(true);
+        ytWeb.getSettings().setLoadWithOverviewMode(true);
+        ytWeb.setBackgroundColor(Color.parseColor("#0e1318"));
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(ytWeb, true);
+        ytWeb.setWebChromeClient(new WebChromeClient());
+        ytWeb.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String host = uri != null ? uri.getHost() : null;
+                if (host != null && (host.endsWith("youtube.com") || host.endsWith("youtu.be")
+                        || host.endsWith("google.com") || host.endsWith("googleapis.com") || host.endsWith("gstatic.com"))) {
+                    return false;
+                }
+                return true;
+            }
+            @Override public void onPageFinished(WebView view, String url) {
+                applyYtViewMode();
+                syncYtState();
+            }
+        });
+        ytContainer.addView(ytWeb, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(1, 1);
+        lp.gravity = Gravity.BOTTOM | Gravity.START;
+        ytContainer.setAlpha(0f);
+        ytContainer.setClickable(false);
+        ytContainer.setFocusable(false);
+        rootLayout.addView(ytContainer, lp);
+        ytWeb.loadUrl("https://m.youtube.com");
+    }
+
+    private void applyYtViewMode() {
+        if (ytWeb == null) return;
+        boolean videoOnly = !ytBrowseMode;
+        String js = "(function(){"
+            + "var id='rw-yt-clean-css';var st=document.getElementById(id);"
+            + "if(!st){st=document.createElement('style');st.id=id;document.head.appendChild(st);}"
+            + "var onWatch=location.pathname.indexOf('/watch')===0;"
+            + "if(!window.__rwPauseGuard){window.__rwPauseGuard=true;window.__rwLastTouch=0;"
+            + "  document.addEventListener('pointerdown',function(){window.__rwLastTouch=Date.now();},true);"
+            + "  var _op=HTMLMediaElement.prototype.pause;"
+            + "  HTMLMediaElement.prototype.pause=function(){"
+            + "    if(window.__rwAllowPause||(Date.now()-window.__rwLastTouch<450)){window.__rwAllowPause=false;return _op.apply(this,arguments);}"
+            + "    return;"
+            + "  };"
+            + "}"
+            + "var hideDrawer='drawer-layout-container,.ytmDrawerLayoutContainerHost,.ytmDrawerLayoutContainerDrawerLayout,ytm-pivot-bar-renderer{display:none!important}';"
+            + "var keepVideo='video.html5-main-video,video{min-height:120px!important;min-width:200px!important}#movie_player,.html5-video-player,.html5-video-container{min-height:120px!important}';"
+            + "if(" + videoOnly + "&&onWatch){"
+            + "  st.textContent=hideDrawer+keepVideo+'ytm-mobile-topbar-renderer,ytm-slim-video-metadata-section-renderer,ytm-item-section-renderer,ytm-engagement-panel-section-list-renderer,ytm-comments-entry-point-header-renderer,.related-chips-slot-wrapper,.watch-below-the-player{display:none!important}'+"
+            + "  'body,html{background:#000!important;overflow:hidden!important;height:100%!important;width:100%!important}'+"
+            + "  '#player-container-id,.player-container,#movie_player,.html5-video-player,.html5-video-container{position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:100vh!important;min-height:100vh!important;background:#000!important}'+"
+            + "  'video.html5-main-video,video{position:fixed!important;left:0!important;top:0!important;width:100vw!important;height:100vh!important;min-height:100vh!important;object-fit:cover!important}';"
+            + "}else{"
+            + "  st.textContent=hideDrawer+keepVideo;"
+            + "}"
+            + "})()";
+        ytWeb.evaluateJavascript(js, null);
+    }
+
+    private void layoutYtContainer() {
+        if (ytContainer == null) return;
+        float d = getResources().getDisplayMetrics().density;
+        if (!ytEnabled || !ytExpanded) {
+            // Keep full 240x135dp dimensions offscreen (translationX) so YouTube never sees height=0 and never auto-pauses audio!
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(Math.round(240 * d), Math.round(135 * d));
+            lp.gravity = Gravity.BOTTOM | Gravity.START;
+            ytContainer.setLayoutParams(lp);
+            ytContainer.setTranslationX(4000f * d);
+            ytContainer.setAlpha(0f);
+            ytContainer.setClickable(false);
+            ytContainer.setFocusable(false);
+            return;
+        }
+        ytContainer.setTranslationX(0f);
+        int w = rootLayout.getWidth() > 0 ? rootLayout.getWidth() : getResources().getDisplayMetrics().widthPixels;
+        int h = rootLayout.getHeight() > 0 ? rootLayout.getHeight() : getResources().getDisplayMetrics().heightPixels;
+        boolean landscape = w > h;
+        int margin = Math.round(10 * d);
+        int bottomMargin = Math.round((ytBottomCssPx + 22) * d);
+        int leftClearance = Math.round(78 * d); // Keeps GPS target / + / - buttons visible on the left!
+        FrameLayout.LayoutParams lp;
+        if (landscape) {
+            int panelW = Math.round(w * (ytBrowseMode ? 0.50f : 0.40f));
+            int panelH = ytBrowseMode
+                ? Math.max(Math.round(180 * d), h - bottomMargin - Math.round(64 * d))
+                : Math.min(Math.round(190 * d), Math.round(panelW * 9f / 16f));
+            lp = new FrameLayout.LayoutParams(panelW, panelH);
+            lp.gravity = Gravity.BOTTOM | Gravity.END;
+            lp.rightMargin = margin;
+            lp.bottomMargin = bottomMargin;
+        } else {
+            int panelW = Math.max(Math.round(220 * d), w - leftClearance - margin);
+            int panelH = ytBrowseMode
+                ? Math.min(Math.round(350 * d), Math.max(Math.round(250 * d), Math.round(h * 0.44f)))
+                : Math.round(panelW * 9f / 16f);
+            lp = new FrameLayout.LayoutParams(panelW, panelH);
+            lp.gravity = Gravity.BOTTOM | Gravity.END;
+            lp.rightMargin = margin;
+            lp.bottomMargin = bottomMargin;
+        }
+        ytContainer.setLayoutParams(lp);
+        ytContainer.setAlpha(1f);
+        ytContainer.setClickable(true);
+        ytContainer.setFocusable(true);
+        ytContainer.bringToFront();
+        applyYtViewMode();
+    }
+
+    private void syncYtState() {
+        if (ytWeb == null || web == null) return;
+        String js = "(function(){var v=document.querySelector('video');var t=(document.title||'YouTube').replace(/\\s*-\\s*YouTube$/i,'').trim()||'YouTube';return JSON.stringify({playing:Boolean(v&&!v.paused&&!v.ended),hasVideo:Boolean(v),title:t,url:location.href});})()";
+        ytWeb.evaluateJavascript(js, raw -> {
+            if (web == null || raw == null || "null".equals(raw)) return;
+            try {
+                String unquoted = new org.json.JSONTokener(raw).nextValue().toString();
+                web.evaluateJavascript("window.routeWeatherYtState?.(" + unquoted + ")", null);
+            } catch (Exception ignored) {}
+        });
+    }
+
+    private void runYtAction(String action) {
+        if (ytWeb == null) return;
+        String js;
+        if ("toggle".equals(action)) {
+            js = "(function(){"
+                + "var p=document.getElementById('movie_player'),v=document.querySelector('video');"
+                + "if(v&&!v.paused){"
+                + "  window.__rwAllowPause=true;"
+                + "  if(p&&typeof p.pauseVideo==='function')p.pauseVideo();"
+                + "  if(!v.paused){window.__rwAllowPause=true;v.pause();}"
+                + "  return;"
+                + "}"
+                + "if(p&&typeof p.playVideo==='function'){"
+                + "  if(typeof p.unMute==='function')p.unMute();"
+                + "  if(v)v.muted=false;"
+                + "  p.playVideo();"
+                + "  if(v)v.play().catch(function(){});"
+                + "  return;"
+                + "}"
+                + "if(v){v.muted=false;v.play().catch(function(){});}"
+                + "})()";
+        } else if ("pause".equals(action)) {
+            js = "(function(){window.__rwAllowPause=true;var p=document.getElementById('movie_player'),v=document.querySelector('video');if(p&&typeof p.pauseVideo==='function'){p.pauseVideo();}if(v&&!v.paused){window.__rwAllowPause=true;v.pause();}})()";
+        } else if ("next".equals(action)) {
+            js = "(function(){"
+                + "var btn=document.querySelector('button[aria-label*=\"Next\" i],a.ytp-next-button,.player-controls-middle button[aria-label*=\"Next\" i]');"
+                + "if(btn){btn.click();return;}"
+                + "var cur=(new URLSearchParams(location.search)).get('v')||'';"
+                + "var links=Array.from(document.querySelectorAll('a[href*=\"/watch?v=\"]'));"
+                + "for(var i=0;i<links.length;i++){"
+                + "  try{var u=new URL(links[i].href,location.origin);var id=u.searchParams.get('v');"
+                + "  if(id&&id!==cur){links[i].click();return;}}catch(e){}"
+                + "}"
+                + "})()";
+        } else if ("prev".equals(action)) {
+            js = "(function(){"
+                + "var btn=document.querySelector('button[aria-label*=\"Previous\" i],a.ytp-prev-button');"
+                + "if(btn&&!btn.disabled){btn.click();return;}"
+                + "if(history.length>1){history.back();return;}"
+                + "var v=document.querySelector('video');if(v){v.currentTime=0;}"
+                + "})()";
+        } else {
+            syncYtState();
+            return;
+        }
+        ytWeb.evaluateJavascript(js, r -> locationHandler.postDelayed(this::syncYtState, 350L));
     }
 
     private static boolean isLocal(Uri uri) {
@@ -564,6 +772,48 @@ public final class MainActivity extends Activity implements SensorEventListener 
         @JavascriptInterface public void offlineReload() {
             if (offlineEngine != null) offlineEngine.reloadInstalledData();
         }
+        @JavascriptInterface public void ytSetEnabled(boolean enabled) {
+            runOnUiThread(() -> {
+                ytEnabled = enabled;
+                locationHandler.removeCallbacks(ytSyncTask);
+                if (enabled) {
+                    ensureYtWebView();
+                    layoutYtContainer();
+                    locationHandler.postDelayed(ytSyncTask, 1200L);
+                } else {
+                    ytExpanded = false;
+                    runYtAction("pause");
+                    layoutYtContainer();
+                }
+            });
+        }
+        @JavascriptInterface public void ytSetExpanded(boolean expanded, int bottomCssPx) {
+            runOnUiThread(() -> {
+                if (bottomCssPx > 0) ytBottomCssPx = bottomCssPx;
+                ytExpanded = expanded && ytEnabled;
+                if (ytEnabled) ensureYtWebView();
+                layoutYtContainer();
+                if (ytEnabled) syncYtState();
+            });
+        }
+        @JavascriptInterface public void ytSetBrowseMode(boolean browse) {
+            runOnUiThread(() -> {
+                ytBrowseMode = browse;
+                if (ytEnabled) {
+                    ensureYtWebView();
+                    if (!ytExpanded) ytExpanded = true;
+                    layoutYtContainer();
+                    syncYtState();
+                }
+            });
+        }
+        @JavascriptInterface public void ytControl(String action) {
+            runOnUiThread(() -> {
+                if (!ytEnabled) return;
+                ensureYtWebView();
+                runYtAction(action);
+            });
+        }
     }
 
     private void fetchProvider(int id, String spec, String accept, boolean wifiOnly) {
@@ -670,6 +920,8 @@ public final class MainActivity extends Activity implements SensorEventListener 
         sensors.unregisterListener(this);
         requests.shutdownNow();
         plannerRequests.shutdownNow();
+        locationHandler.removeCallbacks(ytSyncTask);
+        if (ytWeb != null) { ytWeb.destroy(); ytWeb = null; }
         if (offlineEngine != null) { offlineEngine.close(); offlineEngine = null; }
         if (web != null) { web.destroy(); web = null; }
         super.onDestroy();

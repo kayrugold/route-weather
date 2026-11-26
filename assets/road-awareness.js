@@ -8,8 +8,24 @@
   const pacific=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'});
   const pacificOffset=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',timeZoneName:'shortOffset'});
   const incidentLayer=L.layerGroup().addTo(map);
-  const roadBanner=$('roadAheadBanner');
-  let roadEnabled=false,roadReports=[],roadFetched=0,roadCheck=null,roadSources='',chpUpdated='';
+  const roadNotice=$('roadAheadNotice'), lookaheadMiles=8;
+  const {createRoadDisplay,hazardKind}=window.routeWeatherRoadDisplay;
+  const hazardNames={full:'Closure',collision:'Collision',stopped:'Stopped vehicle',debris:'Debris',police:'CHP report',
+    hold:'Truck hold',lane:'Lane closure',chain:'Chain controls',winter:'Winter advisory',work:'Road work',incident:'Road hazard'};
+  let aheadMarkers=[],noticeTimer,noticeKey;
+  const announced=new Map();
+  const aheadLayer=createRoadDisplay(L,bounds=>aheadMarkers.filter(report=>bounds.contains([report.lat,report.lon])),showRoadGroup);
+  window.pickRoadAhead=point=>aheadLayer.handleClick(point);
+  function hideRoadNotice(){
+    clearTimeout(noticeTimer);
+    roadNotice.hidden=true;
+    noticeKey=null;
+  }
+  function reportKey(report){
+    if(report.source===communitySource)return report.id;
+    return [report.source,report.title,report.lat.toFixed(4),report.lon.toFixed(4),report.direction||''].join('|');
+  }
+  let roadEnabled=false,roadReports=[],roadFetched=0,roadCheck=null,roadSources='',roadScope='',coverageCheckAt=0,lastCoverageRoute,lastCoverageAlong=NaN;
   const currentView=()=>map.getCenter().wrap();
   function readPreference(key){try{return localStorage.getItem(key)==='true'}catch{return false}}
   function savePreference(key,value){try{localStorage.setItem(key,String(value))}catch{}}
@@ -36,21 +52,27 @@
       const stamp=updated?parsePacific(updated.slice(1).join(' ')):NaN;
       if(Number.isFinite(stamp))latest=Math.max(latest,stamp);
       const title=html.match(/<h2[^>]*class="iw-title"[^>]*>([^<]*)<\/h2>/i)?.[1]?.trim();
-      if(!title||!/(?:collision|traffic accident|hit and run|traffic break|road closure|full closure|^TC[- ]|^11(?:79|80|81|82)[- ])/i.test(title))continue;
+      if(!title||!/(?:collision|traffic accident|hit and run|traffic break|road closure|full closure|obstruction|hazard|debris|blocked|disabled vehicle|^TC[- ]|^11(?:79|80|81|82)[- ])/i.test(title))continue;
       const point=place.querySelector('coordinates')?.textContent.trim().split(',').map(Number)||[];
       if(point.length<2||!point.slice(0,2).every(Number.isFinite))continue;
       const location=html.match(/<p class="iw-text">[^<]*<br\s*\/?>\s*([^<]+)/i)?.[1]?.trim()||'';
       const direction=location.match(/\b(?:I|US|SR)\s*-?\s*\d+\s*(NB|SB|EB|WB|N|S|E|W)\b/i)?.[1];
-      items.push({lon:point[0],lat:point[1],title,place:location,direction,source:'CHP',updated:stamp});
+      items.push({lon:point[0],lat:point[1],title,place:location,direction,source:'CHP',type:'incident',updated:stamp});
     }
     if(doc.querySelector('Placemark')&&(!latest||Math.abs(now-latest)>30*60000))throw Error('CHP feed is stale');
     return {items,latest};
   }
-  async function loadChp(){
-    const reply=await routeProviderFetch(quickMap+'data/chp-only.kml',{signal:AbortSignal.timeout(10000)});
-    if(!reply.ok)throw Error('CHP unavailable');
-    return parseChp(await reply.text());
+  let chpPromise,chpResult;
+  function loadChp(){
+    if(chpResult&&Date.now()-chpResult.checked<120000)return Promise.resolve(chpResult);
+    chpPromise ||= (async()=>{
+      const reply=await routeProviderFetch(quickMap+'data/chp-only.kml',{signal:AbortSignal.timeout(10000)});
+      if(!reply.ok)throw Error('CHP unavailable');
+      return chpResult={...parseChp(await reply.text()),checked:Date.now()};
+    })().finally(()=>{chpPromise=null});
+    return chpPromise;
   }
+  window.readChpRoadEvents=loadChp;
   async function loadClosures(){
     const reports=[],failed=[];
     for(let start=1;start<=12;start+=4){
@@ -70,80 +92,365 @@
     const progress=projectOnRoute(geometry,[gpsPosition[1],gpsPosition[0]]);
     return progress.best<=.5?{geometry,along:progress.along,gps:true}:null;
   }
+  let reportProjections=new WeakMap(), projectionRoute;
   function nearbyRoadReports(reports,origin,now=Date.now()){
+    if(projectionRoute!==origin.geometry){
+      projectionRoute=origin.geometry;
+      reportProjections=new WeakMap();
+    }
+    const corridor=roadCorridor(origin).geometry.coordinates;
+    if(!corridor.length)return [];
+    let west=180,east=-180,south=90,north=-90;
+    for(const [lon,lat] of corridor){
+      west=Math.min(west,lon);east=Math.max(east,lon);
+      south=Math.min(south,lat);north=Math.max(north,lat);
+    }
+    // Reject distant point reports before projecting them onto detailed route geometry.
     const matches=[];
     for(const report of reports){
       if(!Number.isFinite(report.lat)||!Number.isFinite(report.lon)||report.start>now||report.end&&report.end<=now)continue;
-      const position=projectOnRoute(origin.geometry,[report.lon,report.lat]);
-      if(position.best>.14)continue;
+      if(/rest area|park\s*&\s*ride/i.test([report.title,report.description].filter(Boolean).join(' ')))continue;
+      const segment=report.type==='closure'&&Number.isFinite(report.endLat)&&Number.isFinite(report.endLon);
+      if(!segment&&(report.lat<south-.01||report.lat>north+.01||
+        west>=-179.96&&east<=179.96&&east-west<180&&(report.lon<west-.04||report.lon>east+.04)))continue;
+      let projection=reportProjections.get(report);
+      if(!projection){
+        projection={position:projectOnRoute(origin.geometry,[report.lon,report.lat]),
+          end:segment?projectOnRoute(origin.geometry,[report.endLon,report.endLat]):null};
+        reportProjections.set(report,projection);
+      }
+      const {position,end}=projection;
+      const direction=/^(N(?:B|ORTH(?:BOUND)?)?|E(?:B|AST(?:BOUND)?)?|S(?:B|OUTH(?:BOUND)?)?|W(?:B|EST(?:BOUND)?)?)$/i.exec(report.direction?.trim()||'');
+      const cardinal={N:0,E:90,S:180,W:270}[direction?.[1]?.[0]?.toUpperCase()];
+      if(Number.isFinite(cardinal)&&Number.isFinite(position.heading)&&
+        Math.abs((position.heading-cardinal+540)%360-180)>105)continue;
+      let onRoute=position.best<=.14;
       let distance=position.along-origin.along;
-      if(report.type==='closure'&&Number.isFinite(report.endLat)&&Number.isFinite(report.endLon)){
-        const end=projectOnRoute(origin.geometry,[report.endLon,report.endLat]);
+      if(end){
         if(end.best<=.14){
           const endDistance=end.along-origin.along;
-          if(Math.max(distance,endDistance)>=0)distance=Math.max(0,Math.min(distance,endDistance));
+          if(!onRoute)distance=endDistance;
+          else if(Math.max(distance,endDistance)>=0)distance=Math.max(0,Math.min(distance,endDistance));
+          onRoute=true;
         }
       }
-      if(distance<-.08||distance>30*mile)continue;
+      if(!onRoute||distance<-.08||distance>lookaheadMiles*mile)continue;
       matches.push({...report,distance:Math.max(0,distance)/mile});
     }
     return matches.sort((a,b)=>a.distance-b.distance);
   }
-  function updateRoadAhead(){
-    if(!roadEnabled||!trip){
-      roadBanner.hidden=true;
-      $('roadAheadStatus').textContent=!trip?'Plan a route to check the next 30 miles in California.':'Turn on Road ahead to check CHP and Caltrans reports.';
-      $('roadAheadList').replaceChildren();
-      return;
+  const obstructionKey='route-weather-local-obstructions';
+  const communitySource='Route Weather drivers';
+  const communityEndpoint='/api/road-reports';
+  const reporterKey='route-weather-road-reporter';
+  let reporterId,sharedReports=[],sharedChecked=0,sharedReceived=0,sharedRoute,sharedAlong,sharedRequest;
+
+  function roadReporter(){
+    if(reporterId)return reporterId;
+    try{reporterId=localStorage.getItem(reporterKey)}catch{}
+    if(!reporterId){
+      reporterId=crypto.randomUUID();
+      try{localStorage.setItem(reporterKey,reporterId)}catch{}
     }
-    const origin=roadOrigin();
-    const reports=origin&&Date.now()-roadFetched<6*60000?nearbyRoadReports(roadReports,origin):[];
-    roadBanner.hidden=!reports.length;
-    if(reports.length){
-      const first=reports[0];
-      roadBanner.textContent=first.distance.toFixed(1)+' mi '+(origin.gps?'ahead':'from start')+' · '+first.title+
-        (reports.length>1?' · +'+(reports.length-1):'');
+    return reporterId;
+  }
+
+  async function updateSharedReport(report,action){
+    const response=await fetch(communityEndpoint,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:report.id,reporter:roadReporter(),action,
+        ...(action==='create'?{title:report.title,lat:report.lat,lon:report.lon}:{})}),
+      signal:AbortSignal.timeout(10000),credentials:'omit'
+    });
+    if(!response.ok){
+      const error=await response.json().catch(()=>null);
+      throw Error(error?.error||'Could not reach shared reports.');
+    }
+    return response.json();
+  }
+
+  function checkSharedReports(origin,force){
+    if(!origin||navigator.onLine===false)return;
+    const now=Date.now();
+    if(!force&&sharedRoute===origin.geometry&&
+      now-sharedChecked<(Math.abs(sharedAlong-origin.along)>1.6?15000:45000))return;
+    const point=roadCorridor(origin).geometry.coordinates[0];
+    if(!point)return;
+    sharedRequest?.abort();
+    if(sharedRoute!==origin.geometry)sharedReports=[];
+    sharedRoute=origin.geometry;
+    sharedAlong=origin.along;
+    sharedChecked=now;
+    const controller=sharedRequest=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),10000);
+    const query=new URLSearchParams({lat:point[1].toFixed(3),lon:L.Util.wrapNum(point[0],[-180,180]).toFixed(3)});
+    fetch(communityEndpoint+'?'+query,{signal:controller.signal,credentials:'omit'})
+      .then(reply=>reply.ok?reply.json():null)
+      .then(data=>{
+        if(sharedRequest!==controller)return;
+        if(Array.isArray(data?.reports)){
+          sharedReceived=Date.now();
+          sharedReports=data.reports.map(report=>({...report,source:communitySource}));
+        }
+      })
+      .catch(()=>{})
+      .finally(()=>{
+        clearTimeout(timeout);
+        if(sharedRequest!==controller)return;
+        sharedRequest=null;
+        updateRoadAhead();
+      });
+  }
+
+  function sharedReportDetails(report){
+    if(report.source!==communitySource)return null;
+    const content=document.createElement('section');
+    const heading=document.createElement('strong');
+    heading.textContent=report.title;
+    const details=document.createElement('p');
+    details.textContent='Driver report · Expires at '+time(report.end)+
+      (report.confirmed?' · Confirmed at '+time(report.confirmed):'');
+    const actions=document.createElement('div');
+    actions.className='road-group-list';
+    const result=document.createElement('small');
+    result.setAttribute('role','status');
+    for(const [label,action] of [['Still there','still-there'],['No longer there','clear']]){
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=label;
+      button.onclick=async event=>{
+        event.stopPropagation();
+        if(navigator.onLine===false){result.textContent='Offline. No update sent.';return}
+        for(const control of actions.children)control.disabled=true;
+        try{
+          const response=await updateSharedReport(report,action);
+          if(response.cleared){
+            sharedReports=sharedReports.filter(item=>item.id!==report.id);
+            if(content.isConnected)closeStateRoadPopup();
+          }else{
+            result.textContent=action==='clear'?'Marked clear. Waiting for another driver to confirm.':'Thanks for confirming.';
+          }
+          checkSharedReports(roadEnabled&&roadOrigin(),true);
+          updateRoadAhead();
+        }catch(error){result.textContent=error.message||'Could not send the update.'}
+        finally{for(const control of actions.children)control.disabled=false}
+      };
+      actions.append(button);
+    }
+    content.append(heading,details,actions,result);
+    return content;
+  }
+  window.sharedRoadReportDetails=sharedReportDetails;
+  const obstructionLayer=L.layerGroup().addTo(map);
+  const types=new Set([...document.querySelectorAll('[data-obstruction]')].map(button=>button.dataset.obstruction));
+  let obstructionReports=[];
+  try {
+    const saved=JSON.parse(localStorage.getItem(obstructionKey)||'[]');
+    obstructionReports=saved.filter(item=>types.has(item.title)&&Number.isFinite(item.lat)&&Math.abs(item.lat)<=90
+      &&Number.isFinite(item.lon)&&Math.abs(item.lon)<=180&&Number.isFinite(item.end)&&item.end>Date.now()
+      &&typeof item.id==='string').slice(0,30).map(item=>({...item,source:'My report'}));
+  }catch{}
+  function persistObstructions(){
+    try{localStorage.setItem(obstructionKey,JSON.stringify(obstructionReports));return true}catch{return false}
+  }
+  function renderObstructions(){
+    obstructionLayer.clearLayers();
+    for(const report of obstructionReports){
+      const content=document.createElement('section'), remove=document.createElement('button');
+      content.textContent=report.title+' · My report. Expires at '+time(report.end)+'. ';
+      remove.type='button';
+      remove.textContent='Remove';
+      content.append(remove);
+      const [symbol,,color]=roadCategories[hazardKind(report)];
+      const marker=L.marker([report.lat,report.lon],{
+        icon:L.divIcon({className:'road-icon viewport-road',html:'<span style="background:'+color+'">'+symbol+'</span>',
+          iconSize:[29,29],iconAnchor:[14,14]}),
+        title:report.title+' · My report'
+      }).addTo(obstructionLayer);
+      marker.on('click',()=>{
+        showStateRoadPopup(report);
+        remove.onclick=()=>{
+          obstructionReports=obstructionReports.filter(item=>item.id!==report.id);
+          persistObstructions();
+          closeStateRoadPopup();
+          renderObstructions();
+          updateRoadAhead();
+        };
+        stateRoadPopup?.setContent(content);
+      });
+    }
+  }
+  renderObstructions();
+  const reportButtons=[...document.querySelectorAll('[data-obstruction]')];
+  const openObstruction=()=>{
+    openSurface('obstructionDialog');
+    $('obstructionStatus').textContent='';
+  };
+  $('roadAheadReport').onclick=openObstruction;
+  for(const button of reportButtons)button.onclick=()=>{
+    const note=$('obstructionStatus');
+    if(navigator.onLine===false){note.textContent='Offline. No report sent.';return}
+    for(const option of reportButtons)option.disabled=true;
+    note.textContent='Getting your GPS location…';
+    const done=()=>{for(const option of reportButtons)option.disabled=false};
+    androidLocation.getCurrentPosition(async ({coords})=>{
+      try{
+        if(!$('obstructionDialog').open)return;
+        if(!Number.isFinite(coords.latitude)||!Number.isFinite(coords.longitude)||!Number.isFinite(coords.accuracy)||coords.accuracy>100){
+          note.textContent='GPS was too imprecise. Try again from a clear spot.';return;
+        }
+        if(navigator.onLine===false){note.textContent='Offline. No report sent.';return}
+        note.textContent='Sharing report…';
+        await updateSharedReport({id:crypto.randomUUID(),title:button.dataset.obstruction,
+          lat:Number(coords.latitude.toFixed(5)),lon:Number(coords.longitude.toFixed(5))},'create');
+        if($('obstructionDialog').open)$('obstructionDialog').close();
+        checkSharedReports(roadEnabled&&roadOrigin(),true);
+        status('Shared with Route Weather drivers.');
+      }catch(error){note.textContent=error.message||'Could not share the report.'}
+      finally{done()}
+    },error=>{done();note.textContent=error.message||'Could not get your location.'},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:10000});
+  };
+
+  function updateRoadAhead(){
+    const origin=roadEnabled&&roadOrigin();
+    const expired=obstructionReports.filter(item=>item.end<=Date.now());
+    if(expired.length){
+      obstructionReports=obstructionReports.filter(item=>item.end>Date.now());
+      persistObstructions();renderObstructions();
+    }
+    const now=Date.now();
+    const agency=now-roadFetched<6*60000?roadReports:[];
+    const community=sharedRoute===origin?.geometry&&now-sharedReceived<120000?sharedReports:[];
+    const reports=origin?nearbyRoadReports([...agency,...community,...obstructionReports],origin)
+      .map(report=>({...report,kind:hazardKind(report,roadKind(report))})):[];
+
+    // Saved obstructions already have their own removable marker.
+    aheadMarkers=reports.filter(report=>report.source!=='My report');
+    if(aheadMarkers.length){
+      if(!map.hasLayer(aheadLayer))aheadLayer.addTo(map);
+      else aheadLayer.refresh();
+    }else if(map.hasLayer(aheadLayer))map.removeLayer(aheadLayer);
+
+    const following=origin?.gps&&gpsFollowing&&gpsPosition&&map.getBounds().contains(gpsPosition)&&
+      !document.hidden&&!document.querySelector('dialog[open]');
+    if(!following||noticeKey&&!reports.some(report=>reportKey(report)===noticeKey))hideRoadNotice();
+    if(following&&roadNotice.hidden){
+      for(const [key,at] of announced)if(now-at>90*60000)announced.delete(key);
+      const first=reports.find(report=>!announced.has(reportKey(report)));
+      if(first){
+        noticeKey=reportKey(first);
+        announced.set(noticeKey,now);
+        roadNotice.textContent=(hazardNames[first.kind]||'Road report')+' · '+first.distance.toFixed(1)+' mi ahead';
+        roadNotice.hidden=false;
+        noticeTimer=setTimeout(hideRoadNotice,6500);
+      }
     }
     if(!$('roadAheadDialog').open)return;
-    $('roadAheadStatus').textContent=!origin?'Road ahead resumes when GPS is on the route.':
-      (roadCheck?'Checking reports…':roadSources||'Waiting for reports')+' · Next 30 route miles '+(origin.gps?'from GPS':'from start')+
-      (chpUpdated?' · CHP updated '+chpUpdated:'');
-    $('roadAheadList').replaceChildren(...reports.slice(0,12).map(report=>{
+    $('roadAheadStatus').textContent=!trip?'Plan a route to see reports ahead.':
+      !roadEnabled?'Turn on Road ahead to check reports.':
+      !origin?'Road ahead resumes when GPS is on the route.':
+      (roadCheck?'Checking reports…':roadSources||'Waiting for reports')+' · Next '+lookaheadMiles+' route miles '+(origin.gps?'from GPS':'from start');
+    $('roadAheadList').replaceChildren(...reports.map(report=>{
       const item=document.createElement('li');
-      item.textContent=report.distance.toFixed(1)+' mi · '+report.title+
-        [report.place,report.direction,report.source,report.timestamp].filter(Boolean).map(text=>' · '+text).join('');
+      const button=document.createElement('button');
+      button.type='button';
+      button.textContent=report.distance.toFixed(1)+' mi · '+(hazardNames[report.kind]||'Road report')+
+        [report.place,report.source].filter(Boolean).map(text=>' · '+text).join('');
+      button.onclick=()=>{
+        $('roadAheadDialog').close();
+        if(!map.getBounds().contains([report.lat,report.lon])){
+          pauseGpsFollow();
+          map.panTo([report.lat,report.lon],{animate:false});
+        }
+        showStateRoadPopup(report);
+      };
+      item.append(button);
       return item;
     }));
     if(!reports.length&&origin&&!roadCheck&&roadFetched){
       const item=document.createElement('li');item.textContent='No matching reports in the available feeds.';$('roadAheadList').append(item);
     }
   }
+  function roadCorridor(origin){
+    const points=[];
+    let along=0;
+    for(let i=1;i<origin.geometry.length;i++){
+      const a=origin.geometry[i-1],b=origin.geometry[i];
+      const length=km(a,b), end=along+length;
+      if(length&&end>=origin.along&&along<=origin.along+lookaheadMiles*mile){
+        for(const distance of [Math.max(along,origin.along),Math.min(end,origin.along+lookaheadMiles*mile)]){
+          const fraction=(distance-along)/length;
+          points.push([a[0]+((b[0]-a[0]+540)%360-180)*fraction,a[1]+(b[1]-a[1])*fraction]);
+        }
+      }
+      along=end;
+      if(along>origin.along+lookaheadMiles*mile)break;
+    }
+    return {geometry:{coordinates:points}};
+  }
+  async function stateAgencyReports(code){
+    if(code==='CA'){
+      const [chp,caltrans]=await Promise.allSettled([loadChp(),loadClosures()]);
+      const items=[...(chp.value?.items||[]),...(caltrans.value?.items||[])];
+      const anyFeed=chp.status==='fulfilled'||caltrans.value?.failed<12;
+      if(!anyFeed)throw Error('CA feeds unavailable');
+      return {items,limited:chp.status!=='fulfilled'||caltrans.status!=='fulfilled'||caltrans.value.failed>0};
+    }
+    const prior=stateRoadReports.get(code);
+    if(prior?.items&&Date.now()-prior.checked<120000)return {...prior,items:prior.items.filter(item=>item.type!=='cctv')};
+    return api('/api/state-road-overlay?state='+encodeURIComponent(code)+'&incidents=1');
+  }
   function checkRoadAhead(force=false){
+    const origin=roadEnabled&&roadOrigin();
+    checkSharedReports(origin,force);
     updateRoadAhead();
-    if(!roadEnabled||!trip||roadCheck||!force&&Date.now()-roadFetched<120000)return;
-    roadCheck=Promise.allSettled([loadChp(),loadClosures()]).then(([chp,caltrans])=>{
-      roadReports=[...(chp.value?.items||[]),...(caltrans.value?.items||[])];
+    if(!origin||roadCheck)return;
+    const now=Date.now();
+    const moved=Math.abs(origin.along-lastCoverageAlong)>5;
+    if(!force&&lastCoverageRoute===origin.geometry&&(!moved&&now-coverageCheckAt<120000||now-coverageCheckAt<15000))return;
+    lastCoverageRoute=origin.geometry;lastCoverageAlong=origin.along;coverageCheckAt=now;
+    roadCheck=(async()=>{
+      const catalog=await getStateRoadDirectory();
+      const codes=findRouteStates(roadCorridor(origin),catalog.boundaries);
+      const supported=codes.filter(code=>code==='CA'||catalog.directory[code]?.overlay);
+      const scope=supported.join(',');
+      if(!force&&scope===roadScope&&Date.now()-roadFetched<120000)return;
+      const results=await Promise.allSettled(supported.map(stateAgencyReports));
+      roadReports=results.flatMap(result=>result.value?.items||[]);
       roadFetched=Date.now();
-      chpUpdated=chp.value?.latest?time(chp.value.latest):'';
-      roadSources='CHP '+(chp.status==='fulfilled'?'reports':'unavailable')+' · Caltrans '+
-        (caltrans.status==='rejected'||caltrans.value.failed===12?'unavailable':caltrans.value.failed?'partial coverage':'closures');
+      roadScope=scope;
+      roadSources=[
+        ...supported.map((code,i)=>code+' '+(results[i].status!=='fulfilled'?'unavailable':results[i].value.limited?'partial feed':'reports')),
+        ...codes.filter(code=>!supported.includes(code)).map(code=>code+' has no in-app feed')
+      ].join(' · ')||'No agency feed identified here';
+    })().catch(()=>{
+      roadSources='Could not check agency coverage. Your reports are still available.';
     }).finally(()=>{roadCheck=null;updateRoadAhead()});
     updateRoadAhead();
   }
-  $('openRoadAhead').onclick=()=>{
-    openSurface('roadAheadDialog');
-    if(!trip)$('roadAheadStatus').textContent='Plan a route to check the next 30 miles in California.';
-    checkRoadAhead();
-  };
-  roadBanner.onclick=$('openRoadAhead').onclick;
+  $('openRoadAhead').onclick=()=>{openSurface('roadAheadDialog');checkRoadAhead()};
+  roadNotice.onclick=$('openRoadAhead').onclick;
+  map.on('dragstart',hideRoadNotice);
+  map.on('moveend',()=>{if(!gpsFollowing||!gpsPosition||!map.getBounds().contains(gpsPosition))hideRoadNotice()});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden)hideRoadNotice();
+    else checkRoadAhead();
+  });
   $('roadAheadEnabled').onchange=()=>{
     roadEnabled=$('roadAheadEnabled').checked;savePreference('road-ahead-enabled',roadEnabled);
     pressed('openRoadAhead',roadEnabled);checkRoadAhead(true);
   };
-  $('roadAheadRefresh').onclick=()=>checkRoadAhead(true);
   roadEnabled=readPreference('road-ahead-enabled');
   $('roadAheadEnabled').checked=roadEnabled;
   pressed('openRoadAhead',roadEnabled);
+  window.addEventListener('offline',()=>{
+    sharedRequest?.abort();
+    sharedRequest=null;
+    sharedReports=[];
+    updateRoadAhead();
+  });
+  window.addEventListener('online',()=>checkRoadAhead(true));
   setInterval(()=>{if(!document.hidden)checkRoadAhead()},15000);
   window.refreshRoadAhead=checkRoadAhead;
   checkRoadAhead();

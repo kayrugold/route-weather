@@ -13,13 +13,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 import btools.router.FormatJson;
 import btools.router.OsmNodeNamed;
@@ -40,6 +45,20 @@ public final class OfflineRouter {
 
     private final File profilesDir;
     private final File segmentsDir;
+    private final AtomicLong activeGeneration = new AtomicLong(0);
+    private final Set<RoutingEngine> activeEngines = Collections.newSetFromMap(new ConcurrentHashMap<>());
+
+    public void cancelActiveRoutes() {
+        activeGeneration.incrementAndGet();
+        terminateActiveEngines();
+    }
+
+    private void terminateActiveEngines() {
+        for (RoutingEngine engine : activeEngines) {
+            try { engine.terminate(); } catch (Exception ignored) {}
+        }
+        activeEngines.clear();
+    }
 
     public OfflineRouter(Context context, File segmentsDir) {
         this.segmentsDir = segmentsDir;
@@ -48,6 +67,7 @@ public final class OfflineRouter {
         copyAssetIfMissing(context, "offline-profiles/lookups.dat", new File(profilesDir, "lookups.dat"));
         copyAssetIfMissing(context, "offline-profiles/car-fast.brf", new File(profilesDir, "car-fast.brf"));
         copyAssetIfMissing(context, "offline-profiles/truck.brf", new File(profilesDir, "truck.brf"));
+        copyAssetIfMissing(context, "offline-profiles/highway-corridor.brf", new File(profilesDir, "highway-corridor.brf"));
     }
 
     public boolean hasSegments() {
@@ -76,53 +96,30 @@ public final class OfflineRouter {
             throw new IllegalStateException("Routing profile missing: " + profileFile.getName());
         }
 
+        long gen = activeGeneration.incrementAndGet();
+        terminateActiveEngines();
         long started = System.currentTimeMillis();
         List<double[]> expandedCoords = InterstateCorridorPlanner.expandLongLegs(coords, segmentsDir);
         JSONObject result;
         if (expandedCoords.size() > coords.size()) {
             Log.i(TAG, "Long-distance corridor planned: " + coords.size() + " -> " + expandedCoords.size() + " waypoints");
-            result = calculateMultiLegRoute(expandedCoords, coords, profileFile, truck, started);
+            result = calculateMultiLegRoute(expandedCoords, coords, profileFile, truck, started, gen);
         } else {
-            JSONObject geoJson = runSingleBRouter(coords, profileFile, 96, 60_000L);
+            JSONObject geoJson = runSingleBRouter(coords, profileFile, 96, 45_000L, 2.2, 1.25, gen);
             long elapsedMs = System.currentTimeMillis() - started;
             result = convertGeoJsonToRouteWeather(geoJson, coords, truck, elapsedMs);
         }
-        // Attach up to 2 alternative Interstate corridor choices for long A->B trips
+        if (gen != activeGeneration.get()) {
+            throw new CancellationException("Offline route cancelled by newer request.");
+        }
+        // Label the finalized primary route with its Interstate corridor summary (never attach unfinalized preview routes)
         if (coords.size() == 2) {
             List<InterstateCorridorPlanner.CorridorOption> alts =
-                    InterstateCorridorPlanner.planAlternativeCorridors(coords.get(0), coords.get(1), segmentsDir, 3);
+                    InterstateCorridorPlanner.planAlternativeCorridors(coords.get(0), coords.get(1), segmentsDir, 1);
             if (!alts.isEmpty()) {
                 JSONArray routes = result.optJSONArray("routes");
                 if (routes != null && routes.length() > 0) {
                     routes.getJSONObject(0).put("summary", alts.get(0).label);
-                    for (int k = 1; k < alts.size(); k++) {
-                        InterstateCorridorPlanner.CorridorOption opt = alts.get(k);
-                        JSONArray altCoords = new JSONArray();
-                        for (double[] pt : opt.waypoints) {
-                            JSONArray pair = new JSONArray();
-                            pair.put(pt[0]);
-                            pair.put(pt[1]);
-                            altCoords.put(pair);
-                        }
-                        JSONObject altGeom = new JSONObject();
-                        altGeom.put("type", "LineString");
-                        altGeom.put("coordinates", altCoords);
-                        JSONObject altRoute = new JSONObject();
-                        altRoute.put("preview", true);
-                        altRoute.put("summary", opt.label);
-                        altRoute.put("distance", Math.round(opt.estimatedMeters));
-                        altRoute.put("duration", Math.round(opt.estimatedMeters / (truck ? 23.7 : 26.8)));
-                        altRoute.put("geometry", altGeom);
-                        // Pick middle hub as anchor via-point if user taps this alternative
-                        if (opt.waypoints.size() > 2) {
-                            double[] midHub = opt.waypoints.get(opt.waypoints.size() / 2);
-                            JSONArray viaPt = new JSONArray();
-                            viaPt.put(midHub[0]);
-                            viaPt.put(midHub[1]);
-                            altRoute.put("viaAnchor", viaPt);
-                        }
-                        routes.put(altRoute);
-                    }
                 }
             }
         }
@@ -132,22 +129,49 @@ public final class OfflineRouter {
     }
 
     private JSONObject runSingleBRouter(List<double[]> legCoords, File profileFile,
-                                        int memoryClass, long timeoutMs) throws Exception {
+                                        int memoryClass, long timeoutMs,
+                                        double pass1Coeff, double airCostFactor, long gen) throws Exception {
+        if (gen != activeGeneration.get()) {
+            throw new CancellationException("Offline route cancelled.");
+        }
         try {
-            return executeBRouterOnce(legCoords, profileFile, memoryClass, timeoutMs);
+            return executeBRouterOnce(legCoords, profileFile, memoryClass, timeoutMs, pass1Coeff, airCostFactor, gen);
         } catch (IllegalStateException e) {
+            if (gen != activeGeneration.get()) {
+                throw new CancellationException("Offline route cancelled.");
+            }
             String msg = e.getMessage() != null ? e.getMessage().toLowerCase(java.util.Locale.US) : "";
-            // If an OSM city-center node sits on a pedestrian plaza / park island (e.g. Capitol Square in Richmond, VA),
-            // nudge the target ~450m in cardinal directions to snap onto a real driveable road.
-            if (legCoords.size() >= 2 && (msg.contains("island") || msg.contains("not mapped"))) {
-                double[][] offsets = {{0.0045, 0}, {-0.0045, 0}, {0, 0.0045}, {0, -0.0045}};
+            // If a tapped waypoint lands on a disconnected frontage road island (e.g. South Frontage Rd next to I-90)
+            // or non-truck road, try highway-corridor.brf first (snaps past frontage/service islands straight onto I-90!),
+            // then car-fast.brf, then 4 quick nudges (~550m).
+            if (legCoords.size() >= 2 && !msg.contains("timeout")
+                    && (msg.contains("island") || msg.contains("not mapped") || msg.contains("no track found"))) {
+                File hwyProfile = new File(profilesDir, "highway-corridor.brf");
+                if (hwyProfile.isFile() && !hwyProfile.equals(profileFile)) {
+                    try {
+                        return executeBRouterOnce(legCoords, hwyProfile, memoryClass, Math.min(timeoutMs, 8_000L), 3.0, 1.4, gen);
+                    } catch (Exception ignored) {}
+                }
+                if ("truck.brf".equals(profileFile.getName())) {
+                    File carProfile = new File(profilesDir, "car-fast.brf");
+                    if (carProfile.isFile()) {
+                        try {
+                            return executeBRouterOnce(legCoords, carProfile, memoryClass, Math.min(timeoutMs, 10_000L), 2.4, 1.3, gen);
+                        } catch (Exception ignored) {}
+                    }
+                }
+                double[][] offsets = {{0.005, 0}, {-0.005, 0}, {0, 0.005}, {0, -0.005}};
                 int last = legCoords.size() - 1;
                 double[] origEnd = legCoords.get(last);
+                File retryProfile = hwyProfile.isFile() ? hwyProfile : profileFile;
                 for (double[] off : offsets) {
+                    if (gen != activeGeneration.get()) {
+                        throw new CancellationException("Offline route cancelled.");
+                    }
                     List<double[]> nudged = new ArrayList<>(legCoords);
                     nudged.set(last, new double[]{origEnd[0] + off[0], origEnd[1] + off[1]});
                     try {
-                        return executeBRouterOnce(nudged, profileFile, memoryClass, Math.min(timeoutMs, 25_000L));
+                        return executeBRouterOnce(nudged, retryProfile, memoryClass, Math.min(timeoutMs, 5_000L), 2.8, 1.35, gen);
                     } catch (Exception ignored) {}
                 }
             }
@@ -156,7 +180,11 @@ public final class OfflineRouter {
     }
 
     private JSONObject executeBRouterOnce(List<double[]> legCoords, File profileFile,
-                                          int memoryClass, long timeoutMs) throws Exception {
+                                          int memoryClass, long timeoutMs,
+                                          double pass1Coeff, double airCostFactor, long gen) throws Exception {
+        if (gen != activeGeneration.get()) {
+            throw new CancellationException("Offline route cancelled.");
+        }
         List<OsmNodeNamed> waypoints = new ArrayList<>(legCoords.size());
         for (int i = 0; i < legCoords.size(); i++) {
             double lon = legCoords.get(i)[0];
@@ -173,15 +201,26 @@ public final class OfflineRouter {
         rc.carMode = true;
         rc.considerTurnRestrictions = false;
         rc.memoryclass = memoryClass;
-        rc.pass1coefficient = 2.2;
+        rc.pass1coefficient = pass1Coeff;
         rc.pass2coefficient = 0;
         rc.keyValues = new HashMap<>();
         rc.keyValues.put("turnInstructionMode", "3");
 
         RoutingEngine engine = new RoutingEngine(null, null, segmentsDir, waypoints, rc);
-        engine.airDistanceCostFactor = 1.25;
+        engine.airDistanceCostFactor = airCostFactor;
         engine.quite = true;
-        engine.doRun(timeoutMs);
+        activeEngines.add(engine);
+        try {
+            if (gen != activeGeneration.get()) {
+                throw new CancellationException("Offline route cancelled.");
+            }
+            engine.doRun(timeoutMs);
+        } finally {
+            activeEngines.remove(engine);
+        }
+        if (gen != activeGeneration.get()) {
+            throw new CancellationException("Offline route cancelled.");
+        }
 
         String err = engine.getErrorMessage();
         OsmTrack track = engine.getFoundTrack();
@@ -193,18 +232,48 @@ public final class OfflineRouter {
         return new JSONObject(new FormatJson(rc).format(track));
     }
 
+    private static boolean isRequestedCoord(double[] pt, List<double[]> requestedCoords) {
+        for (double[] r : requestedCoords) {
+            if (Math.abs(r[0] - pt[0]) < 1e-4 && Math.abs(r[1] - pt[1]) < 1e-4) return true;
+        }
+        return false;
+    }
+
     private JSONObject calculateMultiLegRoute(List<double[]> expandedCoords, List<double[]> requestedCoords,
-                                              File profileFile, boolean truck, long started) throws Exception {
+                                              File profileFile, boolean truck, long started, long gen) throws Exception {
         int legCount = expandedCoords.size() - 1;
-        ExecutorService pool = Executors.newFixedThreadPool(Math.min(4, Math.max(2, legCount)));
+        // Cap to 3 low-priority threads x 32MB so WebView/UI stays silky smooth and never GC-thrashes.
+        int threads = Math.min(3, Math.max(2, legCount));
+        ExecutorService pool = Executors.newFixedThreadPool(threads, r -> {
+            Thread t = new Thread(r, "brouter-leg");
+            t.setPriority(Thread.MIN_PRIORITY);
+            return t;
+        });
+        File highwayProfile = new File(profilesDir, "highway-corridor.brf");
+        boolean hasHighwayProfile = highwayProfile.isFile();
         List<Future<JSONObject>> futures = new ArrayList<>(legCount);
         try {
             for (int i = 0; i < legCount; i++) {
                 final double[] a = expandedCoords.get(i);
                 final double[] b = expandedCoords.get(i + 1);
+                final boolean isEndLeg = (i == 0 || i == legCount - 1);
+                // Try fast highway-corridor.brf on all middle legs (including highway waypoints like I-90!)
+                // with automatic fallback to full profile if a waypoint is on a local street.
+                final boolean tryHighwayFirst = hasHighwayProfile && !isEndLeg;
                 futures.add(pool.submit(() -> {
                     try {
-                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 48, 45_000L);
+                        if (tryHighwayFirst) {
+                            try {
+                                return executeBRouterOnce(Arrays.asList(a, b), highwayProfile, 32, 7_000L, 3.2, 1.45, gen);
+                            } catch (CancellationException ce) {
+                                throw ce;
+                            } catch (Exception ignored) {
+                                // Fall back to full profile if this leg requires a local/tertiary connector
+                            }
+                        }
+                        return runSingleBRouter(Arrays.asList(a, b), profileFile, 32, 14_000L, 2.6, 1.35, gen);
+                    } catch (CancellationException ce) {
+                        throw ce;
                     } catch (Exception e) {
                         Log.w(TAG, "Sub-leg failed: " + e.getMessage());
                         return null;
@@ -214,14 +283,19 @@ public final class OfflineRouter {
 
             List<JSONObject> legGeoJsons = new ArrayList<>(legCount);
             for (int i = 0; i < legCount; i++) {
+                if (gen != activeGeneration.get()) {
+                    throw new CancellationException("Offline route cancelled.");
+                }
                 legGeoJsons.add(futures.get(i).get());
             }
 
-            // Self-healing fallback: NEVER invent an unverified midpoint (which can land on a disconnected road island).
-            // Instead retry failed sub-leg with conservative pass1=1.5 & 96MB, or skip a bad hub if island detected.
+            // Fast single-step self-healing fallback (bounded to ~15s so a bad hub never stalls for minutes).
             List<JSONObject> stitchedLegs = new ArrayList<>();
             int i = 0;
             while (i < legCount) {
+                if (gen != activeGeneration.get()) {
+                    throw new CancellationException("Offline route cancelled.");
+                }
                 JSONObject cur = legGeoJsons.get(i);
                 if (cur != null) {
                     stitchedLegs.add(cur);
@@ -230,13 +304,15 @@ public final class OfflineRouter {
                     double[] a = expandedCoords.get(i);
                     double[] b = expandedCoords.get(i + 1);
                     try {
-                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, b), profileFile, 96, 50_000L));
+                        stitchedLegs.add(runSingleBRouter(Arrays.asList(a, b), profileFile, 96, 15_000L, 2.5, 1.3, gen));
                         i++;
+                    } catch (CancellationException ce) {
+                        throw ce;
                     } catch (Exception retryErr) {
                         if (i + 2 <= legCount) {
                             stitchedLegs.add(runSingleBRouter(
                                     Arrays.asList(a, expandedCoords.get(i + 2)),
-                                    profileFile, 96, 55_000L));
+                                    profileFile, 96, 18_000L, 3.0, 1.4, gen));
                             i += 2;
                         } else {
                             throw retryErr;
