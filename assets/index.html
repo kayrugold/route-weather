@@ -4707,12 +4707,18 @@ try{setTheme(localStorage.getItem('route-weather-day')==='true')}catch{}
 updateDrive();
 bindMapTools();
 initializeRoadOverlay();
+function currentGpsLatLon(){
+  if(!gpsPosition)return null;
+  const lat=gpsPosition.coords?.latitude??gpsPosition.latitude??gpsPosition.lat;
+  const lon=gpsPosition.coords?.longitude??gpsPosition.longitude??gpsPosition.lon;
+  return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null;
+}
 let emergencyAlertsCtrl=null;
 function bindEmergencyAlerts(){
   if(!map||!window.routeEmergencyAlerts)return;
   emergencyAlertsCtrl=window.routeEmergencyAlerts.createMapController({
     map,
-    getGps:()=>gpsPosition?{lat:gpsPosition.coords.latitude,lon:gpsPosition.coords.longitude}:null,
+    getGps:currentGpsLatLon,
     getRouteCoords:()=>trip?.route?.geometry?.coordinates??null,
     onSpeak:(summary,alert)=>{
       atlasAudio.speak(summary,{
@@ -4782,8 +4788,9 @@ function bindAtlasRouter(){
     destination:dest=>{
       openPlanner(false);
       $('end').value=dest;
-      if(!$('start').value.trim()&&gpsPosition){
-        $('start').value=gpsPosition.coords.latitude.toFixed(5)+', '+gpsPosition.coords.longitude.toFixed(5);
+      const cur=currentGpsLatLon();
+      if(!$('start').value.trim()&&cur){
+        $('start').value=cur.lat.toFixed(5)+', '+cur.lon.toFixed(5);
       }
       buildTrip(false);
     },
