@@ -33,7 +33,7 @@ Download the GPLv3 source code for this release at https://github.com/kayrugold/
 
 ## Release notes
 
-First release. Plan drives with arrival-time weather forecasts, view radar and available road reports, follow GPS, and turn on spoken directions or live traffic when you need them.
+v0.35: Added Atlas CB Radio (live real-time voice on CH 17, CH 19, custom side channels, private FAM & CMP invite-code channels with 1-tap approval, live CMP fleet pins on the map, Smart Queue priority controls, and Atlas NOAA Weather Radio on WX), automatic off-route rerouting from live GPS, 10–30 mile Road Ahead CHP/DOT look-ahead, and hands-free "Router" voice commands including YouTube search.
 
 ## Before submission
 

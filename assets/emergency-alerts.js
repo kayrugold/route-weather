@@ -231,7 +231,7 @@
   }
 
   function createMapController(opts) {
-    const { map, getGps, getRouteCoords, onSpeak, onRestoreView } = opts;
+    const { map, getGps, getRouteCoords, onSpeak, onRestoreView, onImpactsChanged } = opts;
     const canvasRenderer = typeof L !== 'undefined' ? L.canvas({ padding: 0.3 }) : null;
     const layerGroup = typeof L !== 'undefined' ? L.layerGroup() : null;
 
@@ -333,6 +333,7 @@
         badgeBtn.textContent = count > 1 ? `WX ${count}` : 'WX';
         badgeBtn.title = count ? `${count} active trucker weather alert(s)` : 'Weather alerts clear';
       }
+      onImpactsChanged?.(enabled ? activeImpacts.slice() : []);
 
       if (!bannerEl) return;
       if (!enabled || !top) {

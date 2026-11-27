@@ -8,7 +8,19 @@
   const pacific=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',year:'numeric',month:'2-digit',day:'2-digit'});
   const pacificOffset=new Intl.DateTimeFormat('en-US',{timeZone:'America/Los_Angeles',timeZoneName:'shortOffset'});
   const incidentLayer=L.layerGroup().addTo(map);
-  const roadNotice=$('roadAheadNotice'), lookaheadMiles=8;
+  const roadNotice=$('roadAheadNotice');
+  const lookaheadKey='route-weather-road-lookahead';
+  let lookaheadMiles=(()=>{try{const v=Number(localStorage.getItem(lookaheadKey));return [10,20,30].includes(v)?v:20}catch{return 20}})();
+  const lookaheadSelect=$('roadAheadMiles');
+  if(lookaheadSelect){
+    lookaheadSelect.value=String(lookaheadMiles);
+    lookaheadSelect.onchange=()=>{
+      const next=Number(lookaheadSelect.value);
+      lookaheadMiles=[10,20,30].includes(next)?next:20;
+      try{localStorage.setItem(lookaheadKey,String(lookaheadMiles))}catch{}
+      checkRoadAhead(true);
+    };
+  }
   const {createRoadDisplay,hazardKind}=window.routeWeatherRoadDisplay;
   const hazardNames={full:'Closure',collision:'Collision',stopped:'Stopped vehicle',debris:'Debris',police:'CHP report',
     hold:'Truck hold',lane:'Lane closure',chain:'Chain controls',winter:'Winter advisory',work:'Road work',incident:'Road hazard'};
@@ -85,15 +97,35 @@
     return {items:reports,failed:failed.length};
   }
   function roadOrigin(){
-    if(!trip?.route?.geometry?.coordinates?.length)return null;
-    const geometry=trip.route.geometry.coordinates;
-    if(watch===null)return {geometry,along:0,gps:false};
-    if(!gpsPosition)return null;
-    const progress=projectOnRoute(geometry,[gpsPosition[1],gpsPosition[0]]);
-    return progress.best<=.5?{geometry,along:progress.along,gps:true}:null;
+    if(trip?.route?.geometry?.coordinates?.length){
+      const geometry=trip.route.geometry.coordinates;
+      if(watch===null)return {geometry,along:0,gps:false};
+      if(!gpsPosition)return null;
+      const progress=projectOnRoute(geometry,[gpsPosition[1],gpsPosition[0]]);
+      if(progress.best<=.5)return {geometry,along:progress.along,gps:true};
+    }
+    // Free-drive look-ahead using live GPS (or map center) so CHP/DOT obstacles still appear without a planned route
+    if(gpsPosition&&Number.isFinite(gpsPosition[0])&&Number.isFinite(gpsPosition[1])){
+      return {freeDrive:true,lat:gpsPosition[0],lon:gpsPosition[1],gps:true};
+    }
+    const c=currentView();
+    if(c&&Number.isFinite(c.lat)&&Number.isFinite(c.lng)){
+      return {freeDrive:true,lat:c.lat,lon:c.lng,gps:false};
+    }
+    return null;
   }
   let reportProjections=new WeakMap(), projectionRoute;
   function nearbyRoadReports(reports,origin,now=Date.now()){
+    if(origin.freeDrive){
+      const matches=[];
+      for(const report of reports){
+        if(!Number.isFinite(report.lat)||!Number.isFinite(report.lon)||report.start>now||report.end&&report.end<=now)continue;
+        if(/rest area|park\s*&\s*ride/i.test([report.title,report.description].filter(Boolean).join(' ')))continue;
+        const distMi=km([origin.lon,origin.lat],[report.lon,report.lat])/mile;
+        if(distMi<=lookaheadMiles)matches.push({...report,distance:distMi});
+      }
+      return matches.sort((a,b)=>a.distance-b.distance);
+    }
     if(projectionRoute!==origin.geometry){
       projectionRoute=origin.geometry;
       reportProjections=new WeakMap();
@@ -347,10 +379,9 @@
       }
     }
     if(!$('roadAheadDialog').open)return;
-    $('roadAheadStatus').textContent=!trip?'Plan a route to see reports ahead.':
-      !roadEnabled?'Turn on Road ahead to check reports.':
-      !origin?'Road ahead resumes when GPS is on the route.':
-      (roadCheck?'Checking reports…':roadSources||'Waiting for reports')+' · Next '+lookaheadMiles+' route miles '+(origin.gps?'from GPS':'from start');
+    $('roadAheadStatus').textContent=!roadEnabled?'Turn on Road ahead to check reports.':
+      !origin?'Waiting for GPS or map location.':
+      (roadCheck?'Checking reports…':roadSources||'Waiting for reports')+' · Next '+lookaheadMiles+' miles '+(origin.freeDrive?(origin.gps?'around GPS':'around map'):(origin.gps?'from GPS':'from start'));
     $('roadAheadList').replaceChildren(...reports.map(report=>{
       const item=document.createElement('li');
       const button=document.createElement('button');
@@ -373,6 +404,9 @@
     }
   }
   function roadCorridor(origin){
+    if(origin.freeDrive){
+      return {geometry:{coordinates:[[origin.lon,origin.lat],[origin.lon+0.01,origin.lat+0.01]]}};
+    }
     const points=[];
     let along=0;
     for(let i=1;i<origin.geometry.length;i++){

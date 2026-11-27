@@ -121,6 +121,8 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private AtlasVoiceController voiceController;
     private boolean pendingListenAfterGrant;
     private boolean pendingHandsFreeAfterGrant;
+    private boolean pendingCbMicAfterGrant;
+    private android.webkit.PermissionRequest pendingWebPermissionRequest;
     private String pendingExternalPayloadJson;
     private OfflineEngine offlineEngine;
 
@@ -240,7 +242,12 @@ public final class MainActivity extends Activity implements SensorEventListener 
                     if ("start".equals(event)) voiceController.setSuspendedForTts(true);
                     else if ("done".equals(event) || "error".equals(event) || "idle".equals(event)) voiceController.setSuspendedForTts(false);
                 }
-                runOnUiThread(() -> notifyVoice(event));
+                runOnUiThread(() -> {
+                    notifyVoice(event);
+                    if (web != null) {
+                        web.evaluateJavascript("window.atlasAudioEvent?.(" + JSONObject.quote(event) + "," + priority + ")", null);
+                    }
+                });
             }
             @Override public void onDuckMedia(boolean duck) {
                 runOnUiThread(() -> duckYtMedia(duck));
@@ -310,6 +317,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
         web.getSettings().setJavaScriptEnabled(true);
         web.getSettings().setDomStorageEnabled(true);
         web.getSettings().setGeolocationEnabled(true);
+        web.getSettings().setMediaPlaybackRequiresUserGesture(false);
         web.getSettings().setAllowFileAccess(false);
         web.getSettings().setAllowContentAccess(false);
         web.getSettings().setUserAgentString(web.getSettings().getUserAgentString()+" RouteWeatherAndroid/0.1");
@@ -363,6 +371,36 @@ public final class MainActivity extends Activity implements SensorEventListener 
                     requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST);
                 }
+            }
+            @Override public void onPermissionRequest(android.webkit.PermissionRequest request) {
+                runOnUiThread(() -> {
+                    Uri reqOrigin = request.getOrigin();
+                    if (reqOrigin == null || !isLocal(reqOrigin)) {
+                        Log.w("RouteWeatherCb", "Denied WebView permission for origin: " + reqOrigin);
+                        request.deny();
+                        return;
+                    }
+                    java.util.List<String> allowed = new java.util.ArrayList<>();
+                    for (String res : request.getResources()) {
+                        if (android.webkit.PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(res)) {
+                            allowed.add(res);
+                        }
+                    }
+                    if (allowed.isEmpty()) {
+                        request.deny();
+                        return;
+                    }
+                    if (hasAudioPermission()) {
+                        request.grant(allowed.toArray(new String[0]));
+                    } else {
+                        if (pendingWebPermissionRequest != null) {
+                            try { pendingWebPermissionRequest.deny(); } catch (Exception ignored) {}
+                        }
+                        pendingWebPermissionRequest = request;
+                        pendingCbMicAfterGrant = true;
+                        requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_REQUEST);
+                    }
+                });
             }
         });
         rootLayout = new FrameLayout(this);
@@ -608,12 +646,25 @@ public final class MainActivity extends Activity implements SensorEventListener 
             boolean granted = hasAudioPermission();
             boolean listen = pendingListenAfterGrant;
             boolean hf = pendingHandsFreeAfterGrant;
+            boolean cbMic = pendingCbMicAfterGrant;
+            android.webkit.PermissionRequest webReq = pendingWebPermissionRequest;
             pendingListenAfterGrant = false;
             pendingHandsFreeAfterGrant = false;
+            pendingCbMicAfterGrant = false;
+            pendingWebPermissionRequest = null;
+            if (webReq != null) {
+                try {
+                    if (granted) webReq.grant(new String[]{android.webkit.PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                    else webReq.deny();
+                } catch (Exception ignored) {}
+            }
+            if (cbMic && web != null) {
+                web.evaluateJavascript("window.atlasCbMicPermission?.(" + granted + ")", null);
+            }
             if (granted && voiceController != null) {
                 if (hf) voiceController.setHandsFree(true);
                 if (listen) voiceController.listenOnce(true);
-            } else if (web != null) {
+            } else if (!granted && web != null && (listen || hf)) {
                 web.evaluateJavascript("window.atlasVoiceState?.('denied',false)", null);
             }
             return;
@@ -736,6 +787,29 @@ public final class MainActivity extends Activity implements SensorEventListener 
         }
         @JavascriptInterface public void routerPlayTone(String kind) {
             if (voiceController != null) voiceController.playTone(kind);
+        }
+        @JavascriptInterface public void cbSetAudioState(String state, int priority) {
+            runOnUiThread(() -> {
+                if (voiceController != null) {
+                    voiceController.setSuspendedForRadioTx("tx".equals(state));
+                }
+                if (audioManager != null) {
+                    audioManager.setRadioState(state, priority);
+                }
+            });
+        }
+        @JavascriptInterface public boolean cbHasMicPermission() {
+            return hasAudioPermission();
+        }
+        @JavascriptInterface public void cbEnsureMicPermission() {
+            runOnUiThread(() -> {
+                if (hasAudioPermission()) {
+                    if (web != null) web.evaluateJavascript("window.atlasCbMicPermission?.(true)", null);
+                    return;
+                }
+                pendingCbMicAfterGrant = true;
+                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, AUDIO_PERMISSION_REQUEST);
+            });
         }
         @JavascriptInterface public String routerConsumeExternalCommand() {
             String json = pendingExternalPayloadJson;
@@ -873,6 +947,20 @@ public final class MainActivity extends Activity implements SensorEventListener 
                 if (!ytEnabled) return;
                 ensureYtWebView();
                 runYtAction(action);
+            });
+        }
+        @JavascriptInterface public void ytSearch(String rawQuery) {
+            runOnUiThread(() -> {
+                String q = rawQuery == null ? "" : rawQuery.trim();
+                if (q.isEmpty()) return;
+                ytEnabled = true;
+                ytExpanded = true;
+                ytBrowseMode = true;
+                ensureYtWebView();
+                layoutYtContainer();
+                ytWeb.loadUrl("https://m.youtube.com/results?search_query=" + Uri.encode(q));
+                locationHandler.removeCallbacks(ytSyncTask);
+                locationHandler.postDelayed(ytSyncTask, 1200L);
             });
         }
     }

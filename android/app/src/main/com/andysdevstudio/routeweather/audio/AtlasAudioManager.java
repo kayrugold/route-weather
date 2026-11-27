@@ -75,6 +75,8 @@ public final class AtlasAudioManager {
     private long utteranceSeq;
     private AudioFocusRequest focusRequest;
     private boolean mediaDucked;
+    private boolean radioActive;
+    private int radioPriority = PRIORITY_PUBLIC_RADIO;
 
     private String lastSpokenKey = "";
     private long lastSpokenAt = 0L;
@@ -95,6 +97,35 @@ public final class AtlasAudioManager {
     /** Stops active/queued items whose priority is >= minPriority (e.g., 2 stops nav & lower, preserves emergency). */
     public void stopFromPriority(int minPriority) {
         mainHandler.post(() -> stopOnMain(minPriority));
+    }
+
+    /** Coordinates external CB Radio RX/TX audio focus and YouTube ducking without interfering with TTS priority. */
+    public void setRadioState(String state, int priority) {
+        mainHandler.post(() -> {
+            boolean active = "rx".equals(state) || "tx".equals(state);
+            radioActive = active;
+            radioPriority = Math.max(PRIORITY_PRIORITY_RADIO, Math.min(PRIORITY_PUBLIC_RADIO, priority));
+            if (active) {
+                if (!callbacks.isResumed()) return;
+                AudioAttributes attrs = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build();
+                ensureFocus(attrs, false);
+                if (!mediaDucked) {
+                    mediaDucked = true;
+                    callbacks.onDuckMedia(true);
+                }
+            } else {
+                if (activeItem == null && queue.isEmpty()) {
+                    releaseFocusAndRestoreMedia();
+                }
+            }
+        });
+    }
+
+    public boolean isRadioActive() {
+        return radioActive;
     }
 
     public void shutdown() {
@@ -277,6 +308,10 @@ public final class AtlasAudioManager {
     }
 
     private void releaseFocusAndRestoreMedia() {
+        if (radioActive && callbacks.isResumed()) {
+            callbacks.onSpeechEvent("idle", PRIORITY_NAVIGATION, "");
+            return;
+        }
         if (mediaDucked) {
             mediaDucked = false;
             callbacks.onDuckMedia(false);

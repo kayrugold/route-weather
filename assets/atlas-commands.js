@@ -66,6 +66,12 @@
     }
 
     // 2. YouTube / Entertainment controls (natural verbs!)
+    m = body.match(/^(?:(?:search|look\s+up|find)\s+(?:youtube|yt)\s+(?:for\s+)?|(?:youtube|yt)\s+search(?:\s+for)?\s+)(.+)$/i)
+      || body.match(/^(?:search|look\s+up|find|play)\s+(?:for\s+)?(.+?)\s+on\s+(?:youtube|yt)$/i);
+    if (m && m[1].trim()) {
+      const q = cleanPhrase(m[1]);
+      return { action: 'media_search', value: q, label: 'YouTube: ' + q };
+    }
     if (/^(?:open|show|start|launch|enable|turn\s+on|bring\s+up)\s+(?:the\s+)?(?:youtube|entertainment|media\s+bar|video\s+player)$/.test(lower)
       || /^(?:entertainment|youtube)\s+on$/.test(lower)) {
       return { action: 'media_show', label: 'Entertainment on' };
@@ -148,6 +154,29 @@
     }
 
     // 5. CB Radio channels & controls (Phase 4)
+    if (/^(?:open|show|turn\s+on|enable|start)\s+(?:the\s+)?(?:cb|cb\s+radio|radio)$/.test(lower)
+      || /^(?:cb|cb\s+radio)\s+on$/.test(lower)) {
+      return { action: 'cb_show', label: 'CB Radio on' };
+    }
+    if (/^(?:close|hide|turn\s+off|disable|exit)\s+(?:the\s+)?(?:cb|cb\s+radio|radio)$/.test(lower)
+      || /^(?:cb|cb\s+radio)\s+off$/.test(lower)) {
+      return { action: 'cb_hide', label: 'CB Radio off' };
+    }
+    if (/^(?:mute|silence|squelch)\s+(?:the\s+)?(?:cb|cb\s+radio|radio)$/.test(lower)) {
+      return { action: 'cb_mute', value: true, label: 'CB Muted' };
+    }
+    if (/^(?:unmute)\s+(?:the\s+)?(?:cb|cb\s+radio|radio)$/.test(lower)) {
+      return { action: 'cb_mute', value: false, label: 'CB Unmuted' };
+    }
+    if (/^(?:say\s+again|repeat\s+(?:that|last|cb|radio)|replay\s+(?:cb|radio|last))$/.test(lower)) {
+      return { action: 'cb_replay', label: 'CB Replay' };
+    }
+    if (/^(?:stop|silence|quiet|turn\s+off)\s+(?:the\s+)?(?:weather\s+radio|wx\s+radio|noaa\s+radio)$/.test(lower)) {
+      return { action: 'wx_radio_stop', label: 'WX Radio off' };
+    }
+    if (/^(?:(?:play|open|start|turn\s+on|listen\s+to)\s+)?(?:the\s+)?(?:weather\s+radio|wx\s+radio|noaa\s+(?:weather\s+)?radio)$/.test(lower)) {
+      return { action: 'wx_radio_toggle', label: 'WX Weather Radio' };
+    }
     if (/^(?:family\s+channel|switch\s+to\s+family|channel\s+family|go\s+to\s+family)$/.test(lower)) {
       return { action: 'cb_channel', value: 'FAM', label: 'CB: Family' };
     }
@@ -157,6 +186,9 @@
     m = normNum.match(/^(?:(?:switch\s+to|go\s+to)\s+)?(?:cb\s+)?channel\s+(\d{1,3})$/i);
     if (m) {
       return { action: 'cb_channel', value: 'CH ' + m[1], label: 'CB: Channel ' + m[1] };
+    }
+    if (/^(?:(?:set\s+)?(?:cb\s+)?range\s+(?:to\s+)?global|global\s+range)$/.test(lower)) {
+      return { action: 'cb_range', value: 0, label: 'CB Range: Global' };
     }
     m = normNum.match(/^(?:(?:set\s+)?(?:cb\s+)?range\s+(?:to\s+)?)(\d{1,3})\s*(?:mi|miles?)?$/i);
     if (m) {

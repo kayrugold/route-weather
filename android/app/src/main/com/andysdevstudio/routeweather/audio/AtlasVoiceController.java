@@ -53,11 +53,12 @@ public final class AtlasVoiceController {
     private boolean directListening;
     private boolean recognizerActive;
     private boolean suspendedForTts;
+    private boolean suspendedForRadioTx;
     private int activeSessionId = 0;
 
     private final Runnable resumeWakeTask = new Runnable() {
         @Override public void run() {
-            if (!callbacks.isResumed() || !handsFreeEnabled || directListening || suspendedForTts) return;
+            if (!callbacks.isResumed() || !handsFreeEnabled || directListening || suspendedForTts || suspendedForRadioTx) return;
             if (!callbacks.hasRecordPermission()) return;
             if (wakeEngine.isReady()) {
                 wakeEngine.start();
@@ -238,6 +239,20 @@ public final class AtlasVoiceController {
         });
     }
 
+    /** Automatically pauses wake-word listening while CB Radio is actively transmitting on the mic. */
+    public void setSuspendedForRadioTx(boolean suspended) {
+        mainHandler.post(() -> {
+            suspendedForRadioTx = suspended;
+            if (suspended) {
+                mainHandler.removeCallbacks(resumeWakeTask);
+                wakeEngine.stop();
+                stopRecognizer();
+            } else {
+                scheduleWakeResume();
+            }
+        });
+    }
+
     public void onPause() {
         mainHandler.post(() -> {
             mainHandler.removeCallbacks(resumeWakeTask);
@@ -286,7 +301,7 @@ public final class AtlasVoiceController {
 
     private void scheduleWakeResume() {
         mainHandler.removeCallbacks(resumeWakeTask);
-        if (handsFreeEnabled && !directListening && !suspendedForTts && callbacks.isResumed()) {
+        if (handsFreeEnabled && !directListening && !suspendedForTts && !suspendedForRadioTx && callbacks.isResumed()) {
             mainHandler.postDelayed(resumeWakeTask, RESUME_WAKE_DELAY_MS);
         }
     }
