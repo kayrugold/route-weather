@@ -7,7 +7,7 @@
             android:targetPackage="com.andysdevstudio.routeweather"
             android:targetClass="com.andysdevstudio.routeweather.MainActivity">
             <parameter
-                android:name="feature"
+                android:name="featureName"
                 android:key="atlas_feature"/>
         </intent>
     </capability>
@@ -36,7 +36,7 @@
             <extra android:name="atlas_action" android:value="media_show"/>
         </intent>
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
-            <parameter-binding android:key="feature" android:value="entertainment"/>
+            <parameter-binding android:key="featureName" android:value="entertainment"/>
         </capability-binding>
     </shortcut>
 
@@ -52,7 +52,7 @@
             <extra android:name="atlas_action" android:value="plan_trip"/>
         </intent>
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
-            <parameter-binding android:key="feature" android:value="trip planner"/>
+            <parameter-binding android:key="featureName" android:value="trip planner"/>
         </capability-binding>
     </shortcut>
 
@@ -68,7 +68,7 @@
             <extra android:name="atlas_action" android:value="radar_toggle"/>
         </intent>
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
-            <parameter-binding android:key="feature" android:value="weather radar"/>
+            <parameter-binding android:key="featureName" android:value="weather radar"/>
         </capability-binding>
     </shortcut>
 </shortcuts>

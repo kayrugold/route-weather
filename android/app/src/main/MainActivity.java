@@ -51,6 +51,7 @@ import org.json.JSONObject;
 
 import com.andysdevstudio.routeweather.audio.AtlasAudioManager;
 import com.andysdevstudio.routeweather.audio.AtlasVoiceController;
+import com.andysdevstudio.routeweather.nav.NavigationIntentParser;
 import com.andysdevstudio.routeweather.offline.OfflineEngine;
 import com.andysdevstudio.routeweather.offline.OfflinePackageManager;
 
@@ -120,8 +121,7 @@ public final class MainActivity extends Activity implements SensorEventListener 
     private AtlasVoiceController voiceController;
     private boolean pendingListenAfterGrant;
     private boolean pendingHandsFreeAfterGrant;
-    private String pendingExternalAction;
-    private String pendingExternalValue;
+    private String pendingExternalPayloadJson;
     private OfflineEngine offlineEngine;
 
     private void notifyVoice(String event) {
@@ -585,48 +585,14 @@ public final class MainActivity extends Activity implements SensorEventListener 
     }
 
     private void captureNavigationIntent(Intent intent, boolean dispatchNow) {
-        if (intent == null) return;
-        String action = intent.getStringExtra("atlas_action");
-        String value = intent.getStringExtra("atlas_value");
-        String feature = intent.getStringExtra("atlas_feature");
-        String explicitDest = intent.getStringExtra("atlas_destination");
-
-        if ((action == null || action.isEmpty()) && explicitDest != null && !explicitDest.trim().isEmpty()) {
-            action = "destination";
-            value = explicitDest.trim();
-        } else if ((action == null || action.isEmpty()) && feature != null && !feature.trim().isEmpty()) {
-            action = "feature";
-            value = feature.trim();
-        } else if ((action == null || action.isEmpty()) && Intent.ACTION_VIEW.equals(intent.getAction())) {
-            Uri data = intent.getData();
-            if (data != null) {
-                String scheme = data.getScheme();
-                String query = null;
-                if ("google.navigation".equals(scheme) || "geo".equals(scheme)) {
-                    query = data.getQueryParameter("q");
-                    if (query == null || query.trim().isEmpty()) {
-                        String ssp = data.getSchemeSpecificPart();
-                        if (ssp != null) {
-                            int qIdx = ssp.indexOf("q=");
-                            if (qIdx >= 0) query = Uri.decode(ssp.substring(qIdx + 2).split("&")[0]);
-                            else if (!ssp.startsWith("0,0")) query = ssp.split("\\?")[0];
-                        }
-                    }
-                }
-                if (query != null && !query.trim().isEmpty()) {
-                    action = "destination";
-                    value = query.trim();
-                }
-            }
-        }
-        if (action == null || action.trim().isEmpty()) return;
-        String act = action.trim();
-        String val = value == null ? "" : value.trim();
+        JSONObject parsed = NavigationIntentParser.parse(intent);
+        if (parsed == null) return;
+        String json = parsed.toString();
+        Log.i("RouteWeatherNavIntent", "Captured intent (dispatchNow=" + dispatchNow + "): " + json);
         if (dispatchNow && web != null) {
-            web.evaluateJavascript("window.atlasExternalCommand?.(" + JSONObject.quote(act) + "," + JSONObject.quote(val) + ")", null);
+            web.evaluateJavascript("window.atlasExternalPayload?.(" + json + ")", null);
         } else {
-            pendingExternalAction = act;
-            pendingExternalValue = val;
+            pendingExternalPayloadJson = json;
         }
     }
 
@@ -772,20 +738,9 @@ public final class MainActivity extends Activity implements SensorEventListener 
             if (voiceController != null) voiceController.playTone(kind);
         }
         @JavascriptInterface public String routerConsumeExternalCommand() {
-            if (pendingExternalAction == null || pendingExternalAction.isEmpty()) return "";
-            try {
-                String json = new JSONObject()
-                    .put("action", pendingExternalAction)
-                    .put("value", pendingExternalValue == null ? "" : pendingExternalValue)
-                    .toString();
-                pendingExternalAction = null;
-                pendingExternalValue = null;
-                return json;
-            } catch (Exception ignored) {
-                pendingExternalAction = null;
-                pendingExternalValue = null;
-                return "";
-            }
+            String json = pendingExternalPayloadJson;
+            pendingExternalPayloadJson = null;
+            return json == null ? "" : json;
         }
         @JavascriptInterface public void fetch(int id, String spec, String accept, boolean wifiOnly) {
             if (id < 0 || spec.length() > 4096) return;

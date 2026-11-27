@@ -4834,6 +4834,62 @@ function bindAtlasRouter(){
     follow_me:()=>cycleGpsView(),
     theme_day:()=>setTheme(true),
     theme_night:()=>setTheme(false),
+    route_overview:()=>{
+      if(routeLayer&&map){
+        const b=routeLayer.getBounds?.();
+        if(b?.isValid?.())map.fitBounds(b.pad(0.15),{animate:true});
+      }
+    },
+    show_alternates:()=>{
+      const btns=Array.from(document.querySelectorAll('#routeChoicesBar .route-choice-btn'));
+      if(btns.length>1){
+        const idx=btns.findIndex(b=>b.classList.contains('active'));
+        btns[(idx+1)%btns.length].click();
+      }
+    },
+    route_preference:pref=>{
+      const prefs=(()=>{try{return JSON.parse(localStorage.getItem('route-weather-avoid-prefs')||'{}')}catch{return {}}})();
+      if(pref==='avoid_tolls')prefs.tolls=true;
+      else if(pref==='allow_tolls')prefs.tolls=false;
+      else if(pref==='avoid_highways')prefs.highways=true;
+      else if(pref==='allow_highways')prefs.highways=false;
+      else if(pref==='avoid_ferries')prefs.ferries=true;
+      else if(pref==='allow_ferries')prefs.ferries=false;
+      try{localStorage.setItem('route-weather-avoid-prefs',JSON.stringify(prefs))}catch{}
+      status('Route preference updated: '+pref.replace(/_/g,' ')+'.');
+    },
+    navigate_intent:payload=>{
+      if(!payload||!payload.destination)return false;
+      const avoid=payload.avoid||{};
+      if(avoid.tolls||avoid.highways||avoid.ferries){
+        try{
+          const cur=JSON.parse(localStorage.getItem('route-weather-avoid-prefs')||'{}');
+          localStorage.setItem('route-weather-avoid-prefs',JSON.stringify({...cur,...avoid}));
+        }catch{}
+      }
+      openPlanner(false);
+      const gps=currentGpsLatLon();
+      if(!$('start').value.trim()&&gps){
+        $('start').value=gps.lat.toFixed(5)+', '+gps.lon.toFixed(5);
+      }
+      if(payload.addStop&&$('end').value.trim()){
+        $('via').value=payload.destination;
+      }else{
+        $('end').value=payload.destination;
+        if(payload.waypoint)$('via').value=payload.waypoint;
+      }
+      const profile=window.routeWeatherOffline?.getProfile?.()||'';
+      const note=profile==='truck'?' (truck profile preserved)':'';
+      showRouterToast('✓ Route: '+payload.destination+note);
+      buildTrip(false);
+    },
+    geo_search:payload=>{
+      if(!payload||!payload.destination)return false;
+      openPlanner(false);
+      $('end').value=payload.destination;
+      $('end').focus();
+      showRouterToast('✓ Search: '+payload.destination);
+    },
   });
   window.atlasRouter=atlasRouterDispatcher;
   window.atlasVoiceState=(state,hf)=>{
@@ -4871,6 +4927,19 @@ function bindAtlasRouter(){
     const res=atlasRouterDispatcher.dispatch({action,value,label:value?action+': '+value:action});
     if(res.ok){playRouterTone('ok');showRouterToast('✓ '+res.label)}
   };
+  window.atlasExternalPayload=payload=>{
+    if(!payload||!payload.action)return;
+    if(payload.action==='navigate_intent'||payload.action==='geo_search'){
+      const res=atlasRouterDispatcher.dispatch({
+        action:payload.action,
+        value:payload,
+        label:(payload.action==='geo_search'?'Search: ':'Navigate: ')+(payload.destination||'')
+      });
+      if(res.ok)playRouterTone('ok');
+      return;
+    }
+    window.atlasExternalCommand(payload.action,payload.value||'');
+  };
   const mic=$('routerMicBtn');
   if(mic){
     mic.onclick=()=>{
@@ -4888,7 +4957,7 @@ function bindAtlasRouter(){
   if(routerHandsFree&&window.isRouteWeatherAndroid)AndroidRoute.routerSetHandsFree?.(true);
   const extRaw=window.isRouteWeatherAndroid?AndroidRoute.routerConsumeExternalCommand?.():'';
   if(extRaw){
-    try{const ext=JSON.parse(extRaw);if(ext?.action)window.atlasExternalCommand(ext.action,ext.value||'')}catch{}
+    try{const ext=JSON.parse(extRaw);if(ext?.action)window.atlasExternalPayload(ext)}catch{}
   }
 }
 if(map){bindWildfireLayers();bindClearanceLayer();bindTollRoads();bindDrivingMap();bindTrafficLayer();bindVoiceDirections();bindEmergencyAlerts();bindAtlasRouter();void startGpsLocation('center',true)}
